@@ -46,6 +46,21 @@ hardcoded. Not `make` / `node`.
   for per-company intel
 - the **Claude Code Workflow tool** — orchestration
 
+## Running polyfetch without installing it
+
+The ingester (`polyfetch-scrape`) does not need to be installed into this repo or
+added to its environment — invoke it ad-hoc from its own clone with
+`uv run --directory`:
+
+```bash
+uv run --directory <path-to-polyfetch-scrape> \
+  python -c "from polyfetch_scrape import fetch; r = fetch('https://example.com'); print(r.status, r.backend, len(r.body))"
+```
+
+`uv run --directory <dir>` runs in that repo's own environment, so polyfetch's
+dependencies stay out of this project (for a sibling checkout, `../polyfetch-scrape`).
+Useful for one-off feed / API probes during ingestion.
+
 ## Scope (KISS / DRY / YAGNI)
 
 In: two workflows, a thin web-access wrapper, composable templates. Out
