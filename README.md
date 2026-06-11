@@ -48,7 +48,7 @@ hardcoded. Not `make` / `node`.
 
 ## Running polyfetch without installing it
 
-The ingester (`polyfetch-scrape`) does not need to be installed into this repo or
+The ingester ([`polyfetch-scrape`](https://github.com/qte77/polyfetch-scrape)) does not need to be installed into this repo or
 added to its environment — invoke it ad-hoc from its own clone with
 `uv run --directory`:
 
