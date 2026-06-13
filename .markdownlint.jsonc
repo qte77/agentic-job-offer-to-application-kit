@@ -1,0 +1,12 @@
+// Markdown rule config (adopted from qte77/repo-baseline). Lives here (not only
+// in .markdownlint-cli2.jsonc) so the shared `lint-md-links` reusable workflow
+// detects a local config and reuses it instead of downloading the org default —
+// keeping MD013 (line length) disabled in CI as well as locally.
+{
+  "default": true,
+  "MD013": false,            // line length — URL-rich tables make this counterproductive
+  "MD024": { "siblings_only": true },   // duplicate headings OK across different sections
+  "MD033": false,            // inline HTML OK (used for <details>, <https://...>, <br>)
+  "MD041": false,            // first line need not be H1 (LICENSE/CHANGELOG style)
+  "MD060": { "style": "padded" }        // | col | col | (not |col|col|)
+}
