@@ -4,10 +4,10 @@ results/
 library/
 input/
 
-# Real config is git-ignored; only the *.example.* templates are tracked.
+# Real config is git-ignored; only config/examples/ templates are tracked.
 # (covers seed.json and future PII-bearing portfolio.md / work-history.md)
 config/*
-!config/*.example.*
+!config/examples/
 
 # Python / tooling
 __pycache__/
