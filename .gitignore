@@ -1,13 +1,14 @@
-# Generated outputs — never committed (incl. the PII-bearing evidence library).
-results/
-# Defensive: older directory conventions for generated data.
-library/
-input/
+# Generated outputs at the repo root — never committed. Anchored to the repo root (leading /)
+# so the committed example under examples/ (which mirrors config/ + results/) is unaffected.
+/results/*
+!/results/.gitkeep
+/library/
+/input/
 
-# Real config is git-ignored; only config/examples/ templates are tracked.
-# (covers seed.json and future PII-bearing portfolio.md / work-history.md)
-config/*
-!config/examples/
+# Real config at the repo root is git-ignored; the directory is kept via .gitkeep.
+# Covers seed.json + future PII-bearing portfolio.md / work-history.md / cv + cover-letter samples.
+/config/*
+!/config/.gitkeep
 
 # Python / tooling
 __pycache__/
