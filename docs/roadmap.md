@@ -13,6 +13,7 @@
 - `cc-workflow-tailor-offer.js`: match → CV + cover letter → ats-check → gap report (strict TDD).
 - ats-check: résumé parse-safety + job-description (JD) must-have coverage (#9).
 - Delivery: a human-submit prefill pack + a cited ToU/CFAA/GDPR safety note (#8).
+- Tailor in the user's own writing style or a set tone, from user CV + cover-letter config inputs (#16).
 
 ## Later — hardening & reach
 
