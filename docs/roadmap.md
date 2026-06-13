@@ -1,0 +1,23 @@
+# Roadmap
+
+## Shipped — first end-to-end (e2e) happy path
+
+- Evidence-library workflow (`cc-workflow-evidence-library.js`).
+- Ingest → chunk → relevance, generic + config-driven (`src/ajoa_kit/`, `cc-workflow-relevance.js`).
+- Baseline gates: ruff, a value-add `pytest` suite, CodeQL + Dependabot + CI (SHA-pinned),
+  markdownlint + lychee.
+- Governance, docs, and a synthetic worked example (`examples/alexis-doe/`).
+
+## Next — Stage 3 tailoring
+
+- `cc-workflow-tailor-offer.js`: match → CV + cover letter → ats-check → gap report (strict TDD).
+- ats-check: résumé parse-safety + job-description (JD) must-have coverage (#9).
+- Delivery: a human-submit prefill pack + a cited ToU/CFAA/GDPR safety note (#8).
+
+## Later — hardening & reach
+
+- `AppSettings` (pydantic-settings) replacing plain JSON / constant config loading.
+- Per-adapter error/edge handling + full per-adapter and error-branch test coverage.
+- Adopt `pseudonymize-text` for shared / trends-dashboard corpora.
+- Locale-aware templates (#12); trends dashboard (#11); structured sources catalog (#10).
+- Full L1 org-settings apply (branch protection, broader SHA allowlist).

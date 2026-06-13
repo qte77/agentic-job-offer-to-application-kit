@@ -32,7 +32,7 @@ cloud/DevOps/platform · architect. Cost model: cheap pre-filter → LLM relevan
 ## How
 
 ```bash
-cp config/seed.example.json config/seed.json            # your target companies / feeds
+cp config/examples/seed.example.json config/seed.json   # your target companies / feeds
 POLYFETCH_DIR=../polyfetch-scrape scripts/ingest.sh     # -> results/jobs-raw.json
 uv run python -m ajoa_kit.chunk                         # -> results/batches/ + manifest.json
 # relevance (Claude Code Workflow tool); batchCount = results/batches/manifest.json .batch_count:
@@ -51,9 +51,11 @@ Use/Service); no scraping (public no-auth GET only); no PII in the repo (real co
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md) — pipeline, components, execution model
-- [docs/plans/two-stage-tailoring.md](docs/plans/two-stage-tailoring.md) — stages, lanes, templates, ATS
+- [docs/roadmap.md](docs/roadmap.md) — what's built, what's next, what's deferred
+- [docs/userstory.md](docs/userstory.md) — user stories with acceptance criteria
 - [docs/research.md](docs/research.md) — fetching, ATS, and positioning research
 - [examples/alexis-doe/](examples/alexis-doe/) — synthetic end-to-end example
 
-Conventions follow the org `repo-baseline`: ruff + pytest, SHA-pinned CodeQL/CI, squash-only PRs
-into a protected `main`.
+## License
+
+Apache-2.0 © 2026 qte77. See [LICENSE](LICENSE).
