@@ -15,6 +15,7 @@
   "ignores": [
     "node_modules/**",
     ".git/**",
-    ".venv/**"
+    ".venv/**",
+    "changelog.d/**"
   ]
 }
