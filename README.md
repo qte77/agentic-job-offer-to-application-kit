@@ -31,7 +31,7 @@ cloud/DevOps/platform · architect. Cost model: cheap pre-filter → LLM relevan
 
 ## How
 
-Dev loop: `make help` · `make check` (lint + tests) · `make docs-lint`.
+Dev loop: `make help` · `make check` (lint + types + complexity + tests) · `make docs-lint`.
 
 ### Run your own search
 

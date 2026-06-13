@@ -46,7 +46,7 @@ engineering, cloud/DevOps/platform, architect. Lanes live in the evidence librar
 
 ```text
 agentic-job-offer-to-application-kit/
-├── README.md / AGENTS.md / CHANGELOG.md / CODEOWNERS / LICENSE
+├── README.md / AGENTS.md / CHANGELOG.md / SECURITY.md / LICENSE
 ├── docs/
 │   ├── architecture.md / roadmap.md / userstory.md / research.md
 │   └── workflows/
@@ -61,8 +61,8 @@ agentic-job-offer-to-application-kit/
 ├── examples/alexis-doe/        # self-contained example mirroring config/ + results/ (committed)
 ├── results/                    # generated outputs — git-ignored, dir kept via .gitkeep
 │                               #   evidence-library.json, jobs-raw.json, batches/, <lane>/shortlist.*, offers/<slug>/
-├── pyproject.toml / uv.lock    # uv project; ruff + pytest config
-└── .github/                    # codeql + dependabot + ci (SHA-pinned)
+├── pyproject.toml / uv.lock    # uv project; ruff + pyright + complexipy + pytest + scriv config
+└── .github/                    # codeql + dependabot + ci + lint-md-links + CODEOWNERS (SHA-pinned)
 ```
 
 ## Data layout — two folders
@@ -84,8 +84,8 @@ agentic-job-offer-to-application-kit/
 ## Built vs designed
 
 - **Built:** `src/ajoa_kit/` engine; `AppSettings` config + `ajoa-kit` CLI (ADR-0001 L1/L2);
-  `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; baseline gates (ruff, pytest,
-  CodeQL/Dependabot/CI).
+  `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; baseline gates (ruff, pyright,
+  complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
 - **Designed:** `cc-workflow-tailor-offer.js`, ats-check, templates, locale config, trends dashboard,
   style/tone tailoring from user CV + cover-letter samples (#16).
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks.
