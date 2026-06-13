@@ -20,7 +20,8 @@ PROBE_TIMEOUT = 8.0
 
 def _count(url: str, key: str | None) -> int | None:
     """GET ``url``; return the item count, or None if it is not a live board."""
-    from polyfetch_scrape import fetch  # lazy: keep this module importable without polyfetch
+    # lazy: keep this module importable without polyfetch
+    from polyfetch_scrape import fetch  # pyright: ignore[reportMissingImports]
 
     try:
         r = fetch(url, headers={"Accept": "application/json"}, timeout=PROBE_TIMEOUT)

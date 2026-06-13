@@ -3,7 +3,7 @@ SHELL := bash
 .SILENT:
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
-.PHONY: help install lint format check docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
+.PHONY: help install lint format check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
 
 help: ## List available targets
 	awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-11s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -17,10 +17,18 @@ lint: ## Ruff lint
 format: ## Ruff format (write)
 	uv run ruff format .
 
-check: ## Lint + format-check + offline tests (CI parity)
+check: ## Lint + types + complexity + format-check + offline tests (CI parity)
 	uv run ruff check .
 	uv run ruff format --check .
+	uv run pyright src/ajoa_kit
+	uv run complexipy src/ajoa_kit --max-complexity-allowed 10
 	uv run pytest -m "not network"
+
+check_types: ## Pyright type check
+	uv run pyright src/ajoa_kit
+
+check_complexity: ## Complexipy cognitive-complexity gate (max 10)
+	uv run complexipy src/ajoa_kit --max-complexity-allowed 10
 
 docs-lint: ## Markdown lint + link check (local)
 	markdownlint-cli2 "*.md" "docs/**/*.md" "examples/**/*.md"
