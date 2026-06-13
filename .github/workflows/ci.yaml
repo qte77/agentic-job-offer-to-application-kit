@@ -20,11 +20,5 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
 
-      - name: Ruff lint
-        run: uv run ruff check .
-
-      - name: Ruff format check
-        run: uv run ruff format --check .
-
-      - name: Pytest (offline)
-        run: uv run pytest -m "not network"
+      - name: Checks (ruff + pytest)
+        run: make check   # same gate as local `make check`

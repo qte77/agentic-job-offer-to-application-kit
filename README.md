@@ -42,7 +42,7 @@ uv run python -m ajoa_kit.persist_scored <output.json> # -> results/<lane>/short
 ```
 
 Runnable synthetic example: [`examples/alexis-doe/`](examples/alexis-doe/).
-Develop with `uv run ruff check .` and `uv run pytest -m "not network"`.
+Develop with `make help` · `make check` (lint + tests) · `make docs-lint`.
 
 **Constraints:** no automated submission (human-reviewed prefill pack, inside platform Terms of
 Use/Service); no scraping (public no-auth GET only); no PII in the repo (real config and
