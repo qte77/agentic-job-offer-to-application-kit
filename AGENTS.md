@@ -12,8 +12,9 @@ base — operational recipes and machine-specific quirks belong in local memory,
 
 - **Never delete existing code unless asked.**
 - **Pin every Actions `uses:` to a full-length commit SHA** (never a tag).
-- **No PII in the repo.** Only `config/*.example.*` templates are committed; real config and
-  everything under `results/` / `library/` / `input/` is git-ignored.
+- **No PII in the repo.** Real config (`config/`) and all generated data (`results/`, `library/`,
+  `input/`) are git-ignored; only the synthetic `examples/` workspace and the `config/`/`results/`
+  `.gitkeep` placeholders are committed.
 - **No automated submission.** The pipeline produces artifacts for a human to review and
   submit; it uses only public, no-auth, read-only (GET) endpoints.
 - **Python**: target `pydantic` for structured config/models (no `TypedDict` / `dataclass`)
@@ -22,9 +23,9 @@ base — operational recipes and machine-specific quirks belong in local memory,
 
 ## Quality gates
 
-- `uv run ruff check .` and `uv run ruff format --check .` must pass (config in `pyproject.toml`).
-- `uv run pytest -m "not network"` must pass. Tests earn their place: non-trivial, value-add
-  only — no import/constant/trivial-slice tests.
+- `make check` (ruff lint + `ruff format --check` + offline `pytest`) must pass — the same gate CI runs.
+- `make docs-lint` (markdownlint + lychee) for docs, locally.
+- Tests earn their place: non-trivial, value-add only — no import/constant/trivial-slice tests.
 - New behaviour follows TDD (red → green); ported behaviour is pinned with regression tests.
 
 ## Quality thresholds (self-review before opening a PR)
