@@ -1,69 +1,85 @@
 # Architecture — agentic-job-offer-to-application-kit
 
-Mirrors the `agentic-market-research-to-gtm` shape (config -> pipeline ->
-results), with three deliberate corrections so it reflects how the approach
-actually works.
+A generic pipeline (config → Python engine → results) with LLM/agent phases. Claude Code is the
+on-demand orchestrator (Workflow-tool scripts), but the phases are described agent-agnostically so
+other coding agents can drive them.
+
+## Pipeline
+
+```text
+config/seed.json
+  → src/ajoa_kit/ingest.py   (ATS/feed adapters → word-boundary pre-filter → dedupe)
+  → results/jobs-raw.json
+  → src/ajoa_kit/chunk.py    → results/batches/ + manifest.json
+  → docs/workflows/cc-workflow-relevance.js   (parallel LLM lane-screen)
+  → results/<lane>/shortlist.{json,md}
+  → [Stage 3, designed] cc-workflow-tailor-offer.js → results/offers/<slug>/
+```
+
+Run-once upstream: `cc-workflow-evidence-library.js` → `results/evidence-library.json`.
+
+**Two-stage trim (cost model):** cheap deterministic pre-filter → LLM relevance screen →
+expensive tailoring only on the shortlist.
 
 ## Three mechanics that define it
 
-1. **Orchestration = Claude Code Workflow tool, not make/node.** The Stage-1
-   workflow runs via `Workflow({ scriptPath: 'docs/workflows/evidence-library.js',
-   args })`, resumable and cached by run id (it can be edited + resumed to
-   re-assemble without re-mining). Its subagents are inline `agent()` calls, so
-   there are **no `.claude/agents/*.md` definitions and no team mode**. The
-   reference's `make orchestrated` / AGENTS-prose model is what this replaces. The
-   `.js` is the **Claude Code reference implementation**; the phased pipeline is
-   described agent-agnostically here so other coding agents can implement it.
-2. **The evidence library is structured data, not a markdown blob.** The workflow
-   returns the `LIB` object (skill clusters, master CV bullets, per-lane angles).
-   That JSON is the retrieval index the tailoring step queries; markdown is only a
-   human render. So `results/` holds `evidence-library.json` (source of truth)
-   AND a rendered `.md`.
-3. **A web-access layer wraps native tools + polyfetch (fallback / replacement).**
-   `lib/ingest.py` chains: native **WebSearch** (discover) -> native **WebFetch**
-   (fetch, tried first) -> **polyfetch** (browser-impersonation -> headless tier)
-   on 403 / JS-shell / header needs; an RSS/Atom feed or backend API is preferred
-   over rendering; paste is the reliable fallback. polyfetch can also fully
-   **replace** WebFetch where reliability matters. Never reimplement fetching (DRY).
+1. **Orchestration = Claude Code Workflow tool, not make/node.** Workflows run via
+   `Workflow({ scriptPath: 'docs/workflows/cc-workflow-*.js', args })`, resumable and cached by run
+   id; subagents are inline `agent()` calls — no `.claude/agents/*.md`, no team mode. The `.js`
+   scripts are the reference implementation; the phases are documented agent-agnostically.
+2. **The evidence library is structured data.** `cc-workflow-evidence-library.js` returns the `LIB`
+   object (skill clusters, master CV bullets, per-lane angles, gaps) written to
+   `results/evidence-library.json` — the retrieval source of truth the relevance and tailor steps read.
+3. **A web-access layer wraps polyfetch.** `src/ajoa_kit/ingest.py` fetches via `polyfetch-scrape`
+   (httpx → curl_cffi → headless), invoked with `uv run --directory $POLYFETCH_DIR` — never vendored.
+   Feed/API-first, no-auth, GET only; each record carries `fetched_backend` for tier monitoring.
+
+## Position lanes
+
+Five configurable lanes scored by the relevance screen: CxO/fractional, founding engineer, senior IC
+engineering, cloud/DevOps/platform, architect. Lanes live in the evidence library.
 
 ## Repo structure
 
 ```text
 agentic-job-offer-to-application-kit/
-├── README.md / AGENTS.md
+├── README.md / AGENTS.md / CHANGELOG.md / CODEOWNERS / LICENSE
 ├── docs/
-│   ├── plans/two-stage-tailoring.md
-│   ├── architecture.md
-│   ├── research.md
+│   ├── architecture.md / roadmap.md / userstory.md / research.md
 │   └── workflows/
-│       ├── evidence-library.js   # Stage 1 (functional): tone+inv -> mine -> adversarial-verify -> assemble; Claude Code reference impl
-│       └── tailor-offer.js       # Stage 2 (designed): ingest -> parse -> [deep-research company] -> match -> tailor -> ats-check -> gap
+│       ├── cc-workflow-evidence-library.js   # Stage 1 (built)
+│       ├── cc-workflow-relevance.js          # Stage 2 screen (built)
+│       └── cc-workflow-tailor-offer.js       # Stage 3 (designed)
+├── src/ajoa_kit/               # engine: ingest, chunk, persist_scored, slug_probe
+├── scripts/ingest.sh           # runner (borrows polyfetch's uv env via POLYFETCH_DIR)
 ├── config/
-│   ├── portfolio.md              # workspace root + repos that feed the evidence base
-│   ├── work-history.md           # optional employment history
-│   ├── lanes.md                  # target lanes (configurable)
-│   ├── locale.md                 # target locale(s)
-│   └── offers/                   # offer URLs or pasted JD text
-├── lib/ingest.py                 # web-access layer: WebSearch/WebFetch + polyfetch fallback (feed/API-first, paste fallback)
-├── templates/                    # base(ats-safe | polished/typst) x shape(chrono|projects|hybrid) x locale x lane (composed)
-├── results/
-│   ├── evidence-library.json     # structured index = matching source of truth
-│   ├── evidence-library.md       # human render
-│   └── offers/<slug>/{match.md, cv.{md,docx,pdf}, cover-letter.*, gap-report.md, ats-check.md}
-└── pyproject.toml                # deps: an HTTP fetcher (git), pandoc/typst optional
+│   ├── examples/               # committed templates: seed, seed-candidates
+│   └── <real config>           # seed.json + future portfolio/work-history/lanes/locale (git-ignored)
+├── tests/                      # value-add suite (pre-filter, canonical_url, dedup, adapters)
+├── examples/alexis-doe/        # synthetic end-to-end example
+├── results/                    # generated, git-ignored: evidence-library.json, jobs-raw.json,
+│                               #   batches/, <lane>/shortlist.*, offers/<slug>/
+├── pyproject.toml / uv.lock    # uv project; ruff + pytest config
+└── .github/                    # codeql + dependabot + ci (SHA-pinned)
 ```
 
-## Components
+## Data layout — two folders
 
-- **docs/workflows/** — the dynamic workflows (Claude Code reference implementation).
-- **config/** — portfolio + workspace root, optional work history, lanes, locale, offers.
-- **lib/ingest.py** — web-access layer (WebSearch / WebFetch -> polyfetch fallback; feed -> API -> paste).
-- **templates/** — composable `shape x layout x locale x lane`.
-- **results/** — structured library (json) + render (md) + per-offer outputs.
+- `config/` — inputs you author. Only `config/examples/` templates are committed; real config is git-ignored.
+- `results/` — everything generated; all git-ignored, so no PII is ever committed.
+
+## Boundary failure policy
+
+| Boundary | Policy |
+|---|---|
+| ATS/feed fetch (per source) | wrap-continue (one source down ≠ run fails) |
+| JD parse (per record) | wrap-continue (skip malformed) — hardening tracked in issues |
+| config load (seed) | fail-loud (missing/invalid config stops the run) |
+| evidence-library load (relevance) | fail-loud (clear "run Stage 1 first") |
 
 ## Built vs designed
 
-- **Built / functional:** `docs/workflows/evidence-library.js`.
-- **Designed, not built:** `tailor-offer.js`, `lib/ingest.py`, templates,
-  ats-check, config scaffolding.
+- **Built:** `src/ajoa_kit/` engine; `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`;
+  baseline gates (ruff, pytest, CodeQL/Dependabot/CI).
+- **Designed:** `cc-workflow-tailor-offer.js`, ats-check, templates, locale config, trends dashboard.
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks.
