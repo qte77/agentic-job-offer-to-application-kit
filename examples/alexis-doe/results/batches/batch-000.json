@@ -1,0 +1,50 @@
+[
+  {
+    "id": "ashby:acme-ai:101",
+    "source": "ashby",
+    "ats": "ashby",
+    "company": "Acme AI",
+    "company_slug": "acme-ai",
+    "lane_hint": "engineering",
+    "department": "Engineering",
+    "fetched_backend": "httpx",
+    "title": "AI Engineer, Agentic Systems",
+    "location": "Remote (EU)",
+    "remote": true,
+    "url": "https://example.com/acme-ai/jobs/101",
+    "posted_at": "2026-06-02",
+    "description": "Build agentic LLM workflows end-to-end: data ingestion and structuring pipelines, retrieval (embeddings + hybrid search), tool-use orchestration, and evaluation infrastructure. Python; strong testing and observability. Small team, high ownership. Generalized from a real posting."
+  },
+  {
+    "id": "greenhouse:northwind-cloud:102",
+    "source": "greenhouse",
+    "ats": "greenhouse",
+    "company": "Northwind Cloud",
+    "company_slug": "northwind-cloud",
+    "lane_hint": "cloud",
+    "department": "Platform",
+    "fetched_backend": "httpx",
+    "title": "Senior Platform Engineer",
+    "location": "Remote (EU)",
+    "remote": true,
+    "url": "https://example.com/northwind-cloud/jobs/102",
+    "posted_at": "2026-05-29",
+    "description": "System/platform engineering with Linux, Kubernetes, and cloud-native open-source tooling. Build and extend CI/CD and GitOps pipelines, migrate apps to Kubernetes, and run reliable, observable systems (SRE). Generalized from a real posting."
+  },
+  {
+    "id": "greenhouse:meridian-software:103",
+    "source": "greenhouse",
+    "ats": "greenhouse",
+    "company": "Meridian Software",
+    "company_slug": "meridian-software",
+    "lane_hint": "engineering",
+    "department": "Engineering",
+    "fetched_backend": "httpx",
+    "title": "Senior Java / Spring Boot Fullstack Engineer",
+    "location": "Hybrid (EU)",
+    "remote": false,
+    "url": "https://example.com/meridian-software/jobs/103",
+    "posted_at": "2026-05-26",
+    "description": "5+ years Java and Spring Boot, event-driven microservices, Angular front end, PostgreSQL, and a CI/CD toolchain (Git, Maven, Jenkins, Docker, Kubernetes). Consulting delivery for enterprise clients. Generalized from a real posting."
+  }
+]
