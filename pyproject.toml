@@ -7,7 +7,14 @@ requires-python = ">=3.11"
 authors = [{ name = "qte77" }]
 classifiers = ["License :: OSI Approved :: Apache Software License"]
 # polyfetch-scrape is invoked ad-hoc via `uv run --directory`, never installed here.
-dependencies = ["defusedxml>=0.7.1"]
+dependencies = [
+    "defusedxml>=0.7.1",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+]
+
+[project.scripts]
+ajoa-kit = "ajoa_kit.__main__:main"
 
 [dependency-groups]
 dev = ["pytest>=8.0", "ruff>=0.6"]

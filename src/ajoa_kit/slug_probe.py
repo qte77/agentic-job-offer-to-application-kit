@@ -12,10 +12,9 @@ Candidates are read from ``config/seed-candidates.json``. Run via polyfetch's en
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]  # repo root (src/ajoa_kit/ -> src -> root)
-CONFIG_DIR = ROOT / "config"
+from ajoa_kit.settings import AppSettings
+
 PROBE_TIMEOUT = 8.0
 
 
@@ -48,7 +47,7 @@ PROBES = {
 
 def load_candidates() -> list[str]:
     """Load candidate slugs from ``config/seed-candidates.json``; fail loud if missing."""
-    path = CONFIG_DIR / "seed-candidates.json"
+    path = AppSettings().config_dir / "seed-candidates.json"
     if not path.is_file():
         raise FileNotFoundError(
             f"missing {path} — create it (key: candidates; see README)",

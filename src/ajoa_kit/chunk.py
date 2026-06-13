@@ -12,18 +12,24 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]  # repo root (src/ajoa_kit/ -> src -> root)
-RESULTS = ROOT / "results"  # generated data (jobs-raw.json + batches/)
+from ajoa_kit.settings import AppSettings
+
 DEFAULT_BATCH = 40
 
 
-def main() -> None:
-    """Split the ingested corpus into fixed-size batch files plus a manifest."""
-    batch = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_BATCH
-    jobs = json.loads((RESULTS / "jobs-raw.json").read_text())
-    out = RESULTS / "batches"
+def main(batch: int = DEFAULT_BATCH) -> None:
+    """Split the ingested corpus into fixed-size batch files plus a manifest.
+
+    Args:
+        batch: Number of JDs per batch file.  When called from the CLI the
+            ``--batch-size`` argument is passed here; when invoked directly as
+            ``python -m ajoa_kit.chunk [N]`` the module-level ``if __name__``
+            block reads ``sys.argv[1]`` and passes it in.
+    """
+    results = AppSettings().results_dir
+    jobs = json.loads((results / "jobs-raw.json").read_text())
+    out = results / "batches"
     out.mkdir(parents=True, exist_ok=True)
     for stale in out.glob("batch-*.json"):  # clear previous run
         stale.unlink()
@@ -42,4 +48,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(batch=int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_BATCH)
