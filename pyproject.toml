@@ -17,7 +17,7 @@ dependencies = [
 ajoa-kit = "ajoa_kit.__main__:main"
 
 [dependency-groups]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+dev = ["pytest>=8.0", "ruff>=0.6", "scriv[toml]>=1.8"]
 
 [build-system]
 requires = ["hatchling"]
@@ -53,3 +53,16 @@ max-complexity = 10
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["network: hits the live network (deselect with -m 'not network')"]
+
+# Changelog fragments — each PR adds one under changelog.d/ via `make
+# changelog_new`; `make changelog_preview` shows the assembled entry;
+# `make changelog_release VERSION=X.Y.Z` collects them into CHANGELOG.md
+# at the `<!-- scriv-insert-here -->` marker. Categories mirror the
+# Keep-a-Changelog preamble; fragment headings sit at h3 (md_header_level + 1).
+[tool.scriv]
+format = "md"
+fragment_directory = "changelog.d"
+categories = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
+md_header_level = "2"
+entry_title_template = "[{{ version }}] - {{ date.strftime('%Y-%m-%d') }}"
+md_html_anchors = false

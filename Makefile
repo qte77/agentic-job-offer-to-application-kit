@@ -3,7 +3,7 @@ SHELL := bash
 .SILENT:
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
-.PHONY: help install lint format check docs-lint ingest chunk persist probe
+.PHONY: help install lint format check docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
 
 help: ## List available targets
 	awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-11s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -38,3 +38,13 @@ persist: ## Persist a relevance result: make persist FILE=<output.json>
 
 probe: ## Probe candidate slugs across ATS platforms (set POLYFETCH_DIR)
 	uv run ajoa-kit probe
+
+changelog_new: ## Create + stage a new changelog fragment (scriv)
+	uv run scriv create --add
+
+changelog_preview: ## Preview the assembled release entry (scriv)
+	uv run scriv print
+
+changelog_release: ## Collect fragments into CHANGELOG.md: make changelog_release VERSION=X.Y.Z
+	test -n "$(VERSION)" || { echo "usage: make changelog_release VERSION=X.Y.Z"; exit 2; }
+	uv run scriv collect --version "$(VERSION)"
