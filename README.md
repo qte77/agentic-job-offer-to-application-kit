@@ -31,18 +31,33 @@ cloud/DevOps/platform · architect. Cost model: cheap pre-filter → LLM relevan
 
 ## How
 
+Dev loop: `make help` · `make check` (lint + tests) · `make docs-lint`.
+
+### Run your own search
+
 ```bash
-cp examples/alexis-doe/config/seed.json config/seed.json   # your target companies / feeds
-POLYFETCH_DIR=../polyfetch-scrape scripts/ingest.sh     # -> results/jobs-raw.json
-uv run python -m ajoa_kit.chunk                         # -> results/batches/ + manifest.json
-# relevance (Claude Code Workflow tool); batchCount = results/batches/manifest.json .batch_count:
+make install                                          # sync the dev env (uv)
+cp examples/alexis-doe/config/seed.json config/seed.json   # then edit your targets
+POLYFETCH_DIR=../polyfetch-scrape make ingest         # -> results/jobs-raw.json
+make chunk                                            # -> results/batches/ + manifest.json
+# relevance — Claude Code Workflow tool; batchCount = results/batches/manifest.json .batch_count:
 #   Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
 #              args: { rootDir: ".", batchCount: <N> } })
-uv run python -m ajoa_kit.persist_scored <output.json> # -> results/<lane>/shortlist.*
+make persist FILE=<workflow-output.json>              # -> results/<lane>/shortlist.*
 ```
 
-Runnable synthetic example: [`examples/alexis-doe/`](examples/alexis-doe/).
-Develop with `make help` · `make check` (lint + tests) · `make docs-lint`.
+Build the evidence library once, upstream, via the Stage-1 Workflow
+(`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
+
+### Try the example (no fetch)
+
+The synthetic [`examples/alexis-doe/`](examples/alexis-doe/) workspace ships a pre-built evidence
+library + batches, so run the relevance screen straight against it — no `make ingest`/`make chunk`:
+
+```text
+Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
+           args: { rootDir: "examples/alexis-doe", batchCount: 1 } })
+```
 
 **Constraints:** no automated submission (human-reviewed prefill pack, inside platform Terms of
 Use/Service); no scraping (public no-auth GET only); no PII in the repo (real config and
