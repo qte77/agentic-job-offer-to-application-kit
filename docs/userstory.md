@@ -32,3 +32,11 @@ so I apply faster without auto-submitting anything.
 
 Accept: `results/offers/<slug>/{match,cv,cover-letter,gap-report,ats-check,prefill-pack}.md`; no
 automated submission.
+
+## US5 — Tailor in my voice (next)
+
+As a candidate, I want tailored CVs and cover letters written in my own writing style — or a tone I
+set — so they read like me rather than a template.
+
+Accept: the user adds CV + cover-letter samples to `config/` (git-ignored); the tailor stage matches
+that style, or a configured tone, while the evidence library supplies the facts. See #16.

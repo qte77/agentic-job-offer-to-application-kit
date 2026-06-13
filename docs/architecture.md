@@ -54,7 +54,7 @@ agentic-job-offer-to-application-kit/
 ├── scripts/ingest.sh           # runner (borrows polyfetch's uv env via POLYFETCH_DIR)
 ├── config/
 │   ├── examples/               # committed templates: seed, seed-candidates
-│   └── <real config>           # seed.json + future portfolio/work-history/lanes/locale (git-ignored)
+│   └── <real config>           # seed.json + future portfolio/work-history/lanes/locale/writing-samples (git-ignored)
 ├── tests/                      # value-add suite (pre-filter, canonical_url, dedup, adapters)
 ├── examples/alexis-doe/        # synthetic end-to-end example
 ├── results/                    # generated, git-ignored: evidence-library.json, jobs-raw.json,
@@ -81,5 +81,6 @@ agentic-job-offer-to-application-kit/
 
 - **Built:** `src/ajoa_kit/` engine; `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`;
   baseline gates (ruff, pytest, CodeQL/Dependabot/CI).
-- **Designed:** `cc-workflow-tailor-offer.js`, ats-check, templates, locale config, trends dashboard.
+- **Designed:** `cc-workflow-tailor-offer.js`, ats-check, templates, locale config, trends dashboard,
+  style/tone tailoring from user CV + cover-letter samples (#16).
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks.
