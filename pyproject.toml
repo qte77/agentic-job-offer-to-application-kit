@@ -17,7 +17,7 @@ dependencies = [
 ajoa-kit = "ajoa_kit.__main__:main"
 
 [dependency-groups]
-dev = ["pytest>=8.0", "ruff>=0.6", "scriv[toml]>=1.8"]
+dev = ["pytest>=8.0", "ruff>=0.6", "scriv[toml]>=1.8", "pyright>=1.1.400", "complexipy>=5.5.0"]
 
 [build-system]
 requires = ["hatchling"]
@@ -49,6 +49,11 @@ max-complexity = 10
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "D"]      # asserts + no docstrings
 "scripts/**" = ["D", "ANN"]     # one-off scripts; over-annotating is noise
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+include = ["src/ajoa_kit"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

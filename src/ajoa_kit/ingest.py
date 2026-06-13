@@ -180,7 +180,8 @@ def record(**kw: object) -> dict[str, Any]:
 
 def get_json(url: str) -> tuple[Any, str]:
     """Fetch ``url`` as JSON; return (parsed_json, polyfetch_backend)."""
-    from polyfetch_scrape import FetchError, fetch  # lazy: keep pure logic importable w/o polyfetch
+    # lazy: keep pure logic importable w/o polyfetch
+    from polyfetch_scrape import FetchError, fetch  # pyright: ignore[reportMissingImports]
 
     r = fetch(url, headers={"Accept": "application/json"})
     if r.status != 200:
@@ -190,7 +191,8 @@ def get_json(url: str) -> tuple[Any, str]:
 
 def get_bytes(url: str) -> tuple[bytes, str]:
     """Fetch ``url`` as raw bytes; return (body, polyfetch_backend)."""
-    from polyfetch_scrape import FetchError, fetch  # lazy: keep pure logic importable w/o polyfetch
+    # lazy: keep pure logic importable w/o polyfetch
+    from polyfetch_scrape import FetchError, fetch  # pyright: ignore[reportMissingImports]
 
     r = fetch(url)
     if r.status != 200:
