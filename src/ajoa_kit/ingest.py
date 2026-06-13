@@ -20,19 +20,18 @@ from __future__ import annotations
 import html
 import json
 import re
-from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from defusedxml.ElementTree import fromstring as xml_fromstring
 
+from ajoa_kit.settings import AppSettings
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+    from pathlib import Path
     from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]  # repo root (src/ajoa_kit/ -> src -> root)
-RESULTS = ROOT / "results"  # generated ingest data lives here (git-ignored)
-CONFIG_DIR = ROOT / "config"  # user inputs (seed.json)
 DESC_CAP = 4000  # chars of description kept per JD (bounds the later relevance-pass tokens)
 
 # --- Structured pre-filter ------------------------------------------------------------
@@ -377,9 +376,9 @@ ATS: dict[str, Callable[[dict[str, str]], Iterable[dict[str, Any]]]] = {
 
 
 # --- run ------------------------------------------------------------------------------
-def load_sources() -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+def load_sources(config_dir: Path) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     """Load (feeds, ats) from ``config/seed.json``; fail loud if it is missing."""
-    path = CONFIG_DIR / "seed.json"
+    path = config_dir / "seed.json"
     if not path.is_file():
         raise FileNotFoundError(
             f"missing {path} — create it (keys: feeds, ats; see README)",
@@ -462,8 +461,10 @@ def build_summary(deduped: list[dict[str, Any]], state: dict[str, Any]) -> str:
 
 def main() -> None:
     """Ingest all configured sources into results/jobs-raw.json (+ summary)."""
-    RESULTS.mkdir(parents=True, exist_ok=True)
-    feeds, seed = load_sources()
+    settings = AppSettings()
+    results = settings.results_dir
+    results.mkdir(parents=True, exist_ok=True)
+    feeds, seed = load_sources(settings.config_dir)
     sources: list[tuple[str, Callable[[], Iterable[dict[str, Any]]]]] = [
         (f"feed/{f['source']}", (lambda f=f: from_rss(f))) for f in feeds
     ]
@@ -471,8 +472,8 @@ def main() -> None:
 
     state = collect(sources)
     deduped = dedupe(state["jobs"])
-    (RESULTS / "jobs-raw.json").write_text(json.dumps(deduped, indent=2, ensure_ascii=False))
-    (RESULTS / "jobs-raw.summary.md").write_text(build_summary(deduped, state))
+    (results / "jobs-raw.json").write_text(json.dumps(deduped, indent=2, ensure_ascii=False))
+    (results / "jobs-raw.summary.md").write_text(build_summary(deduped, state))
 
     total_filtered = sum(state["filtered"].values())
     print(f"wrote {len(deduped)} JDs -> results/jobs-raw.json (dropped {total_filtered})")

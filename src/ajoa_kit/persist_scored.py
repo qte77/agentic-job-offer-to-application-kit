@@ -17,8 +17,8 @@ import sys
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-ROOT = Path(__file__).resolve().parents[2]  # repo root (src/ajoa_kit/ -> src -> root)
-RESULTS = ROOT / "results"
+from ajoa_kit.settings import AppSettings
+
 _TRACKING = {"gclid", "fbclid", "mc_cid", "mc_eid", "igshid", "ref_src"}
 
 
@@ -57,14 +57,14 @@ def load_result(src: Path) -> dict:
     return data
 
 
-def write_shortlists(rel: list[dict]) -> dict[str, int]:
+def write_shortlists(rel: list[dict], results_dir: Path) -> dict[str, int]:
     """Write per-lane shortlist.{json,md}; return the per-lane counts."""
     by_lane: dict[str, list[dict]] = {}
     for j in rel:
         by_lane.setdefault(j.get("best_lane", "unsorted"), []).append(j)
     for lane, items in by_lane.items():
         items.sort(key=lambda x: -(x.get("score") or 0))
-        d = RESULTS / lane
+        d = results_dir / lane
         d.mkdir(parents=True, exist_ok=True)
         (d / "shortlist.json").write_text(json.dumps(items, indent=2, ensure_ascii=False))
         lines = [f"# {lane} — shortlist ({len(items)})", ""]
@@ -77,15 +77,19 @@ def write_shortlists(rel: list[dict]) -> dict[str, int]:
     return {k: len(v) for k, v in by_lane.items()}
 
 
-def main() -> None:
-    """Read the workflow result path from argv and write scored artifacts to results/."""
-    data = load_result(Path(sys.argv[1]))
+def main(src: Path | None = None) -> None:
+    """Write scored artifacts to results/; src defaults to sys.argv[1] when called directly."""
+    if src is None:
+        src = Path(sys.argv[1])
+    settings = AppSettings()
+    results = settings.results_dir
+    data = load_result(src)
     rel = data.get("relevant", [])
     for j in rel:
         j["url"] = canonical_url(j.get("url", ""))
-    RESULTS.mkdir(parents=True, exist_ok=True)
-    (RESULTS / "jobs-scored.json").write_text(json.dumps(data, indent=2, ensure_ascii=False))
-    by_lane = write_shortlists(rel)
+    results.mkdir(parents=True, exist_ok=True)
+    (results / "jobs-scored.json").write_text(json.dumps(data, indent=2, ensure_ascii=False))
+    by_lane = write_shortlists(rel, results_dir=results)
     summary = ", ".join(f"{k}={v}" for k, v in sorted(by_lane.items()))
     print(f"persisted {len(rel)} JDs -> results/jobs-scored.json; per-lane: {summary}")
 

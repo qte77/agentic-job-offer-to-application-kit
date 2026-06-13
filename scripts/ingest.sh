@@ -7,5 +7,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" # repo root
 POLYFETCH_DIR="${POLYFETCH_DIR:-${HERE}/../polyfetch-scrape}"
+export AJOA_CONFIG_DIR="${HERE}/config"
+export AJOA_RESULTS_DIR="${HERE}/results"
 exec uv run --directory "${POLYFETCH_DIR}" \
-  python "${HERE}/src/ajoa_kit/ingest.py" "$@"
+  python -m ajoa_kit ingest "$@"
