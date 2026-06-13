@@ -3,7 +3,7 @@ SHELL := bash
 .SILENT:
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
-.PHONY: help install lint format check docs-lint ingest chunk
+.PHONY: help install lint format check docs-lint ingest chunk persist
 
 help: ## List available targets
 	awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-11s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -31,3 +31,7 @@ ingest: ## Ingest JDs into results/jobs-raw.json (set POLYFETCH_DIR)
 
 chunk: ## Batch the ingested corpus into results/batches/
 	uv run python -m ajoa_kit.chunk
+
+persist: ## Persist a relevance result: make persist FILE=<output.json>
+	test -n "$(FILE)" || { echo "usage: make persist FILE=<workflow-output.json>"; exit 2; }
+	uv run python -m ajoa_kit.persist_scored "$(FILE)"
