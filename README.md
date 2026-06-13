@@ -1,68 +1,59 @@
 # agentic-job-offer-to-application-kit
 
-> Align a candidate's project portfolio to job offers and generate tailored,
-> ATS-safe application materials — orchestrated with Claude Code dynamic workflows.
+> Turn a candidate portfolio into tailored, ATS-safe job applications — feed/API-first, no
+> scraping, no automated submission.
 
-**Status: concept / design stage** (not built). Inspired by the
-`agentic-market-research-to-gtm` pattern, modernized: the orchestration engine is
-the **Claude Code Workflow tool** (deterministic, resumable JS workflows), not
-Makefile / AGENTS-prose. It produces application *artifacts* (CV, cover letter,
-gap report) — it does not submit applications.
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/ci.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/ci.yaml)
+[![CodeQL](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml)
 
-## What it does (two stages)
+<!-- A screenshot/diagram belongs here once there is a visual surface (e.g. the trends dashboard). -->
 
-1. **Evidence library** (build once) — mine a candidate's project portfolio into
-   an adversarially-verified, lane-tagged "brag document": skill clusters, master
-   CV bullets, per-project bullets, and a positioning paragraph per target lane
-   (lanes are configurable). Structured data — the retrieval index for tailoring.
-2. **Per-offer tailoring** (repeat, cheap) — ingest a job description (feed / API
-   / paste), parse it into requirements, match against the library, and emit a
-   tailored CV + cover letter + honest gap report — ATS-safe and locale-aware.
+## Why
 
-## Execution model
+Job search is noisy: hundreds of postings, each needing a tailored CV and cover letter with an
+honest framing of gaps. This kit aligns one portfolio to many offers — screen for fit, then
+tailor — using only public, no-auth data and keeping a human in the loop for submission.
 
-The Stage-1 workflow (`docs/workflows/evidence-library.js`) is the **Claude Code
-reference implementation**, run via the Workflow tool —
-`Workflow({ scriptPath: 'docs/workflows/evidence-library.js', args: { ... } })` —
-resumable and cached by run id. The phased pipeline is described agent-agnostically
-in the docs, so other coding agents can implement it with their own primitives.
-Inputs (workspace root, account, lanes, locale) come from `args` / config, not
-hardcoded. Not `make` / `node`.
+## What
+
+A **generic** pipeline (a small Python engine + LLM/agent phases). **Claude Code** is the
+on-demand orchestrator via Workflow-tool scripts, but the phases are documented
+agent-agnostically so any coding agent can drive them.
+
+1. **Evidence library** (build once) — mine a portfolio into a verified, lane-tagged brag document.
+2. **Ingest → relevance** (per search) — pull job descriptions (JDs) from public applicant
+   tracking systems (ATS) + feeds, **pre-filter** cheaply, then LLM-screen against your lanes → a scored shortlist.
+3. **Tailor** (per offer) — CV + cover letter + gap report + human-review prefill pack. *Designed; see docs.*
+
+Five configurable **position lanes**: CxO/fractional · founding engineer · senior IC engineering ·
+cloud/DevOps/platform · architect. Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
+
+## How
+
+```bash
+cp config/seed.example.json config/seed.json            # your target companies / feeds
+POLYFETCH_DIR=../polyfetch-scrape scripts/ingest.sh     # -> results/jobs-raw.json
+uv run python -m ajoa_kit.chunk                         # -> results/batches/ + manifest.json
+# relevance (Claude Code Workflow tool); batchCount = results/batches/manifest.json .batch_count:
+#   Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
+#              args: { rootDir: ".", batchCount: <N> } })
+uv run python -m ajoa_kit.persist_scored <output.json> # -> results/<lane>/shortlist.*
+```
+
+Runnable synthetic example: [`examples/alexis-doe/`](examples/alexis-doe/).
+Develop with `uv run ruff check .` and `uv run pytest -m "not network"`.
+
+**Constraints:** no automated submission (human-reviewed prefill pack, inside platform Terms of
+Use/Service); no scraping (public no-auth GET only); no PII in the repo (real config and
+`results/` are git-ignored).
 
 ## Docs
 
-- [docs/plans/two-stage-tailoring.md](docs/plans/two-stage-tailoring.md) — approach, stages, lanes, templates, ATS, decisions
-- [docs/architecture.md](docs/architecture.md) — repo structure, components, execution model
-- [docs/research.md](docs/research.md) — research dimensions the design relies on
-- [docs/workflows/evidence-library.js](docs/workflows/evidence-library.js) — Stage-1 dynamic workflow (functional; Claude Code reference implementation)
+- [docs/architecture.md](docs/architecture.md) — pipeline, components, execution model
+- [docs/plans/two-stage-tailoring.md](docs/plans/two-stage-tailoring.md) — stages, lanes, templates, ATS
+- [docs/research.md](docs/research.md) — fetching, ATS, and positioning research
+- [examples/alexis-doe/](examples/alexis-doe/) — synthetic end-to-end example
 
-## Built on
-
-- **Native Claude Code web tools** (WebSearch / WebFetch) — discovery + simple fetches
-- an HTTP scraping toolkit (e.g. **polyfetch-scrape**) — **fallback for, or
-  replacement of, WebFetch** when it hits 403 / JS SPAs / header walls
-  (browser-impersonation + headless tiers); also the feed/API-first ingester
-- a Claude Code skills source (e.g. **claude-code-plugins**) — incl. deep-research
-  for per-company intel
-- the **Claude Code Workflow tool** — orchestration
-
-## Running polyfetch without installing it
-
-The ingester ([`polyfetch-scrape`](https://github.com/qte77/polyfetch-scrape)) does not need to be installed into this repo or
-added to its environment — invoke it ad-hoc from its own clone with
-`uv run --directory`:
-
-```bash
-uv run --directory <path-to-polyfetch-scrape> \
-  python -c "from polyfetch_scrape import fetch; r = fetch('https://example.com'); print(r.status, r.backend, len(r.body))"
-```
-
-`uv run --directory <dir>` runs in that repo's own environment, so polyfetch's
-dependencies stay out of this project (for a sibling checkout, `../polyfetch-scrape`).
-Useful for one-off feed / API probes during ingestion.
-
-## Scope (KISS / DRY / YAGNI)
-
-In: two workflows, a thin web-access wrapper, composable templates. Out
-(deliberately): team mode, dual concise/detailed modes, validation-loop ceremony,
-slide decks. Reuse existing tools and skills; don't rebuild.
+Conventions follow the org `repo-baseline`: ruff + pytest, SHA-pinned CodeQL/CI, squash-only PRs
+into a protected `main`.
