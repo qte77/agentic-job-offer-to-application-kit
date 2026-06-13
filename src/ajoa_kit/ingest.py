@@ -382,7 +382,7 @@ def load_sources() -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     path = CONFIG_DIR / "seed.json"
     if not path.is_file():
         raise FileNotFoundError(
-            f"missing {path} — copy from config/examples/seed.example.json and edit",
+            f"missing {path} — copy from examples/alexis-doe/config/seed.json and edit",
         )
     cfg = json.loads(path.read_text())
     return cfg.get("feeds", []), cfg.get("ats", [])

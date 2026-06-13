@@ -1,5 +1,5 @@
 {
-  "_comment": "Copy to config/seed.json (git-ignored) and edit for your search. 'feeds' = RSS/Atom URLs (no slug); 'ats' = company boards keyed by ATS + public slug. lane is a hint for the relevance pass, not a filter. Discover live slugs with: python -m ajoa_kit.slug_probe.",
+  "_comment": "Example sources. Copy to the repo-root config/seed.json (git-ignored) and edit. 'feeds' = RSS/Atom URLs (no slug); 'ats' = company boards keyed by ATS + public slug. lane is a hint for the relevance pass, not a filter. Discover live slugs with: python -m ajoa_kit.slug_probe.",
   "feeds": [],
   "ats": [
     {"ats": "greenhouse", "slug": "anthropic", "company": "Anthropic", "lane": "engineering"},

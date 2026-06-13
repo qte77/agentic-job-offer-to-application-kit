@@ -52,21 +52,22 @@ agentic-job-offer-to-application-kit/
 │       └── cc-workflow-tailor-offer.js       # Stage 3 (designed)
 ├── src/ajoa_kit/               # engine: ingest, chunk, persist_scored, slug_probe
 ├── scripts/ingest.sh           # runner (borrows polyfetch's uv env via POLYFETCH_DIR)
-├── config/
-│   ├── examples/               # committed templates: seed, seed-candidates
-│   └── <real config>           # seed.json + future portfolio/work-history/lanes/locale/writing-samples (git-ignored)
+├── config/                     # your inputs — git-ignored, dir kept via .gitkeep
+│                               #   seed.json + future portfolio/work-history/lanes/locale/writing-samples
 ├── tests/                      # value-add suite (pre-filter, canonical_url, dedup, adapters)
-├── examples/alexis-doe/        # synthetic end-to-end example
-├── results/                    # generated, git-ignored: evidence-library.json, jobs-raw.json,
-│                               #   batches/, <lane>/shortlist.*, offers/<slug>/
+├── examples/alexis-doe/        # self-contained example mirroring config/ + results/ (committed)
+├── results/                    # generated outputs — git-ignored, dir kept via .gitkeep
+│                               #   evidence-library.json, jobs-raw.json, batches/, <lane>/shortlist.*, offers/<slug>/
 ├── pyproject.toml / uv.lock    # uv project; ruff + pytest config
 └── .github/                    # codeql + dependabot + ci (SHA-pinned)
 ```
 
 ## Data layout — two folders
 
-- `config/` — inputs you author. Only `config/examples/` templates are committed; real config is git-ignored.
-- `results/` — everything generated; all git-ignored, so no PII is ever committed.
+- `config/` — inputs you author; git-ignored (dir kept via `.gitkeep`). Copy a starting `seed.json`
+  from `examples/alexis-doe/config/`.
+- `results/` — everything generated; git-ignored (dir kept via `.gitkeep`), so no PII is ever committed.
+- `examples/alexis-doe/` — a committed, self-contained example mirroring `config/` + `results/`.
 
 ## Boundary failure policy
 
