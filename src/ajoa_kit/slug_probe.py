@@ -51,7 +51,7 @@ def load_candidates() -> list[str]:
     path = CONFIG_DIR / "seed-candidates.json"
     if not path.is_file():
         raise FileNotFoundError(
-            f"missing {path} — copy from config/examples/seed-candidates.example.json and edit",
+            f"missing {path} — copy from examples/alexis-doe/config/seed-candidates.json and edit",
         )
     return json.loads(path.read_text()).get("candidates", [])
 

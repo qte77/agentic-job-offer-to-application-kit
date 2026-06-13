@@ -32,7 +32,7 @@ cloud/DevOps/platform · architect. Cost model: cheap pre-filter → LLM relevan
 ## How
 
 ```bash
-cp config/examples/seed.example.json config/seed.json   # your target companies / feeds
+cp examples/alexis-doe/config/seed.json config/seed.json   # your target companies / feeds
 POLYFETCH_DIR=../polyfetch-scrape scripts/ingest.sh     # -> results/jobs-raw.json
 uv run python -m ajoa_kit.chunk                         # -> results/batches/ + manifest.json
 # relevance (Claude Code Workflow tool); batchCount = results/batches/manifest.json .batch_count:
