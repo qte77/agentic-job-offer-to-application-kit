@@ -47,6 +47,10 @@ make chunk                                            # -> results/batches/ + ma
 make persist FILE=<workflow-output.json>              # -> results/<lane>/shortlist.*
 ```
 
+Each step is also a CLI subcommand — `uv run ajoa-kit {ingest,chunk,persist,probe}` (the `make`
+targets wrap it); `config/` and `results/` locations are env-overridable via `AJOA_CONFIG_DIR` /
+`AJOA_RESULTS_DIR`.
+
 Build the evidence library once, upstream, via the Stage-1 Workflow
 (`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
 

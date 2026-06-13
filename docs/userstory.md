@@ -14,7 +14,7 @@ As a candidate, I want job descriptions (JDs) pulled from public applicant track
 feeds and screened against my target lanes, so I get a ranked shortlist instead of reading hundreds of
 postings.
 
-Accept: `scripts/ingest.sh` → scored `results/<lane>/shortlist.md`, each with a lane, a 0–5 score, and a
+Accept: `ajoa-kit ingest` → scored `results/<lane>/shortlist.md`, each with a lane, a 0–5 score, and a
 one-line rationale.
 
 ## US3 — Keep my data private

@@ -4,6 +4,9 @@ A generic pipeline (config → Python engine → results) with LLM/agent phases.
 on-demand orchestrator (Workflow-tool scripts), but the phases are described agent-agnostically so
 other coding agents can drive them.
 
+The repo follows a four-layer separation — backend / CLI / orchestration / UI, one-way imports
+only — per [ADR-0001](decisions/0001-backend-cli-ui-separation.md).
+
 ## Pipeline
 
 ```text
@@ -50,8 +53,8 @@ agentic-job-offer-to-application-kit/
 │       ├── cc-workflow-evidence-library.js   # Stage 1 (built)
 │       ├── cc-workflow-relevance.js          # Stage 2 screen (built)
 │       └── cc-workflow-tailor-offer.js       # Stage 3 (designed)
-├── src/ajoa_kit/               # engine: ingest, chunk, persist_scored, slug_probe
-├── scripts/ingest.sh           # runner (borrows polyfetch's uv env via POLYFETCH_DIR)
+├── src/ajoa_kit/               # engine: ingest, chunk, persist_scored, slug_probe, settings, __main__ (CLI)
+├── scripts/ingest.sh           # thin env shim -> ajoa-kit ingest (borrows polyfetch's uv env via POLYFETCH_DIR)
 ├── config/                     # your inputs — git-ignored, dir kept via .gitkeep
 │                               #   seed.json + future portfolio/work-history/lanes/locale/writing-samples
 ├── tests/                      # value-add suite (pre-filter, canonical_url, dedup, adapters)
@@ -80,8 +83,9 @@ agentic-job-offer-to-application-kit/
 
 ## Built vs designed
 
-- **Built:** `src/ajoa_kit/` engine; `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`;
-  baseline gates (ruff, pytest, CodeQL/Dependabot/CI).
+- **Built:** `src/ajoa_kit/` engine; `AppSettings` config + `ajoa-kit` CLI (ADR-0001 L1/L2);
+  `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; baseline gates (ruff, pytest,
+  CodeQL/Dependabot/CI).
 - **Designed:** `cc-workflow-tailor-offer.js`, ats-check, templates, locale config, trends dashboard,
   style/tone tailoring from user CV + cover-letter samples (#16).
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks.

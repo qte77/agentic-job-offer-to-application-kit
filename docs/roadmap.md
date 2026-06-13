@@ -4,6 +4,8 @@
 
 - Evidence-library workflow (`cc-workflow-evidence-library.js`).
 - Ingest → chunk → relevance, generic + config-driven (`src/ajoa_kit/`, `cc-workflow-relevance.js`).
+- `AppSettings` (pydantic-settings) config + `ajoa-kit` CLI: env-overridable `config/` + `results/`
+  paths (no hardcoded `ROOT`), `ingest`/`chunk`/`persist`/`probe` subcommands (ADR-0001 L1/L2).
 - Baseline gates: ruff, a value-add `pytest` suite, CodeQL + Dependabot + CI (SHA-pinned),
   markdownlint + lychee.
 - Governance, docs, and a synthetic worked example (`examples/alexis-doe/`).
@@ -17,7 +19,6 @@
 
 ## Later — hardening & reach
 
-- `AppSettings` (pydantic-settings) replacing plain JSON / constant config loading.
 - Per-adapter error/edge handling + full per-adapter and error-branch test coverage.
 - Adopt `pseudonymize-text` for shared / trends-dashboard corpora.
 - Locale-aware templates (#12); trends dashboard (#11); structured sources catalog (#10).
