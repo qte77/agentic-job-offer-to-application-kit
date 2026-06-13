@@ -41,16 +41,13 @@ DESC_CAP = 4000  # chars of description kept per JD (bounds the later relevance-
 # LLM gate does the lane-level nuance.
 FILTER_ATS_BY_DEPARTMENT = True  # Greenhouse/Ashby/Recruitee expose a clean `department`
 FILTER_RSS_BY_TITLE = True  # RSS has no department; match the role title instead
+# Keyword sets are English-only; locale/i18n keyword support is tracked in #31.
 INTEREST = [
     "engineer",
     "engineering",
     "software",
     "developer",
     "development",
-    "entwickler",
-    "entwicklung",
-    "informatik",
-    "ingenieur",  # DE
     "infrastructure",
     "platform",
     "devops",
@@ -81,7 +78,6 @@ TITLE_ROLES = [
     "engineer",
     "engineering",
     "developer",
-    "entwickler",
     "software",
     "architect",
     "architecture",
