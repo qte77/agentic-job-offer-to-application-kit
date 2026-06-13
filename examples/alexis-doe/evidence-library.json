@@ -1,0 +1,68 @@
+{
+  "_note": "GENERALIZED from a real run and de-identified — a representative solo/open-source infrastructure-first engineer. Not a real person; no project names, metrics, or identifiers. Replace with your own (build it with cc-workflow-evidence-library.js).",
+  "headline": "Infrastructure-first AI-engineering practitioner who builds the plumbing — contract-driven pipelines, supply-chain-hardened CI, and multi-repo agent orchestration — that makes agentic software compound instead of drift.",
+  "positioningSummary": "Center of gravity is polyrepo AI-agent orchestration and the engineering discipline around it: contract-first system design, empirical agent evaluation, and reusable CI/CD with supply-chain security from day one. Every project shows the same posture — boring, reliable engines behind hard API contracts, strict quality gates, and explicit governance over what agents may and may not do.",
+  "skillClusters": [
+    {
+      "cluster": "Architecture / system design",
+      "bullets": [
+        "Designed contract-first pipeline engines with typed (Pydantic v2) models as the sole public API and gate validators that halt on schema failure.",
+        "Authored Architecture Decision Record (ADR) cultures from the first commit; established traceable rationale chains and stable contract registries that avoid breaking renames for downstream consumers.",
+        "Separated data-plane engines from orchestration control-planes via explicit two-surface designs with zero hard orchestrator dependencies.",
+        "Designed a multi-layer authority chain to prevent policy/mechanism/state duplication across a large multi-repo ecosystem."
+      ]
+    },
+    {
+      "cluster": "Cloud / DevOps / platform (CI/CD + supply-chain)",
+      "bullets": [
+        "Applied SHA-pinned GitHub Actions across every workflow, weekly Dependabot, and CodeQL SAST as the default starting posture, not a retrofit.",
+        "Built and published reusable composite GitHub Actions (e.g. SBOM generation) with change-gated PR creation.",
+        "Configured multi-workflow quality gates combining ruff, strict type-checking, complexity ceilings, coverage floors, markdownlint, and link validation — mirrored locally via a single make target."
+      ]
+    },
+    {
+      "cluster": "Software engineering (production-grade IC)",
+      "bullets": [
+        "Migrated static JSON schemas to typed models as a single source of truth while preserving the public API across dozens of call sites, with round-trip drift-detection tests.",
+        "Built a hardened outbound HTTP layer with an egress allowlist (HTTPS-only, port 443) that raises before any socket opens, plus Retry-After-aware exponential backoff.",
+        "Implemented atomic file writes (tempfile + os.replace) with mock-injected failure tests, and a three-tier anti-bot fetch fallback behind a single typed callable."
+      ]
+    },
+    {
+      "cluster": "AI agent infrastructure & evaluation",
+      "bullets": [
+        "Conducted independent benchmarking of a context-compression tool that refuted the vendor's headline savings claim, with reproducible measurements filed upstream.",
+        "Engineered baseline-aware regression detection for an autonomous TDD loop (set-difference on pre-existing failures; auto-refresh after success) to eliminate false-positive quality-gate failures.",
+        "Built content-hash caches that short-circuit expensive model inference on unchanged inputs."
+      ]
+    }
+  ],
+  "masterCvBullets": [
+    "Designed contract-first pipeline engines (typed models as the sole public API; validators halt on schema failure) usable by any JSON-compatible orchestrator without hard coupling.",
+    "Established ADR-driven governance and a multi-layer authority chain across a large multi-repo AI-agent ecosystem, preventing cross-repo policy drift.",
+    "Enforced supply-chain security as a default: SHA-pinned Actions, weekly Dependabot, CodeQL on push/PR/cron, SBOM on dependency change.",
+    "Refuted a vendor's compression-savings claim via independent, reproducible benchmarking filed upstream.",
+    "Shipped multiple independent open-source projects solo end-to-end — ADRs, tests, CI/CD, releases."
+  ],
+  "perProject": [
+    {
+      "project": "contract-first pipeline engine",
+      "bullets": ["Typed models as sole public API; dual in-process/stream runtime on shared contracts; ADR-documented design.", "Stable contract registry shipped forward-compatible to avoid downstream breakage."]
+    },
+    {
+      "project": "anti-bot HTTP fetch library",
+      "bullets": ["Three-tier fallback (plain HTTP -> TLS impersonation -> headless browser) behind one typed fetch() callable.", "Immutable typed API, strict type-checking, backends isolated behind a private boundary."]
+    },
+    {
+      "project": "reusable CI/CD actions",
+      "bullets": ["SBOM generation, paper/issue triage, and timeline automation as workflow_call composites with typed inputs.", "All third-party actions SHA-pinned; change-gated PRs."]
+    }
+  ],
+  "cxoAngle": "Fits a fractional CTO / technical-advisor role at a pre-Series-A company where the role is still IC and governance-building: systems-level authority chains, build-vs-buy rigor, and demand-for-evidence thinking. Absent: leading people/teams, org change management, P&L.",
+  "foundingAngle": "Strong founding-engineer / first-technical-hire profile: broad, autonomous, ships end-to-end solo with production-grade discipline from day one. Absent: ramping/mentoring juniors, production traffic at scale, fundraising diligence.",
+  "engineeringAngle": "Senior IC backend/platform/AI-agent fit: strict typing + testing, non-trivial systems design, hardened HTTP, AI-agent infra. Absent: code review at team scale, production incident/SLO ops, distributed systems / DB / queues at scale.",
+  "cloudAngle": "DevOps/platform via supply-chain security + reusable Actions + devcontainers. Absent: cloud-provider infra at scale (AWS/GCP/Azure), IaC (Terraform), Kubernetes/orchestration, production observability.",
+  "architectAngle": "Most on-brand: ADR/MADR culture, contract-first design, Protocol abstractions, multi-repo governance, compound-learning. Absent: enterprise-scale/legacy systems, cross-team architectural leadership, change through skeptical-stakeholder consensus.",
+  "gapNarrative": "All work is solo, open-source, and outside formal employment — no production user metrics, on-call rotations, or team interactions under SLO pressure. The honest framing: a practitioner who compressed a broad, production-grade engineering practice into a solo open-source context, arriving with documented, versioned, empirically tested opinions on governance, contract design, and agent infrastructure.",
+  "toneApplied": "Infrastructure-first, systems-thinking voice; led with architecture, contracts, and compound-learning rather than feature lists; framed breadth as architectural range, not shallowness."
+}
