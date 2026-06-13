@@ -1,0 +1,18 @@
+# Generated outputs — never committed (incl. the PII-bearing evidence library).
+results/
+# Defensive: older directory conventions for generated data.
+library/
+input/
+
+# Real config is git-ignored; only the *.example.* templates are tracked.
+# (covers seed.json and future PII-bearing portfolio.md / work-history.md)
+config/*
+!config/*.example.*
+
+# Python / tooling
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
