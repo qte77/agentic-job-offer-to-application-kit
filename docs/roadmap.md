@@ -6,8 +6,9 @@
 - Ingest → chunk → relevance, generic + config-driven (`src/ajoa_kit/`, `cc-workflow-relevance.js`).
 - `AppSettings` (pydantic-settings) config + `ajoa-kit` CLI: env-overridable `config/` + `results/`
   paths (no hardcoded `ROOT`), `ingest`/`chunk`/`persist`/`probe` subcommands (ADR-0001 L1/L2).
-- Baseline gates: ruff, a value-add `pytest` suite, CodeQL + Dependabot + CI (SHA-pinned),
-  markdownlint + lychee.
+- Baseline gates: ruff, pyright, complexipy, a value-add `pytest` suite, CodeQL + Dependabot + CI
+  (SHA-pinned), and markdownlint + lychee (local `make docs-lint` + a `lint-md-links` CI workflow).
+- Release tooling: scriv changelog fragments under `changelog.d/`.
 - Governance, docs, and a synthetic worked example (`examples/alexis-doe/`).
 
 ## Next — Stage 3 tailoring
@@ -23,3 +24,4 @@
 - Adopt `pseudonymize-text` for shared / trends-dashboard corpora.
 - Locale-aware templates (#12); trends dashboard (#11); structured sources catalog (#10).
 - Full L1 org-settings apply (branch protection, broader SHA allowlist).
+- i18n pre-filter keywords (#31); coverage gate (#33); CI `paths-ignore` (#34); `CONTRIBUTING.md` (#35).
