@@ -1,0 +1,48 @@
+[project]
+name = "ajoa-kit"
+version = "0.1.0"
+description = "Agentic job-offer-to-application kit: feed/API-first JD ingestion, pre-filter, and LLM relevance screening."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "qte77" }]
+classifiers = ["License :: OSI Approved :: Apache Software License"]
+# polyfetch-scrape is invoked ad-hoc via `uv run --directory`, never installed here.
+dependencies = ["defusedxml>=0.7.1"]
+
+[dependency-groups]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ajoa_kit"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "I", "N", "W", "UP",      # baseline
+    "B", "S", "SIM", "RUF", "PT",       # quality
+    "ANN", "TC", "PGH", "C90", "D",     # strictness
+    "TRY",                              # try/except discipline
+]
+ignore = [
+    "TRY003",  # long error messages outside exception classes — noisy on one-off defensive raises
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "D"]      # asserts + no docstrings
+"scripts/**" = ["D", "ANN"]     # one-off scripts; over-annotating is noise
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["network: hits the live network (deselect with -m 'not network')"]

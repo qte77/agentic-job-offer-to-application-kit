@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy to config/seed-candidates.json (git-ignored). A flat list of best-guess company slugs to probe across Greenhouse / Ashby / Lever / Recruitee. Run: python -m ajoa_kit.slug_probe. Copy the live hits into config/seed.json.",
+  "candidates": [
+    "anthropic",
+    "openai",
+    "mistral",
+    "huggingface",
+    "langchain",
+    "supabase",
+    "temporal"
+  ]
+}

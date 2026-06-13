@@ -1,0 +1,11 @@
+# Local lychee config. Each exclusion is a deliberate decision, not a blanket bypass:
+#
+#   - example.com — the synthetic worked example (examples/alexis-doe/) and its sample
+#     shortlist use https://example.com/... placeholder job URLs by design. They are not
+#     real endpoints and must not be link-checked.
+#   - actions/workflows/*/badge.svg — the README status badges 404 until these workflows
+#     exist on the default branch (i.e. after this PR merges). Drop this exclusion afterwards.
+exclude = [
+    "^https://example\\.com/",
+    "^https://github\\.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/.*badge\\.svg",
+]

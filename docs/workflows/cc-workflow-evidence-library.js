@@ -8,7 +8,7 @@
 // EXECUTION MODEL: a Claude Code Workflow-tool script (not node/make). Run it
 // from a Claude Code session, passing inputs via `args`:
 //
-//   Workflow({ scriptPath: 'docs/workflows/evidence-library.js', args: {
+//   Workflow({ scriptPath: 'docs/workflows/cc-workflow-evidence-library.js', args: {
 //     workspaceRoot: '/path/to/workspace', // dir holding the candidate's repos
 //     account:       'the candidate',      // owner/account name, for tone framing
 //     profileRepo:   '',                   // optional: path to a profile repo (README = self-presentation)
