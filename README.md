@@ -37,7 +37,8 @@ Dev loop: `make help` · `make check` (lint + tests) · `make docs-lint`.
 
 ```bash
 make install                                          # sync the dev env (uv)
-cp examples/alexis-doe/config/seed.json config/seed.json   # then edit your targets
+# create config/seed.json with your sources, e.g.:
+#   {"feeds": [], "ats": [{"ats": "greenhouse", "slug": "acme", "company": "Acme", "lane": "engineering"}]}
 POLYFETCH_DIR=../polyfetch-scrape make ingest         # -> results/jobs-raw.json
 make chunk                                            # -> results/batches/ + manifest.json
 # relevance — Claude Code Workflow tool; batchCount = results/batches/manifest.json .batch_count:
