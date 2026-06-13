@@ -5,7 +5,18 @@
 #     real endpoints and must not be link-checked.
 #   - actions/workflows/*/badge.svg — the README status badges 404 until these workflows
 #     exist on the default branch (i.e. after this PR merges). Drop this exclusion afterwards.
+#   - security/advisories/new — the SECURITY.md private-disclosure link requires auth, so an
+#     unauthenticated link check cannot resolve it; it is a valid GitHub deep link.
 exclude = [
     "^https://example\\.com/",
     "^https://github\\.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/.*badge\\.svg",
+    "^https://github\\.com/.*/security/advisories/new$",
+]
+
+# Git-ignored local artifact dirs (absent in a CI checkout; excluded so a local
+# `lychee '**/*.md'` mirrors CI instead of crawling vendored READMEs).
+exclude_path = [
+    ".venv",
+    ".pytest_cache",
+    "node_modules",
 ]
