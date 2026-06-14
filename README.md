@@ -4,8 +4,11 @@
 > scraping, no automated submission.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0-informational)](CHANGELOG.md)
+[![CodeFactor](https://www.codefactor.io/repository/github/qte77/agentic-job-offer-to-application-kit/badge)](https://www.codefactor.io/repository/github/qte77/agentic-job-offer-to-application-kit)
 [![CI](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/ci.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/ci.yaml)
 [![CodeQL](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml)
+[![Lint MD and Links](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/lint-md-links.yml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/lint-md-links.yml)
 
 <!-- A screenshot/diagram belongs here once there is a visual surface (e.g. the trends dashboard). -->
 
