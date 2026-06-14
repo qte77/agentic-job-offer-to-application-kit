@@ -2,8 +2,17 @@
 # https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
 name: "CodeQL"
 
+# Docs-only changes skip CodeQL (no code to analyze). Only the push trigger gets
+# the filter; the weekly schedule always runs. Keep this list in sync with ci.yaml.
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - 'changelog.d/**'
+      - 'examples/**/*.md'
+      - '*.md'
+      - 'lychee.toml'
+      - '.markdownlint-cli2.jsonc'
   schedule:
     - cron: '27 11 * * 0'
   workflow_dispatch:
