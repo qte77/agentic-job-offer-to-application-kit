@@ -174,3 +174,12 @@ tool) while dropping the ceremony (KISS / YAGNI).
 Solo / open-source portfolios often lack verifiable employment history, team-scale
 work, or production-at-scale ops. The gap narrative addresses such gaps honestly
 once and reuses them across applications — not patched per offer.
+
+## Writing style / tone
+
+Stage 3 can write the CV and cover letter in the candidate's own voice or a set tone.
+The candidate drops a git-ignored `config/style.json` with an optional `tone` string
+and/or paths to their own CV / cover-letter samples; per artifact, a sample wins over
+the tone, which wins over a neutral default. Preview the resolved directives with
+`ajoa-kit style` (`--json` emits the object to pass as the tailor workflow's `style`
+arg). The evidence library still supplies the facts — style shapes voice, not content.

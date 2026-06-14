@@ -9,6 +9,8 @@
 //     rootDir: '.',              // repo root holding results/ (override for an alt workspace)
 //     lane:    'engineering',    // REQUIRED — which results/<lane>/shortlist.json to read
 //     offerId: 'ashby:acme:101', // REQUIRED — the shortlist entry id to tailor
+//     style:   { cv, coverLetter }, // optional — writing-style directives (#16); generate with
+//                                // `ajoa-kit style --json` (reads config/style.json). Omit = neutral.
 //   }})
 //
 // Persist the returned pack with: python -m ajoa_kit.persist_offer <output.json>
@@ -36,6 +38,8 @@ const cfg = typeof args === 'object' && args ? args : {}
 const rootDir = cfg.rootDir || '.'
 const lane = cfg.lane
 const offerId = cfg.offerId
+// Optional writing-style directives, keyed { cv, coverLetter } (from `ajoa-kit style --json`, #16).
+const STYLE = cfg.style && typeof cfg.style === 'object' ? cfg.style : {}
 
 if (!lane) throw new Error('args.lane required (which results/<lane>/shortlist.json to read)')
 if (!offerId) throw new Error('args.offerId required (the shortlist entry id to tailor)')
@@ -57,6 +61,10 @@ const strField = (name, desc) => ({
   properties: { [name]: { type: 'string', description: desc } },
   required: [name],
 })
+
+// Writing-style directive for an artifact (blank unless `style` was passed). #16.
+const styleLine = (k) =>
+  STYLE[k] ? `\n\nSTYLE — write in the candidate's configured voice:\n${STYLE[k]}` : ''
 
 phase('Match')
 log(`Tailoring ${offerId} (lane: ${lane}) from ${SHORTLIST_PATH}`)
@@ -81,7 +89,7 @@ ${match.match}
 
 Draft a tailored, ATS-safe CV in markdown for THIS offer: clean single-column, standard headings,
 no tables/graphics. Reorder and select from masterCvBullets/perProject to lead with what this JD
-weighs most. Use only evidenced bullets. Return it as "cv".`,
+weighs most. Use only evidenced bullets.${styleLine('cv')} Return it as "cv".`,
       { schema: strField('cv', 'markdown tailored CV'), phase: 'Tailor', label: 'cv' },
     ),
   () =>
@@ -93,7 +101,7 @@ ${match.match}
 
 Draft a short, specific cover letter in markdown for THIS offer (company + role named): why this
 role, what the candidate brings (evidenced), and an honest framing of context using gapNarrative.
-No filler, no claims beyond the evidence. Return it as "cover_letter".`,
+No filler, no claims beyond the evidence.${styleLine('coverLetter')} Return it as "cover_letter".`,
       { schema: strField('cover_letter', 'markdown cover letter'), phase: 'Tailor', label: 'cover-letter' },
     ),
   () =>
