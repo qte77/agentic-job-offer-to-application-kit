@@ -16,7 +16,8 @@ config/seed.json
   → src/ajoa_kit/chunk.py    → results/batches/ + manifest.json
   → docs/workflows/cc-workflow-relevance.js   (parallel LLM lane-screen)
   → results/<lane>/shortlist.{json,md}
-  → [Stage 3, designed] cc-workflow-tailor-offer.js → results/offers/<slug>/
+  → cc-workflow-tailor-offer.js   (per-offer tailor pass)
+  → results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md
 ```
 
 Run-once upstream: `cc-workflow-evidence-library.js` → `results/evidence-library.json`.
@@ -52,8 +53,9 @@ agentic-job-offer-to-application-kit/
 │   └── workflows/
 │       ├── cc-workflow-evidence-library.js   # Stage 1 (built)
 │       ├── cc-workflow-relevance.js          # Stage 2 screen (built)
-│       └── cc-workflow-tailor-offer.js       # Stage 3 (designed)
-├── src/ajoa_kit/               # engine: ingest, chunk, persist_scored, slug_probe, settings, __main__ (CLI)
+│       └── cc-workflow-tailor-offer.js       # Stage 3 tailor (built)
+├── src/ajoa_kit/               # engine: ingest, chunk, persist_scored, persist_offer, ats_check,
+│                               #   style, prefill, slug_probe, settings, __main__ (CLI)
 ├── scripts/ingest.sh           # thin env shim -> ajoa-kit ingest (borrows polyfetch's uv env via POLYFETCH_DIR)
 ├── config/                     # your inputs — git-ignored, dir kept via .gitkeep
 │                               #   seed.json + future portfolio/work-history/lanes/locale/writing-samples
@@ -84,8 +86,10 @@ agentic-job-offer-to-application-kit/
 ## Built vs designed
 
 - **Built:** `src/ajoa_kit/` engine; `AppSettings` config + `ajoa-kit` CLI (ADR-0001 L1/L2);
-  `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; baseline gates (ruff, pyright,
-  complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
-- **Designed:** `cc-workflow-tailor-offer.js`, ats-check, templates, locale config, trends dashboard,
-  style/tone tailoring from user CV + cover-letter samples (#16).
+  `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; `cc-workflow-tailor-offer.js` Stage-3
+  tailor pack (match/CV/cover-letter/gap-report/prefill-pack); `ajoa-kit ats-check` parse-safety (#9);
+  style/tone tailoring (#16); cited delivery safety note (research.md §Delivery, #8); baseline gates
+  (ruff, pyright, complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
+- **Designed:** locale-aware templates/conventions (#12), structured board catalog (#10), trends
+  dashboard (#11, behind the PII pseudonymization gate).
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks.

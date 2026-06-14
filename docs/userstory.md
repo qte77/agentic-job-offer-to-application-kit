@@ -25,15 +25,16 @@ information (PII) is ever published.
 Accept: `results/`, `library/`, `input/`, and real `config/` files are git-ignored; only
 `config/examples/` templates are committed.
 
-## US4 — Tailor per offer (next)
+## US4 — Tailor per offer
 
 As a candidate, I want a tailored CV + cover letter + human-review prefill pack per shortlisted offer,
 so I apply faster without auto-submitting anything.
 
-Accept: `results/offers/<slug>/{match,cv,cover-letter,gap-report,ats-check,prefill-pack}.md`; no
-automated submission.
+Accept: `cc-workflow-tailor-offer.js` → `ajoa-kit persist-offer` writes
+`results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md`; `ajoa-kit ats-check` gates
+the CV for parse-safety; no automated submission.
 
-## US5 — Tailor in my voice (next)
+## US5 — Tailor in my voice
 
 As a candidate, I want tailored CVs and cover letters written in my own writing style — or a tone I
 set — so they read like me rather than a template.
