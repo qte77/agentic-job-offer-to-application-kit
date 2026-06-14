@@ -64,6 +64,11 @@ env-overridable via `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR`.
 Build the evidence library once, upstream, via the Stage-1 Workflow
 (`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
 
+**Writing style (optional):** drop a git-ignored `config/style.json` with a `tone` string and/or
+paths to your own CV / cover-letter samples; `ajoa-kit style --json` emits the resolved directives
+to pass as the tailor workflow's `style` arg (a sample wins over the tone, which wins over a neutral
+default). Style shapes voice, not content — the evidence library still supplies the facts.
+
 ### Try the example (no fetch)
 
 The synthetic [`examples/alexis-doe/`](examples/alexis-doe/) workspace ships a pre-built evidence

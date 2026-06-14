@@ -192,9 +192,6 @@ once and reuses them across applications — not patched per offer.
 
 ## Writing style / tone
 
-Stage 3 can write the CV and cover letter in the candidate's own voice or a set tone.
-The candidate drops a git-ignored `config/style.json` with an optional `tone` string
-and/or paths to their own CV / cover-letter samples; per artifact, a sample wins over
-the tone, which wins over a neutral default. Preview the resolved directives with
-`ajoa-kit style` (`--json` emits the object to pass as the tailor workflow's `style`
-arg). The evidence library still supplies the facts — style shapes voice, not content.
+Own-voice or set-tone CV / cover-letter writing (a sample wins over a `tone` string, which wins over
+a neutral default) is a shipped Stage-3 feature; its configuration (`config/style.json`) and usage
+(`ajoa-kit style`) live in [README §Run your own search](../README.md#run-your-own-search).
