@@ -50,8 +50,10 @@ a future `settings.py`, the structured sources catalog (#10).
 
 ### Layer 2 — CLI (`src/ajoa_kit/__main__.py` + `[project.scripts] ajoa-kit`)
 
-An `argparse` dispatcher (`main()`) routing `ingest` / `chunk` /
-`persist` / `probe` subcommands to the matching Layer 1 module — each
+An `argparse` dispatcher (`main()`) routing the CLI subcommands
+(`ingest` / `chunk` / `persist` / `persist-offer` / `ats-check` / `style` /
+`prefill-fields` / `probe`; see `__main__.py` for the live set) to the
+matching Layer 1 module — each
 delegates to the library with explicit args, and `AppSettings` supplies
 the env-overridable paths. (Subcommand dispatch uses `argparse`, not
 `BaseSettings(cli_parse_args=True)` — the latter is for settings-driven

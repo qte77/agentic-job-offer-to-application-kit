@@ -17,9 +17,8 @@ base — operational recipes and machine-specific quirks belong in local memory,
   `.gitkeep` placeholders are committed.
 - **No automated submission.** The pipeline produces artifacts for a human to review and
   submit; it uses only public, no-auth, read-only (GET) endpoints.
-- **Python**: target `pydantic` for structured config/models (no `TypedDict` / `dataclass`)
-  when settings land; keep pure logic importable without the network layer (lazy-import
-  `polyfetch_scrape`).
+- **Python**: target `pydantic` for structured config/models (no `TypedDict` / `dataclass`);
+  keep pure logic importable without the network layer (lazy-import `polyfetch_scrape`).
 
 ## Quality gates
 

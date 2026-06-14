@@ -23,7 +23,7 @@ As a candidate, I want my evidence, inputs, and results kept out of git, so no p
 information (PII) is ever published.
 
 Accept: `results/`, `library/`, `input/`, and real `config/` files are git-ignored; only
-`config/examples/` templates are committed.
+the synthetic `examples/alexis-doe/` workspace is committed.
 
 ## US4 — Tailor per offer
 

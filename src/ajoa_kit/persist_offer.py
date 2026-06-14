@@ -5,11 +5,13 @@ returned JSON into on-disk markdown artifacts a human reviews before submitting.
 
     python -m ajoa_kit.persist_offer <path-to-workflow-result.json> [--slug SLUG]
 
-Writes ``results/offers/<slug>/{match,cv,cover-letter,gap-report}.md``. The results root
-comes from ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate workspace works.
+Writes ``results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md``. The
+results root comes from ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate
+workspace works.
 
-No submission, no auto-apply: the prefill-pack artifact (which touches ATS submission
-schemas) is intentionally out of scope until the ToU/CFAA/GDPR verification (#8) lands.
+No submission, no auto-apply: the prefill pack is a human-review artifact only — it lists
+application fields for a person to fill and submit manually, never a script or link that
+auto-submits (see ``research.md`` §Delivery for the safe/unsafe boundary, #8).
 """
 
 from __future__ import annotations
