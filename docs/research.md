@@ -40,6 +40,28 @@ Source boards by target region and industry (general dev boards, research / RSE
 boards, startup boards, domain-specific boards). Most are JS SPAs — apply the
 fetching strategy above (feed/API first, paste fallback).
 
+## ATS feed/API endpoints (no-auth)
+
+The ingest layer (`src/ajoa_kit/ingest.py`) pulls job descriptions from public,
+no-auth feed/API endpoints — company slugs come from `config/seed.json`, never
+hard-coded; each adapter yields one normalized record shape. Parsing is stdlib-only
+(`json` + `xml.etree`, `defusedxml` when available); polyfetch is the default fetcher
+(feed/JSON resolves on tier-1 httpx, so the anti-bot fallback chain is rarely needed).
+
+| Source | Endpoint pattern |
+| --- | --- |
+| Greenhouse | `boards-api.greenhouse.io/v1/boards/<slug>/jobs?content=true` |
+| Ashby | `api.ashbyhq.com/posting-api/job-board/<slug>` |
+| Lever | `api.lever.co/v0/postings/<slug>?mode=json` |
+| Recruitee | `<slug>.recruitee.com/api/offers` |
+| Workable | `apply.workable.com/api/v1/widget/accounts/<slug>` |
+| Personio | `<slug>.jobs.personio.de/xml?language=en` (XML) |
+| RSS / Atom | any feed URL |
+
+These are **read-only** public endpoints. Application *submission* is deliberately
+out of scope: the kit delivers a human-reviewed pre-fill pack, never an automated
+submission.
+
 ## ATS
 
 Modern ATS parse both PDF and .docx **if the doc is clean** (single column,
