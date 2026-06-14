@@ -1,8 +1,4 @@
 ---
-# Markdown + link linting in CI (parity with local `make docs-lint`).
-# Mirrors qte77/.github's reusable lint-md-links jobs inline — the cross-repo
-# reusable workflow is not callable from this repo's Actions settings, so the
-# equivalent markdownlint-cli2 + lychee jobs (same vetted action SHAs) run here.
 name: Lint MD and Links
 
 on:
@@ -12,34 +8,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions: {}
-
-concurrency:
-  group: lint-md-links-${{ github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
+  issues: write  # required at workflow startup by reusable notify job (even when unused)
 
 jobs:
-  markdown:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
-        with:
-          persist-credentials: false
-      - uses: DavidAnson/markdownlint-cli2-action@ded1f9488f68a970bc66ea5619e13e9b52e601cd  # v23.2.0
-
-  links:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
-        with:
-          persist-credentials: false
-      - uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411  # v2.8.0
-        with:
-          args: --no-progress '**/*.md'
-          fail: true
+  lint:
+    uses: qte77/.github/.github/workflows/lint-md-links.yml@5dfff1f73ac7241ef37b6103e04d2a8373ff68a4  # 2026-04-27
+...
