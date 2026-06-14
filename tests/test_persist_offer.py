@@ -22,6 +22,7 @@ PACK = {
     "cv": "## Summary\nInfrastructure-first AI engineer.\n\n## Experience\n- Built an engine.",
     "cover_letter": "Dear hiring team, I am excited to apply...",
     "gap_report": "Gap: production-at-scale ops and on-call rotations.",
+    "prefill_pack": "First name: Alexis\nEmail: alexis@example.com\n(Human reviews + submits.)",
 }
 
 
@@ -42,7 +43,7 @@ def test_write_pack_emits_one_md_per_artifact(tmp_path: Path) -> None:
     offer_dir = persist_offer.write_pack(PACK, slug="acme-ai-101", results_dir=tmp_path)
     assert offer_dir == tmp_path / "offers" / "acme-ai-101"
     names = sorted(p.name for p in offer_dir.glob("*.md"))
-    assert names == ["cover-letter.md", "cv.md", "gap-report.md", "match.md"]
+    assert names == ["cover-letter.md", "cv.md", "gap-report.md", "match.md", "prefill-pack.md"]
     assert "Dear hiring team" in (offer_dir / "cover-letter.md").read_text()
     assert (offer_dir / "match.md").read_text().startswith("# ")  # rendered heading
 

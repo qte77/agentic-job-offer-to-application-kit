@@ -11,13 +11,16 @@
 //     offerId: 'ashby:acme:101', // REQUIRED — the shortlist entry id to tailor
 //     style:   { cv, coverLetter }, // optional — writing-style directives (#16); generate with
 //                                // `ajoa-kit style --json` (reads config/style.json). Omit = neutral.
+//     fields:  '<markdown>',      // optional — application-field checklist for the prefill pack (#50);
+//                                // generate with `ajoa-kit prefill-fields ...`. Omit = generic fields.
 //   }})
 //
 // Persist the returned pack with: python -m ajoa_kit.persist_offer <output.json>
 // (writes results/offers/<slug>/{match,cv,cover-letter,gap-report}.md — human reviews + submits).
 //
-// SCOPE: pre-fill + human submit only, NO auto-apply. The prefill-pack and ats-check artifacts
-// are deferred (ats-check #9; prefill-pack gated on the ToU/CFAA/GDPR verification #8).
+// SCOPE: pre-fill + human submit only, NO auto-apply (verified safe in research.md §Delivery, #8).
+// The prefill pack is assembled for a human to review and submit; run `ajoa-kit ats-check` (#9) on the
+// emitted cv.md for parse-safety.
 //
 // Hooks: agent(), parallel(), phase(), log(). agent(prompt,{schema}) returns the
 // schema-validated object. The script has no filesystem access, but its agents do (they Read
@@ -26,10 +29,11 @@
 export const meta = {
   name: 'tailor-offer',
   description:
-    'LLM tailor pass: turn one shortlisted offer into a per-offer application pack (match, tailored CV, cover letter, gap report) grounded in the evidence library. Pre-fill + human submit, no auto-apply.',
+    'LLM tailor pass: turn one shortlisted offer into a per-offer application pack (match, tailored CV, cover letter, gap report, prefill pack) grounded in the evidence library. Pre-fill + human submit, no auto-apply.',
   phases: [
     { title: 'Match', detail: 'assess real requirement overlap of the offer vs the evidence library' },
     { title: 'Tailor', detail: 'draft tailored CV, cover letter, and honest gap report from the match' },
+    { title: 'Prefill', detail: 'assemble a human-review prefill pack (no auto-submit) from the CV + fields' },
   ],
 }
 
@@ -40,6 +44,8 @@ const lane = cfg.lane
 const offerId = cfg.offerId
 // Optional writing-style directives, keyed { cv, coverLetter } (from `ajoa-kit style --json`, #16).
 const STYLE = cfg.style && typeof cfg.style === 'object' ? cfg.style : {}
+// Optional application-field checklist for the prefill pack (from `ajoa-kit prefill-fields`, #50).
+const FIELDS = typeof cfg.fields === 'string' ? cfg.fields : ''
 
 if (!lane) throw new Error('args.lane required (which results/<lane>/shortlist.json to read)')
 if (!offerId) throw new Error('args.offerId required (the shortlist entry id to tailor)')
@@ -118,6 +124,32 @@ This is for the candidate's eyes, not the employer. Return it as "gap_report".`,
     ),
 ])
 
+phase('Prefill')
+const fieldsBlock = FIELDS
+  ? `Fill EXACTLY these application fields (from the live job form):\n${FIELDS}`
+  : `Use a standard application field set: first/last name, email, phone, resume, cover letter,
+LinkedIn, website, plus typical screening questions (work authorization, relocation, notice period).`
+const prefill = await agent(
+  `${SOURCES}
+
+TAILORED CV (already produced):
+${cv.cv}
+
+COVER LETTER (already produced):
+${cover.cover_letter}
+
+Assemble a prefill pack in markdown: for each application field, give the value the candidate would
+enter, drawn ONLY from the evidence library / tailored CV. ${fieldsBlock}
+
+For anything you cannot ground in the evidence (salary expectation, work authorization, exact dates,
+demographic questions), write "[NEEDS HUMAN INPUT]" — do not guess.
+
+HARD RULE: this pack is for the candidate to REVIEW and SUBMIT MANUALLY. It is NOT an automated
+submission, contains no scripts/links to auto-apply, and must never instruct bypassing a form or
+CAPTCHA. Return it as "prefill_pack".`,
+  { schema: strField('prefill_pack', 'markdown prefill pack'), phase: 'Prefill', label: 'prefill-pack' },
+)
+
 log(`Pack ready for ${offerId}`)
 return {
   slug: offerId,
@@ -127,4 +159,5 @@ return {
   cv: cv.cv,
   cover_letter: cover.cover_letter,
   gap_report: gap.gap_report,
+  prefill_pack: prefill.prefill_pack,
 }

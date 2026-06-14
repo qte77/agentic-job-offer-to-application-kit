@@ -27,6 +27,7 @@ ARTIFACTS: list[tuple[str, str, str]] = [
     ("cv", "cv.md", "Tailored CV"),
     ("cover_letter", "cover-letter.md", "Cover letter"),
     ("gap_report", "gap-report.md", "Gap report"),
+    ("prefill_pack", "prefill-pack.md", "Prefill pack (human review — do not auto-submit)"),
 ]
 
 _NON_SLUG = re.compile(r"[^a-z0-9]+")

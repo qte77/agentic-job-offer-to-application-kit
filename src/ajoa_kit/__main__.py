@@ -8,6 +8,7 @@ Usage::
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
     ajoa-kit ats-check <cv.md>
     ajoa-kit style [--json]
+    ajoa-kit prefill-fields [--ats greenhouse --slug S --job-id ID]
     ajoa-kit probe
 
 Each subcommand delegates to the corresponding L1 module's ``main()`` via its ``func``
@@ -65,6 +66,13 @@ def _style(args: argparse.Namespace) -> None:
     run(config_dir=AppSettings().config_dir, as_json=args.json)
 
 
+def _prefill_fields(args: argparse.Namespace) -> None:
+    """Print the application-field checklist for an offer (Greenhouse schema or generic)."""
+    from ajoa_kit.prefill import main as run
+
+    run(ats=args.ats, slug=args.slug, job_id=args.job_id)
+
+
 def _probe(_args: argparse.Namespace) -> None:
     """Run the candidate-slug probe."""
     from ajoa_kit.slug_probe import main as run
@@ -114,6 +122,17 @@ def main() -> None:
         "--json", action="store_true", help="Emit the workflow `style` arg object."
     )
     style_p.set_defaults(func=_style)
+
+    prefill_p = sub.add_parser(
+        "prefill-fields",
+        help="Print an offer's application-field checklist (Greenhouse or generic).",
+    )
+    prefill_p.add_argument(
+        "--ats", default="", help="ATS name; 'greenhouse' fetches the live schema."
+    )
+    prefill_p.add_argument("--slug", default="", help="Greenhouse board slug.")
+    prefill_p.add_argument("--job-id", default="", help="Greenhouse job id.")
+    prefill_p.set_defaults(func=_prefill_fields)
 
     sub.add_parser(
         "probe",
