@@ -12,6 +12,11 @@ base — operational recipes and machine-specific quirks belong in local memory,
 
 - **Never delete existing code unless asked.**
 - **Pin every Actions `uses:` to a full-length commit SHA** (never a tag).
+- **Architecture (ADR-0001).** New code follows the four-layer model — L1 lib / L2 CLI / L3 JS
+  workflows / L4 ui, one-way imports only — see
+  [docs/decisions/0001-backend-cli-ui-separation.md](docs/decisions/0001-backend-cli-ui-separation.md).
+  Orchestration runs via the Claude Code Workflow tool (inline `agent()` subagents, no team mode); see
+  [docs/architecture.md §Three mechanics](docs/architecture.md#three-mechanics-that-define-it).
 - **No PII in the repo.** See [docs/architecture.md §Data layout](docs/architecture.md#data-layout)
   for the authoritative git-ignored paths.
 - **No automated submission; read-only public GET only.** A human reviews and submits. See
