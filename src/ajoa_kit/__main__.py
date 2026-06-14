@@ -5,6 +5,7 @@ Usage::
     ajoa-kit ingest
     ajoa-kit chunk [--batch-size N]
     ajoa-kit persist <workflow-result.json>
+    ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
     ajoa-kit probe
 
 Each subcommand delegates directly to the corresponding L1 module's ``main()``
@@ -44,6 +45,12 @@ def main() -> None:
     )
     persist_p.add_argument("file", metavar="FILE", help="Path to workflow-result.json.")
 
+    offer_p = sub.add_parser(
+        "persist-offer", help="Write a per-offer application pack from a workflow-result JSON."
+    )
+    offer_p.add_argument("file", metavar="FILE", help="Path to workflow-result.json.")
+    offer_p.add_argument("--slug", default=None, help="Offer slug (default: pack slug/id).")
+
     sub.add_parser(
         "probe",
         help=(
@@ -70,6 +77,11 @@ def main() -> None:
         from ajoa_kit.persist_scored import main as _main
 
         _main(src=Path(args.file))
+
+    elif args.cmd == "persist-offer":
+        from ajoa_kit.persist_offer import main as _main
+
+        _main(src=Path(args.file), slug=args.slug)
 
     elif args.cmd == "probe":
         from ajoa_kit.slug_probe import main as _main
