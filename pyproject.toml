@@ -17,7 +17,7 @@ dependencies = [
 ajoa-kit = "ajoa_kit.__main__:main"
 
 [dependency-groups]
-dev = ["pytest>=9.1.0", "ruff>=0.6", "scriv[toml]>=1.8", "pyright>=1.1.400", "complexipy>=5.5.0"]
+dev = ["pytest>=9.1.0", "pytest-cov>=7.0", "ruff>=0.6", "scriv[toml]>=1.8", "pyright>=1.1.400", "complexipy>=5.5.0"]
 
 [build-system]
 requires = ["hatchling"]
@@ -58,6 +58,16 @@ include = ["src/ajoa_kit"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["network: hits the live network (deselect with -m 'not network')"]
+
+# Coverage gate (#33). The floor is set to current coverage to prevent
+# regression — it is NOT a target to chase with trivial tests (value-add tests
+# only). Raise it only when real tests land. `make check` runs with --cov.
+[tool.coverage.run]
+source = ["ajoa_kit"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 41
 
 # Changelog fragments — each PR adds one under changelog.d/ via `make
 # changelog_new`; `make changelog_preview` shows the assembled entry;
