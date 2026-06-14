@@ -40,8 +40,9 @@ expensive tailoring only on the shortlist.
 
 ## Position lanes
 
-Five configurable lanes scored by the relevance screen: CxO/fractional, founding engineer, senior IC
-engineering, cloud/DevOps/platform, architect. Lanes live in the evidence library.
+Five configurable lanes scored by the relevance screen. The default set (each with a focus and an
+honest gap note) is the `LANES` array in `cc-workflow-evidence-library.js` — the single source of
+truth — written into the evidence library.
 
 ## Repo structure
 
@@ -67,11 +68,15 @@ agentic-job-offer-to-application-kit/
 └── .github/                    # codeql + dependabot + ci + lint-md-links + CODEOWNERS (SHA-pinned)
 ```
 
-## Data layout — two folders
+## Data layout
+
+The authoritative list of git-ignored, never-committed paths (so no PII is ever committed) — the
+single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 
 - `config/` — inputs you author; git-ignored (dir kept via `.gitkeep`). Copy a starting `seed.json`
   from `examples/alexis-doe/config/`.
-- `results/` — everything generated; git-ignored (dir kept via `.gitkeep`), so no PII is ever committed.
+- `results/` — everything generated; git-ignored (dir kept via `.gitkeep`).
+- `library/`, `input/` — additional generated/working directories; git-ignored.
 - `examples/alexis-doe/` — a committed, self-contained example mirroring `config/` + `results/`.
 
 ## Boundary failure policy

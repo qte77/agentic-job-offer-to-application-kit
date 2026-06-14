@@ -28,7 +28,8 @@ agent-agnostically so any coding agent can drive them.
    pass, writing-style/tone matching, and a human-review prefill pack (see docs/research.md §Delivery).
 
 Five configurable **position lanes**: CxO/fractional · founding engineer · senior IC engineering ·
-cloud/DevOps/platform · architect. Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
+cloud/DevOps/platform · architect (configurable defaults — see the `LANES` array in
+`cc-workflow-evidence-library.js`). Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
 
 ## How
 
@@ -70,9 +71,9 @@ Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
            args: { rootDir: "examples/alexis-doe", batchCount: 1 } })
 ```
 
-**Constraints:** no automated submission (human-reviewed prefill pack, inside platform Terms of
-Use/Service); no scraping (public no-auth GET only); no PII in the repo (real config and
-`results/` are git-ignored).
+**Constraints:** no automated submission, no scraping — public no-auth GET only, with a
+human-reviewed prefill pack (see [docs/research.md §Delivery](docs/research.md#delivery)); no PII in
+the repo (see [docs/architecture.md §Data layout](docs/architecture.md#data-layout)).
 
 ## Docs
 

@@ -12,11 +12,10 @@ base — operational recipes and machine-specific quirks belong in local memory,
 
 - **Never delete existing code unless asked.**
 - **Pin every Actions `uses:` to a full-length commit SHA** (never a tag).
-- **No PII in the repo.** Real config (`config/`) and all generated data (`results/`, `library/`,
-  `input/`) are git-ignored; only the synthetic `examples/` workspace and the `config/`/`results/`
-  `.gitkeep` placeholders are committed.
-- **No automated submission.** The pipeline produces artifacts for a human to review and
-  submit; it uses only public, no-auth, read-only (GET) endpoints.
+- **No PII in the repo.** See [docs/architecture.md §Data layout](docs/architecture.md#data-layout)
+  for the authoritative git-ignored paths.
+- **No automated submission; read-only public GET only.** A human reviews and submits. See
+  [docs/research.md §Delivery](docs/research.md#delivery) for the safe/unsafe boundary.
 - **Python**: target `pydantic` for structured config/models (no `TypedDict` / `dataclass`);
   keep pure logic importable without the network layer (lazy-import `polyfetch_scrape`).
 

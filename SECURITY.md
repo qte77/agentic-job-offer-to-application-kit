@@ -17,6 +17,7 @@ disclosure timeline with you.
 ## Scope
 
 The kit fetches only public, no-auth data and keeps a human in the loop for
-submission; it stores no credentials. In scope: the ingestion/relevance pipeline,
-the `ajoa-kit` CLI, and dependency vulnerabilities. Handling of applicant PII
-(kept out of the repo via git-ignored `config/` and `results/`) is also in scope.
+submission (see [docs/research.md §Delivery](docs/research.md#delivery)); it stores
+no credentials. In scope: the ingestion/relevance pipeline, the `ajoa-kit` CLI, and
+dependency vulnerabilities. Handling of applicant PII (kept out of the repo — see
+[docs/architecture.md §Data layout](docs/architecture.md#data-layout)) is also in scope.
