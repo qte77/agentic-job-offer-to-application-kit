@@ -7,10 +7,16 @@
 #     exist on the default branch (i.e. after this PR merges). Drop this exclusion afterwards.
 #   - security/advisories/new — the SECURITY.md private-disclosure link requires auth, so an
 #     unauthenticated link check cannot resolve it; it is a valid GitHub deep link.
+#   - eur-lex.europa.eu / edpb.europa.eu — official EU legal/regulatory citations in
+#     research.md §Delivery (the Cybercrime Directive ELI permalink and the EDPB
+#     legitimate-interest guidelines). Both return 403 to datacenter/CI-runner IPs (bot
+#     protection) while resolving fine for humans; they are stable institutional references.
 exclude = [
     "^https://example\\.com/",
     "^https://github\\.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/.*badge\\.svg",
     "^https://github\\.com/.*/security/advisories/new$",
+    "^https://eur-lex\\.europa\\.eu/",
+    "^https://(www\\.)?edpb\\.europa\\.eu/",
 ]
 
 # Git-ignored local artifact dirs (absent in a CI checkout; excluded so a local
