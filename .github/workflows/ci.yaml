@@ -1,9 +1,26 @@
 ---
 name: CI
 
+# Docs-only changes skip this workflow (the lint-md-links workflow still runs on
+# them). Safe because no status check is branch-protection-required, so a skipped
+# job never leaves a PR "pending". Keep this list in sync with codeql.yaml.
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - 'changelog.d/**'
+      - 'examples/**/*.md'
+      - '*.md'
+      - 'lychee.toml'
+      - '.markdownlint-cli2.jsonc'
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'changelog.d/**'
+      - 'examples/**/*.md'
+      - '*.md'
+      - 'lychee.toml'
+      - '.markdownlint-cli2.jsonc'
   workflow_dispatch:
 
 permissions: {}
