@@ -17,12 +17,12 @@ lint: ## Ruff lint
 format: ## Ruff format (write)
 	uv run ruff format .
 
-check: ## Lint + types + complexity + format-check + offline tests (CI parity)
+check: ## Lint + types + complexity + format-check + offline tests + coverage (CI parity)
 	uv run ruff check .
 	uv run ruff format --check .
 	uv run pyright src/ajoa_kit
 	uv run complexipy src/ajoa_kit --max-complexity-allowed 10
-	uv run pytest -m "not network"
+	uv run pytest -m "not network" --cov=ajoa_kit --cov-report=term-missing
 
 check_types: ## Pyright type check
 	uv run pyright src/ajoa_kit
