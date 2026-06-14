@@ -10,18 +10,20 @@
   (SHA-pinned), and markdownlint + lychee (local `make docs-lint` + a `lint-md-links` CI workflow).
 - Release tooling: scriv changelog fragments under `changelog.d/`.
 - Governance, docs, and a synthetic worked example (`examples/alexis-doe/`).
+- Stage 3 tailoring (`cc-workflow-tailor-offer.js` + `persist_offer`): per-offer pack — match → CV +
+  cover letter + gap report + human-review prefill pack (`results/offers/<slug>/`). `ajoa-kit ats-check`
+  résumé parse-safety (#9); style/tone from `config/style.json` (#16); cited ToU/CFAA/GDPR delivery
+  safety note (`research.md` §Delivery, #8).
 
-## Next — Stage 3 tailoring
+## Next
 
-- `cc-workflow-tailor-offer.js`: match → CV + cover letter → ats-check → gap report (strict TDD).
-- ats-check: résumé parse-safety + job-description (JD) must-have coverage (#9).
-- Delivery: a human-submit prefill pack + a cited ToU/CFAA/GDPR safety note (#8).
-- Tailor in the user's own writing style or a set tone, from user CV + cover-letter config inputs (#16).
+- Prefill-pack reach: application-field schemas beyond Greenhouse's public `?questions=true`, and JD
+  must-have coverage in the tailor pass.
+- Structured job-sources board catalog (#10); locale-aware document conventions (#12).
 
 ## Later — hardening & reach
 
 - Per-adapter error/edge handling + full per-adapter and error-branch test coverage.
-- Adopt `pseudonymize-text` for shared / trends-dashboard corpora.
-- Locale-aware templates (#12); trends dashboard (#11); structured sources catalog (#10).
+- Adopt `pseudonymize-text` for shared / trends-dashboard corpora; trends dashboard (#11).
 - Full L1 org-settings apply (branch protection, broader SHA allowlist).
 - i18n pre-filter keywords (#31); coverage gate (#33); CI `paths-ignore` (#34); `CONTRIBUTING.md` (#35).
