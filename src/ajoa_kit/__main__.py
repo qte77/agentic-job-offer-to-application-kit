@@ -6,6 +6,7 @@ Usage::
     ajoa-kit chunk [--batch-size N]
     ajoa-kit persist <workflow-result.json>
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
+    ajoa-kit ats-check <cv.md>
     ajoa-kit probe
 
 Each subcommand delegates directly to the corresponding L1 module's ``main()``
@@ -51,6 +52,11 @@ def main() -> None:
     offer_p.add_argument("file", metavar="FILE", help="Path to workflow-result.json.")
     offer_p.add_argument("--slug", default=None, help="Offer slug (default: pack slug/id).")
 
+    ats_p = sub.add_parser(
+        "ats-check", help="Check a CV markdown file for ATS parse-safety (non-zero if unsafe)."
+    )
+    ats_p.add_argument("file", metavar="FILE", help="Path to a CV markdown file.")
+
     sub.add_parser(
         "probe",
         help=(
@@ -82,6 +88,11 @@ def main() -> None:
         from ajoa_kit.persist_offer import main as _main
 
         _main(src=Path(args.file), slug=args.slug)
+
+    elif args.cmd == "ats-check":
+        from ajoa_kit.ats_check import main as _main
+
+        _main(src=Path(args.file))
 
     elif args.cmd == "probe":
         from ajoa_kit.slug_probe import main as _main
