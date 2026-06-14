@@ -11,7 +11,8 @@ no personally identifiable information (PII).
 examples/alexis-doe/
 ├── config/
 │   ├── seed.json                  # example sources (copy to the repo-root config/seed.json to start)
-│   └── seed-candidates.json       # example slugs for ajoa_kit.slug_probe
+│   ├── seed-candidates.json       # example slugs for ajoa_kit.slug_probe
+│   └── style.json                 # writing-style config for the tailor pass (see ajoa-kit style)
 └── results/
     ├── evidence-library.json      # Stage-1 output — the candidate brief the relevance screen reads
     ├── jobs-raw.json              # ingested corpus (post pre-filter), as ajoa_kit.ingest emits

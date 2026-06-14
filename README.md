@@ -25,7 +25,7 @@ agent-agnostically so any coding agent can drive them.
 2. **Ingest → relevance** (per search) — pull job descriptions (JDs) from public applicant
    tracking systems (ATS) + feeds, **pre-filter** cheaply, then LLM-screen against your lanes → a scored shortlist.
 3. **Tailor** (per offer) — match → CV + cover letter + gap report, with an `ats-check` parse-safety
-   pass and writing-style/tone matching. Human-review prefill pack is next (see docs/research.md §Delivery).
+   pass, writing-style/tone matching, and a human-review prefill pack (see docs/research.md §Delivery).
 
 Five configurable **position lanes**: CxO/fractional · founding engineer · senior IC engineering ·
 cloud/DevOps/platform · architect. Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
@@ -53,7 +53,7 @@ uv run ajoa-kit persist-offer <workflow-output.json>  # -> results/offers/<slug>
 uv run ajoa-kit ats-check results/offers/<slug>/cv.md # ATS parse-safety gate
 ```
 
-Each step is also a CLI subcommand — `uv run ajoa-kit {ingest,chunk,persist,persist-offer,ats-check,style,probe}`
+Each step is also a CLI subcommand — `uv run ajoa-kit {ingest,chunk,persist,persist-offer,ats-check,style,prefill-fields,probe}`
 (the `make` targets wrap the ingest/chunk/persist ones); `config/` and `results/` locations are
 env-overridable via `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR`.
 

@@ -5,7 +5,8 @@
 - Evidence-library workflow (`cc-workflow-evidence-library.js`).
 - Ingest → chunk → relevance, generic + config-driven (`src/ajoa_kit/`, `cc-workflow-relevance.js`).
 - `AppSettings` (pydantic-settings) config + `ajoa-kit` CLI: env-overridable `config/` + `results/`
-  paths (no hardcoded `ROOT`), `ingest`/`chunk`/`persist`/`probe` subcommands (ADR-0001 L1/L2).
+  paths (no hardcoded `ROOT`), and the full `ajoa-kit` subcommand set
+  (`ingest`/`chunk`/`persist`/`persist-offer`/`ats-check`/`style`/`prefill-fields`/`probe`) (ADR-0001 L1/L2).
 - Baseline gates: ruff, pyright, complexipy, a value-add `pytest` suite, CodeQL + Dependabot + CI
   (SHA-pinned), and markdownlint + lychee (local `make docs-lint` + a `lint-md-links` CI workflow).
 - Release tooling: scriv changelog fragments under `changelog.d/`.
