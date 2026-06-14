@@ -82,6 +82,8 @@ the repo (see [docs/architecture.md §Data layout](docs/architecture.md#data-lay
 - [docs/userstory.md](docs/userstory.md) — user stories with acceptance criteria
 - [docs/research.md](docs/research.md) — fetching, ATS, and positioning research
 - [examples/alexis-doe/](examples/alexis-doe/) — synthetic end-to-end example
+- [AGENTS.md](AGENTS.md) — operating rules for AI coding agents
+- [SECURITY.md](SECURITY.md) — vulnerability disclosure policy
 
 ## License
 
