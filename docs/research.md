@@ -36,9 +36,24 @@ systems architect — each with an honest gap note.
 
 ## Market / boards
 
-Source boards by target region and industry (general dev boards, research / RSE
-boards, startup boards, domain-specific boards). Most are JS SPAs — apply the
-fetching strategy above (feed/API first, paste fallback).
+Job sources grouped by **type**, region-agnostic — fill the specific per-region list at deployment
+(in `config/seed.json`, not here). Most boards are JS SPAs, so apply the fetching strategy above
+(feed/API first, **paste** fallback). Where a board is powered by a public ATS, prefer the no-auth
+endpoints in the §ATS feed/API endpoints table over scraping the board; sources that publish an
+RSS/Atom or JSON feed are the cheapest to ingest and are flagged below.
+
+| Type | Representative sources (examples — fill per region) | Ingest path |
+| --- | --- | --- |
+| General tech | LinkedIn Jobs, Indeed, Glassdoor, Dice, Built In | SPA → paste; LinkedIn/Indeed automation is ToS-barred on their own platforms (see §Delivery) — paste only |
+| Startup | Wellfound, Y Combinator "Work at a Startup", `startup.jobs` | SPA → paste; most listings are Greenhouse/Ashby/Lever ATS-backed → use the §ATS endpoints |
+| AI / ML | `ai-jobs.net`, ML-focused boards, lab/company career pages | `ai-jobs.net` publishes a feed; lab pages are usually ATS-backed (§ATS); else SPA → paste |
+| Remote-first | RemoteOK, We Work Remotely, Remotive, Working Nomads | Feed/API-first — these expose RSS/JSON feeds (cheap tier-1 ingest) |
+| Research / RSE | `jobs.ac.uk`, EURAXESS, HigherEdJobs, Society of RSE board | RSS/Atom feeds common (feed-first); some institutional pages SPA → paste |
+| Executive / fractional | Toptal, Catalant, Chief, Go Fractional, Continuum | SPA, mostly login-gated → paste |
+| Co-founder / VC / accelerator | YC "Work at a Startup", VC talent-network boards (Getro / Consider-powered), CoFoundersLab | Getro/Consider boards often expose a JSON API (feed-first); YC SPA → paste |
+| Aggregators | Google Jobs (structured `JobPosting` data), Adzuna, Jooble | Adzuna has a public API; Google Jobs reads structured data; others SPA → paste |
+
+Verify any source before relying on it — board APIs, feeds, and terms change.
 
 ## ATS feed/API endpoints (no-auth)
 
