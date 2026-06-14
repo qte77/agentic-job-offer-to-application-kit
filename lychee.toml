@@ -3,8 +3,6 @@
 #   - example.com — the synthetic worked example (examples/alexis-doe/) and its sample
 #     shortlist use https://example.com/... placeholder job URLs by design. They are not
 #     real endpoints and must not be link-checked.
-#   - actions/workflows/*/badge.svg — the README status badges 404 until these workflows
-#     exist on the default branch (i.e. after this PR merges). Drop this exclusion afterwards.
 #   - security/advisories/new — the SECURITY.md private-disclosure link requires auth, so an
 #     unauthenticated link check cannot resolve it; it is a valid GitHub deep link.
 #   - eur-lex.europa.eu / edpb.europa.eu — official EU legal/regulatory citations in
@@ -13,7 +11,6 @@
 #     protection) while resolving fine for humans; they are stable institutional references.
 exclude = [
     "^https://example\\.com/",
-    "^https://github\\.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/.*badge\\.svg",
     "^https://github\\.com/.*/security/advisories/new$",
     "^https://eur-lex\\.europa\\.eu/",
     "^https://(www\\.)?edpb\\.europa\\.eu/",
