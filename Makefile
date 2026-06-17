@@ -3,7 +3,7 @@ SHELL := bash
 .SILENT:
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
-.PHONY: help install lint format check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
+.PHONY: help install lint format preview check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
 
 help: ## List available targets
 	awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-11s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -16,6 +16,9 @@ lint: ## Ruff lint
 
 format: ## Ruff format (write)
 	uv run ruff format .
+
+preview: ## Serve the ui/ dashboard locally (PORT defaults to 8000)
+	uv run python -m http.server "$${PORT:-8000}" --directory ui
 
 check: ## Lint + types + complexity + format-check + offline tests + coverage (CI parity)
 	uv run ruff check .
