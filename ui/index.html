@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ajoa-kit — shortlist & trends (demo)</title>
+    <meta
+      name="description"
+      content="Demo dashboard shell for agentic-job-offer-to-application-kit: tailored shortlist + job-market keyword trends. Synthetic data only."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="vendor/chart.umd.min.js" defer></script>
+    <script src="app.js" type="module"></script>
+  </head>
+  <body class="theme-system">
+    <header>
+      <div class="brand">
+        <img src="favicon.svg" alt="" width="28" height="28" />
+        <div>
+          <h1>ajoa-kit</h1>
+          <span class="sub">shortlist &amp; market trends · demo</span>
+        </div>
+      </div>
+      <div
+        id="theme-toggle"
+        role="group"
+        aria-label="Color theme"
+      >
+        <button type="button" data-theme="system" aria-pressed="true">System</button>
+        <button type="button" data-theme="light" aria-pressed="false">Light</button>
+        <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
+      </div>
+    </header>
+
+    <main>
+      <p class="synthetic-note">
+        Demo shell — <strong>synthetic data only</strong> (fictional companies, no PII). The live
+        dashboard (issue #11) fetches pseudonymized data and is gated on the PII helper (#52).
+      </p>
+
+      <section id="shortlist-section" aria-labelledby="shortlist-h">
+        <div class="section-head">
+          <h2 id="shortlist-h">Tailored shortlist</h2>
+          <input
+            id="filter"
+            type="search"
+            placeholder="Filter company / role / lane…"
+            aria-label="Filter shortlist"
+          />
+        </div>
+        <p class="count"><span id="shortlist-count">0</span> offers</p>
+        <div class="table-wrap">
+          <table id="shortlist-table">
+            <thead>
+              <tr>
+                <th scope="col">Company</th>
+                <th scope="col">Role</th>
+                <th scope="col">Lane</th>
+                <th scope="col" class="num">Score</th>
+                <th scope="col">Verdict</th>
+              </tr>
+            </thead>
+            <tbody id="shortlist-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="trends-section" aria-labelledby="trends-h">
+        <div class="section-head">
+          <h2 id="trends-h">Job-market keyword trends</h2>
+          <span class="count">per ISO week · click legend to toggle</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="trends-chart"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Generated <span id="generated">—</span> ·
+      <a href="https://github.com/qte77/agentic-job-offer-to-application-kit"
+        >agentic-job-offer-to-application-kit</a
+      >
+      · EyeRest brand · no PII
+    </footer>
+  </body>
+</html>
