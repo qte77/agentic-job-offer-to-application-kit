@@ -17,8 +17,10 @@ import re
 import sys
 from pathlib import Path
 
-# A GFM table separator row (e.g. ``|---|:--:|``): the giveaway that a table is present.
-_TABLE = re.compile(r"(?m)^[ \t]*\|?[ \t:|-]*-{3,}[ \t:|-]*$")
+# A GFM table delimiter row (e.g. ``|---|:--:|``): the giveaway that a table is present. The
+# leading lookahead requires a pipe on the line, so a bare ``---`` thematic break / Setext
+# underline (which the tailor CV agent emits as a section separator) is not mistaken for a table.
+_TABLE = re.compile(r"(?m)^(?=[^\n]*\|)[ \t]*\|?[ \t:|-]*-{3,}[ \t:|-]*$")
 # A real HTML tag, incl. self-closing — but NOT a markdown autolink like ``<https://x>``.
 _HTML_TAG = re.compile(r"</?[a-zA-Z][a-zA-Z0-9]*(?:\s[^>]*)?/?>")
 _IMAGE = re.compile(r"!\[[^\]]*\]\(")

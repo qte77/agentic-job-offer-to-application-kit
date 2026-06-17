@@ -30,6 +30,13 @@ def test_table_is_flagged() -> None:
     assert any("table" in w.lower() for w in ats_check.parse_safety_warnings(cv))
 
 
+def test_thematic_break_is_not_a_table() -> None:
+    # `---` section separators / Setext underlines are not GFM tables (a delimiter row always
+    # has a pipe). The tailor CV agent emits `---` separators, so these must not trip the gate.
+    cv = "## Summary\nInfra-first engineer.\n\n---\n\n## Experience\n- Built an engine.\n"
+    assert ats_check.parse_safety_warnings(cv) == []
+
+
 def test_raw_html_is_flagged_but_autolink_is_not() -> None:
     flagged = ats_check.parse_safety_warnings("## Skills\n<div>x</div>")
     assert any("html" in w.lower() for w in flagged)
