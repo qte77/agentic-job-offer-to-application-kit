@@ -1,0 +1,43 @@
+# ui/ — dashboard shell (demo)
+
+A static, **no-build** dashboard that visualizes the kit's output: a tailored
+**shortlist** and **job-market keyword trends**. Vanilla HTML/CSS/JS + vendored
+[Chart.js](vendor/README.md); same playbook as the `qte77/analyze-stock-kpi`
+dashboard.
+
+This is a **shell**: it renders [`data/demo.json`](data/demo.json) — **synthetic
+data only** (fictional companies, no PII). It's the skeleton for the live
+job-market trends dashboard ([issue #11][i11]), which will fetch *pseudonymized*
+data from a separate `data` branch at runtime — gated on the PII helper
+([issue #52][i52]) per [ADR-0001](../docs/decisions/0001-backend-cli-ui-separation.md).
+
+## Run locally
+
+```bash
+# from the repo root — fetch() + ES modules need a real HTTP origin (not file://)
+uv run python -m http.server 8000 --directory ui
+# open http://localhost:8000/
+```
+
+## Design
+
+- **Brand:** EyeRest tokens from `qte77/qte77/brand/DESIGN.md` — warm amber,
+  **zero-blue**, as CSS custom properties in [`style.css`](style.css).
+- **Theme:** three-state `system` / `light` / `dark`, persisted to `localStorage`
+  and the URL (`?theme=`). Chart colors re-read the tokens on each flip.
+- **Fonts:** brand families (Inter / JetBrains Mono) with system fallbacks — no
+  webfont fetch (offline-first; the brand TTFs are not vendored).
+
+## Files
+
+| File | Purpose |
+| --- | --- |
+| `index.html` | Shell markup: header + theme toggle, shortlist table, trends chart |
+| `style.css` | EyeRest tokens (light/dark/system) + components |
+| `app.js` | Theme resolver, shortlist render + filter, Chart.js trends |
+| `data/demo.json` | Synthetic demo data (shortlist + trends) |
+| `favicon.svg` | Brand favicon (adaptive light/dark) |
+| `vendor/` | Vendored Chart.js (see [vendor/README.md](vendor/README.md)) |
+
+[i11]: https://github.com/qte77/agentic-job-offer-to-application-kit/issues/11
+[i52]: https://github.com/qte77/agentic-job-offer-to-application-kit/issues/52

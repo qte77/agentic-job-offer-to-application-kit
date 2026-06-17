@@ -1,0 +1,103 @@
+{
+  "_synthetic": "DEMO DATA ONLY — synthetic, fictional companies/roles, no real job postings and no PII. Mirrors the shortlist + trend shapes the pipeline produces. See ui/README.md.",
+  "generated": "2026-06-17",
+  "lanes": [
+    { "key": "cxo", "label": "(fractional) CxO" },
+    { "key": "founding", "label": "founding engineer" },
+    { "key": "engineering", "label": "senior IC engineer" },
+    { "key": "cloud", "label": "cloud / DevOps / platform" },
+    { "key": "architect", "label": "software / systems architect" }
+  ],
+  "shortlist": [
+    {
+      "id": "ashby:acme-ai:102",
+      "title": "Founding Engineer",
+      "company": "Acme AI",
+      "url": "https://example.com/acme-ai/jobs/102",
+      "best_lane": "founding",
+      "score": 5,
+      "verdict": "shortlist",
+      "rationale": "0->1 product surface, ships end-to-end solo; breadth maps directly to the founding lane."
+    },
+    {
+      "id": "ashby:acme-ai:101",
+      "title": "AI Engineer, Agentic Systems",
+      "company": "Acme AI",
+      "url": "https://example.com/acme-ai/jobs/101",
+      "best_lane": "engineering",
+      "score": 4,
+      "verdict": "shortlist",
+      "rationale": "Direct fit on agentic LLM workflows; gap is production-at-scale ops."
+    },
+    {
+      "id": "greenhouse:byteworks:204",
+      "title": "Staff Backend Engineer",
+      "company": "ByteWorks",
+      "url": "https://example.com/byteworks/jobs/204",
+      "best_lane": "engineering",
+      "score": 4,
+      "verdict": "shortlist",
+      "rationale": "Typed, tested backend systems; strong evidence on contract-first design."
+    },
+    {
+      "id": "lever:helix:512",
+      "title": "Principal Systems Architect",
+      "company": "Helix Labs",
+      "url": "https://example.com/helix/jobs/512",
+      "best_lane": "architect",
+      "score": 4,
+      "verdict": "shortlist",
+      "rationale": "ADR/MADR culture and contract-driven design align; gap is enterprise cross-team scale."
+    },
+    {
+      "id": "ashby:nimbus:330",
+      "title": "Platform / DevOps Engineer",
+      "company": "Nimbus Cloud",
+      "url": "https://example.com/nimbus/jobs/330",
+      "best_lane": "cloud",
+      "score": 3,
+      "verdict": "maybe",
+      "rationale": "Reusable CI actions and containerization match; thin on provider infra at scale."
+    },
+    {
+      "id": "workable:orbit:077",
+      "title": "Fractional CTO",
+      "company": "Orbit Robotics",
+      "url": "https://example.com/orbit/jobs/077",
+      "best_lane": "cxo",
+      "score": 3,
+      "verdict": "maybe",
+      "rationale": "Breadth reframes as systems-level leadership; no evidence of leading teams."
+    },
+    {
+      "id": "recruitee:quanta:418",
+      "title": "MLOps Engineer",
+      "company": "Quanta Systems",
+      "url": "https://example.com/quanta/jobs/418",
+      "best_lane": "cloud",
+      "score": 3,
+      "verdict": "maybe",
+      "rationale": "ML delivery pipelines fit; observability / production ops are light."
+    },
+    {
+      "id": "greenhouse:vela:255",
+      "title": "Senior Software Engineer",
+      "company": "Vela Health",
+      "url": "https://example.com/vela/jobs/255",
+      "best_lane": "engineering",
+      "score": 2,
+      "verdict": "maybe",
+      "rationale": "Domain (health) is adjacent; role leans team-scale ownership over IC depth."
+    }
+  ],
+  "trends": {
+    "weeks": ["2026-W18", "2026-W19", "2026-W20", "2026-W21", "2026-W22", "2026-W23", "2026-W24", "2026-W25"],
+    "series": [
+      { "keyword": "ai", "counts": [5, 6, 8, 9, 11, 12, 14, 15] },
+      { "keyword": "backend", "counts": [7, 7, 8, 7, 8, 8, 9, 9] },
+      { "keyword": "cloud", "counts": [5, 5, 6, 6, 7, 6, 7, 8] },
+      { "keyword": "platform", "counts": [4, 4, 5, 5, 4, 5, 6, 6] },
+      { "keyword": "security", "counts": [2, 2, 3, 3, 3, 4, 4, 5] }
+    ]
+  }
+}

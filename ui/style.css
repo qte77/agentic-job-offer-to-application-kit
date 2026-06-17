@@ -1,0 +1,252 @@
+/* EyeRest theme tokens — qte77 brand DESIGN.md (zero-blue, warm amber).
+   Never a blue accent. Same source as the analyze-stock-kpi dashboard. */
+:root {
+  --bg: #ece8d8;
+  --panel: #e2dec8;
+  --text: #2c2818;
+  --muted: #686040;
+  --border: #c8c4b0;
+  --accent: #7a6010;
+  /* Zero-blue data arc — drives score chips + chart lines + lane badges. */
+  --data-positive: #4a6818;
+  --data-caution: #787010;
+  --data-negative: #983828;
+  --data-alt: #587818;
+}
+
+/* Dark palette. Applied by `body.theme-dark` (forced) OR by `body.theme-system`
+   when the OS prefers dark (media query below). Both set the same tokens so the
+   downstream rules don't need to know which path triggered. */
+body.theme-dark {
+  --bg: #1c1a14;
+  --panel: #242018;
+  --text: #d8d0b8;
+  --muted: #a89878;
+  --border: #383428;
+  --accent: #c8a858;
+  --data-positive: #8aa860;
+  --data-caution: #c8b868;
+  --data-negative: #c08060;
+  --data-alt: #a8b870;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  body.theme-system {
+    --bg: #1c1a14;
+    --panel: #242018;
+    --text: #d8d0b8;
+    --muted: #a89878;
+    --border: #383428;
+    --accent: #c8a858;
+    --data-positive: #8aa860;
+    --data-caution: #c8b868;
+    --data-negative: #c08060;
+    --data-alt: #a8b870;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  /* Brand families with system fallbacks — no webfont fetch (the brand TTFs
+     are not vendored; the dashboard is offline-first per #11). */
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  line-height: 1.6;
+}
+
+header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand h1 {
+  font-size: 1.125rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.brand .sub {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+main {
+  padding: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.count { color: var(--muted); font-size: 0.8125rem; }
+
+/* Inputs sit on --bg so they read as inset against the --panel section. */
+#filter {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  min-width: 12rem;
+}
+#filter:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ── Shortlist table ── */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+thead th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--border);
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+
+td .role-title { font-weight: 500; }
+td .role-title a { color: var(--text); text-decoration: none; }
+td .role-title a:hover { color: var(--accent); text-decoration: underline; }
+td .rationale { color: var(--muted); font-size: 0.8125rem; margin-top: 0.15rem; max-width: 38ch; }
+
+.num { text-align: center; font-variant-numeric: tabular-nums; }
+
+td.empty-state {
+  text-align: center;
+  color: var(--muted);
+  font-style: italic;
+  padding: 2rem 1rem;
+}
+
+/* Lane badge — outlined pill in the accent. */
+.lane {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Score chip — data-arc by band: >=4 positive, 3 caution, <=2 negative. */
+.score {
+  display: inline-block;
+  min-width: 1.6rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 6px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #1c1a14;
+}
+.score-good { background: var(--data-positive); }
+.score-mid { background: var(--data-caution); }
+.score-bad { background: var(--data-negative); }
+
+.verdict { font-size: 0.8125rem; color: var(--muted); text-transform: capitalize; }
+.verdict.is-shortlist { color: var(--data-positive); font-weight: 500; }
+
+/* ── Trends chart ── */
+.chart-wrap { position: relative; height: 300px; }
+
+footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+.synthetic-note {
+  margin: 0 0 1.5rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+/* ── Three-state theme toggle (segmented pill) ── */
+#theme-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+#theme-toggle button {
+  background: var(--panel);
+  border: 0;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  color: var(--muted);
+  line-height: 1;
+}
+#theme-toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+#theme-toggle button:hover:not([aria-pressed="true"]) { color: var(--accent); }
+
+@media (max-width: 640px) {
+  main { padding: 0.75rem; }
+  section { padding: 0.9rem; }
+  td .rationale { display: none; }
+}
