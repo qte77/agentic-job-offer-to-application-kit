@@ -57,9 +57,13 @@ uv run ajoa-kit persist-offer <workflow-output.json>  # -> results/offers/<slug>
 uv run ajoa-kit ats-check results/offers/<slug>/cv.md # ATS parse-safety gate
 ```
 
-Each step is also a CLI subcommand — `uv run ajoa-kit {ingest,chunk,persist,persist-offer,ats-check,style,prefill-fields,probe}`
+Each step is also a CLI subcommand — `uv run ajoa-kit {ingest,chunk,persist,persist-offer,ats-check,style,prefill-fields,probe,trend-snapshot}`
 (the `make` targets wrap the ingest/chunk/persist ones); `config/` and `results/` locations are
 env-overridable via `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR`.
+
+**Keyword trends (optional):** drop a `config/keywords.json` (`{"interest": [...], "title_roles": [...]}`)
+to override the default pre-filter vocabulary, then `ajoa-kit trend-snapshot` writes an aggregate,
+keyword-only per-ISO-week record to `results/trends.ndjson` (no JD/PII).
 
 Build the evidence library once, upstream, via the Stage-1 Workflow
 (`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
