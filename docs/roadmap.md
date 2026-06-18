@@ -1,7 +1,5 @@
 # Roadmap
 
-> Sequenced execution plan for the open backlog: [docs/plans/backlog.md](plans/backlog.md).
-
 ## Shipped — first end-to-end (e2e) happy path
 
 - Evidence-library workflow (`cc-workflow-evidence-library.js`).
