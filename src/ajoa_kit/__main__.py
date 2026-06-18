@@ -10,6 +10,7 @@ Usage::
     ajoa-kit style [--json]
     ajoa-kit prefill-fields [--ats greenhouse --slug S --job-id ID]
     ajoa-kit probe
+    ajoa-kit trend-snapshot
 
 Each subcommand delegates to the corresponding L1 module's ``main()`` via its ``func``
 default, without reimplementing any logic. ``polyfetch_scrape`` is imported lazily inside
@@ -80,6 +81,13 @@ def _probe(_args: argparse.Namespace) -> None:
     run()
 
 
+def _trend_snapshot(_args: argparse.Namespace) -> None:
+    """Snapshot keyword-only trends from the ingested corpus."""
+    from ajoa_kit.trend_snapshot import main as run
+
+    run()
+
+
 def main() -> None:
     """Parse the chosen subcommand and run the matching L1 pipeline step."""
     parser = argparse.ArgumentParser(
@@ -141,6 +149,11 @@ def main() -> None:
             "Requires polyfetch env (run via scripts/ingest.sh or set POLYFETCH_DIR)."
         ),
     ).set_defaults(func=_probe)
+
+    sub.add_parser(
+        "trend-snapshot",
+        help="Snapshot keyword-only trends from results/jobs-raw.json into results/trends.ndjson.",
+    ).set_defaults(func=_trend_snapshot)
 
     args = parser.parse_args()
     args.func(args)
