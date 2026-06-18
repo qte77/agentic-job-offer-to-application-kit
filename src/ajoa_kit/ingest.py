@@ -97,22 +97,52 @@ TITLE_ROLES = [
 # --- helpers --------------------------------------------------------------------------
 _TAG = re.compile(r"<[^>]+>")
 _WS = re.compile(r"\s+")
-_INTEREST = re.compile(r"\b(" + "|".join(re.escape(t) for t in INTEREST) + r")\b", re.I)
-_TITLE_ROLES = re.compile(r"\b(" + "|".join(re.escape(t) for t in TITLE_ROLES) + r")\b", re.I)
 _TRACKING = {"gclid", "fbclid", "mc_cid", "mc_eid", "igshid", "ref_src"}
 
 
-def is_interesting(text: str | None) -> bool:
-    """Return True if ``text`` contains an INTEREST term on a word boundary."""
-    return bool(text and _INTEREST.search(text))
+def build_patterns(
+    interest: list[str], title_roles: list[str]
+) -> tuple[re.Pattern[str], re.Pattern[str]]:
+    """Compile case-insensitive, word-boundary match patterns for the two keyword sets."""
+
+    def _compile(terms: list[str]) -> re.Pattern[str]:
+        return re.compile(r"\b(" + "|".join(re.escape(t) for t in terms) + r")\b", re.I)
+
+    return _compile(interest), _compile(title_roles)
 
 
-def is_role_title(text: str | None) -> bool:
-    """Return True if ``text`` contains a core engineering role noun on a word boundary."""
-    return bool(text and _TITLE_ROLES.search(text))
+def load_keywords(config_dir: Path) -> tuple[list[str], list[str]]:
+    """Return (interest, title_roles); ``config_dir/keywords.json`` overrides the defaults.
+
+    Lets a caller/consumer drive the pre-filter vocabulary at runtime (a per-run keyword
+    set) without code changes; absent the file, the hardcoded defaults apply.
+    """
+    path = config_dir / "keywords.json"
+    if not path.is_file():
+        return INTEREST, TITLE_ROLES
+    data = json.loads(path.read_text())
+    return data.get("interest", INTEREST), data.get("title_roles", TITLE_ROLES)
 
 
-def keep(rec: dict[str, Any]) -> bool:
+# Module-default compiled patterns (the in-code fallback when no keywords.json is supplied).
+_INTEREST, _TITLE_ROLES = build_patterns(INTEREST, TITLE_ROLES)
+
+
+def is_interesting(text: str | None, pattern: re.Pattern[str] = _INTEREST) -> bool:
+    """Return True if ``text`` contains an interest term on a word boundary."""
+    return bool(text and pattern.search(text))
+
+
+def is_role_title(text: str | None, pattern: re.Pattern[str] = _TITLE_ROLES) -> bool:
+    """Return True if ``text`` contains a core role noun on a word boundary."""
+    return bool(text and pattern.search(text))
+
+
+def keep(
+    rec: dict[str, Any],
+    pat_interest: re.Pattern[str] = _INTEREST,
+    pat_title: re.Pattern[str] = _TITLE_ROLES,
+) -> bool:
     """Coarse pre-filter. RSS keeps on title; ATS keeps on department OR title.
 
     The title fallback stops a whole board being dropped when its ``department`` field is
@@ -120,10 +150,10 @@ def keep(rec: dict[str, Any]) -> bool:
     Executive" title miss both).
     """
     if rec["ats"] == "rss":
-        return not FILTER_RSS_BY_TITLE or is_interesting(rec["title"])
+        return not FILTER_RSS_BY_TITLE or is_interesting(rec["title"], pat_interest)
     if not FILTER_ATS_BY_DEPARTMENT:
         return True
-    return is_interesting(rec["department"]) or is_role_title(rec["title"])
+    return is_interesting(rec["department"], pat_interest) or is_role_title(rec["title"], pat_title)
 
 
 def html_to_text(s: str | None) -> str:
@@ -385,7 +415,11 @@ def load_sources(config_dir: Path) -> tuple[list[dict[str, str]], list[dict[str,
     return cfg.get("feeds", []), cfg.get("ats", [])
 
 
-def collect(sources: list[tuple[str, Callable[[], Iterable[dict[str, Any]]]]]) -> dict[str, Any]:
+def collect(
+    sources: list[tuple[str, Callable[[], Iterable[dict[str, Any]]]]],
+    pat_interest: re.Pattern[str] = _INTEREST,
+    pat_title: re.Pattern[str] = _TITLE_ROLES,
+) -> dict[str, Any]:
     """Pull every source (warn-and-continue), applying the pre-filter; return run state."""
     jobs: list[dict[str, Any]] = []
     counts: dict[str, int] = {}
@@ -398,7 +432,7 @@ def collect(sources: list[tuple[str, Callable[[], Iterable[dict[str, Any]]]]]) -
         except Exception as e:  # warn-and-continue: one bad source must not abort the whole run
             failures.append(f"{label}: {type(e).__name__}: {e}")
             continue
-        kept = [r for r in rows if keep(r)]
+        kept = [r for r in rows if keep(r, pat_interest, pat_title)]
         jobs += kept
         counts[label] = len(kept)
         filtered[label] = len(rows) - len(kept)
@@ -463,12 +497,13 @@ def main() -> None:
     results = settings.results_dir
     results.mkdir(parents=True, exist_ok=True)
     feeds, seed = load_sources(settings.config_dir)
+    pat_interest, pat_title = build_patterns(*load_keywords(settings.config_dir))
     sources: list[tuple[str, Callable[[], Iterable[dict[str, Any]]]]] = [
         (f"feed/{f['source']}", (lambda f=f: from_rss(f))) for f in feeds
     ]
     sources += [(f"{c['ats']}/{c['slug']}", (lambda c=c: ATS[c["ats"]](c))) for c in seed]
 
-    state = collect(sources)
+    state = collect(sources, pat_interest, pat_title)
     deduped = dedupe(state["jobs"])
     (results / "jobs-raw.json").write_text(json.dumps(deduped, indent=2, ensure_ascii=False))
     (results / "jobs-raw.summary.md").write_text(build_summary(deduped, state))
