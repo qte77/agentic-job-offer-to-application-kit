@@ -22,6 +22,9 @@ config/seed.json
 
 Run-once upstream: `cc-workflow-evidence-library.js` → `results/evidence-library.json`.
 
+Side branch (any time after ingest): `ajoa-kit trend-snapshot` reads `results/jobs-raw.json` →
+aggregate keyword-only `results/trends.ndjson` (per ISO week; counts of the config-driven vocabulary).
+
 **Two-stage trim (cost model):** cheap deterministic pre-filter → LLM relevance screen →
 expensive tailoring only on the shortlist.
 
@@ -73,9 +76,10 @@ agentic-job-offer-to-application-kit/
 The authoritative list of git-ignored, never-committed paths (so no PII is ever committed) — the
 single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 
-- `config/` — inputs you author; git-ignored (dir kept via `.gitkeep`). Copy a starting `seed.json`
-  from `examples/alexis-doe/config/`.
-- `results/` — everything generated; git-ignored (dir kept via `.gitkeep`).
+- `config/` — inputs you author (`seed.json`, optional `style.json` / `keywords.json`); git-ignored
+  (dir kept via `.gitkeep`). Copy a starting `seed.json` from `examples/alexis-doe/config/`.
+- `results/` — everything generated (`jobs-raw.json`, `trends.ndjson`, `<lane>/shortlist.*`,
+  `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`).
 - `library/`, `input/` — additional generated/working directories; git-ignored.
 - `examples/alexis-doe/` — a committed, self-contained example mirroring `config/` + `results/`.
 
@@ -93,8 +97,11 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 - **Built:** `src/ajoa_kit/` engine; `AppSettings` config + `ajoa-kit` CLI (ADR-0001 L1/L2);
   `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; `cc-workflow-tailor-offer.js` Stage-3
   tailor pack (match/CV/cover-letter/gap-report/prefill-pack); `ajoa-kit ats-check` parse-safety (#9);
-  style/tone tailoring (#16); cited delivery safety note (research.md §Delivery, #8); baseline gates
-  (ruff, pyright, complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
-- **Designed:** locale-aware templates/conventions (#12), structured board catalog (#10), trends
-  dashboard (#11, behind the PII pseudonymization gate).
+  style/tone tailoring (#16); cited delivery safety note (research.md §Delivery, #8); structured board
+  catalog (#10); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
+  `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A); the reusable
+  `run-with-keywords` workflow (#79); baseline gates (ruff, pyright, complexipy, pytest,
+  CodeQL/Dependabot/CI, markdownlint+lychee).
+- **Designed:** locale-aware document conventions (#12); the trends dashboard UI (#11 PR-B / #71,
+  keyword-only — the `pseudonymize-text` PII gate (#52) is now belt-and-suspenders).
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks.
