@@ -9,11 +9,22 @@
       content="Demo dashboard shell for agentic-job-offer-to-application-kit: tailored shortlist + job-market keyword trends. Synthetic data only."
     />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <script>
+      // Anti-flash: apply a saved explicit theme before first paint (auto = no attr).
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t === "light" || t === "dark")
+            document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="stylesheet" href="style.css" />
     <script src="vendor/chart.umd.min.js" defer></script>
+    <script src="theme.js" defer></script>
     <script src="app.js" type="module"></script>
   </head>
-  <body class="theme-system">
+  <body>
     <header>
       <div class="brand">
         <img src="favicon.svg" alt="" width="28" height="28" />
@@ -22,15 +33,15 @@
           <span class="sub">shortlist &amp; market trends · demo</span>
         </div>
       </div>
-      <div
+      <button
         id="theme-toggle"
-        role="group"
+        class="theme-toggle"
+        type="button"
         aria-label="Color theme"
+        title="Color theme"
       >
-        <button type="button" data-theme="system" aria-pressed="true">System</button>
-        <button type="button" data-theme="light" aria-pressed="false">Light</button>
-        <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
-      </div>
+        ◐ Auto
+      </button>
     </header>
 
     <main>

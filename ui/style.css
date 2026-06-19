@@ -1,6 +1,10 @@
 /* EyeRest theme tokens — qte77 brand DESIGN.md (zero-blue, warm amber).
    Never a blue accent. Same source as the analyze-stock-kpi dashboard. */
-:root {
+/* Light tokens — the default, and the explicit "light" choice (which wins over the
+   prefers-dark media query below via higher specificity). theme.js sets data-theme
+   on <html> for an explicit choice and removes it for auto. */
+:root,
+:root[data-theme="light"] {
   --bg: #ece8d8;
   --panel: #e2dec8;
   --text: #2c2818;
@@ -14,25 +18,10 @@
   --data-alt: #587818;
 }
 
-/* Dark palette. Applied by `body.theme-dark` (forced) OR by `body.theme-system`
-   when the OS prefers dark (media query below). Both set the same tokens so the
-   downstream rules don't need to know which path triggered. */
-body.theme-dark {
-  --bg: #1c1a14;
-  --panel: #242018;
-  --text: #d8d0b8;
-  --muted: #a89878;
-  --border: #383428;
-  --accent: #c8a858;
-  --data-positive: #8aa860;
-  --data-caution: #c8b868;
-  --data-negative: #c08060;
-  --data-alt: #a8b870;
-  color-scheme: dark;
-}
-
+/* Auto (no data-theme) follows the OS. Explicit light above out-specifies this;
+   explicit dark below reinforces it. */
 @media (prefers-color-scheme: dark) {
-  body.theme-system {
+  :root {
     --bg: #1c1a14;
     --panel: #242018;
     --text: #d8d0b8;
@@ -45,6 +34,21 @@ body.theme-dark {
     --data-alt: #a8b870;
     color-scheme: dark;
   }
+}
+
+/* Explicit dark — always wins, regardless of OS preference. */
+:root[data-theme="dark"] {
+  --bg: #1c1a14;
+  --panel: #242018;
+  --text: #d8d0b8;
+  --muted: #a89878;
+  --border: #383428;
+  --accent: #c8a858;
+  --data-positive: #8aa860;
+  --data-caution: #c8b868;
+  --data-negative: #c08060;
+  --data-alt: #a8b870;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -225,25 +229,21 @@ footer a:hover { text-decoration: underline; }
   font-size: 0.8125rem;
 }
 
-/* ── Three-state theme toggle (segmented pill) ── */
-#theme-toggle {
-  display: inline-flex;
+/* ── Theme toggle — auto/light/dark cycle button (mirrors qte77.github.io) ── */
+.theme-toggle {
+  padding: 0.3rem 0.7rem;
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 999px;
-  overflow: hidden;
-}
-#theme-toggle button {
-  background: var(--panel);
-  border: 0;
-  padding: 0.3rem 0.6rem;
+  color: var(--text);
   font: inherit;
   font-size: 0.8125rem;
-  cursor: pointer;
-  color: var(--muted);
   line-height: 1;
+  letter-spacing: 0.02em;
+  cursor: pointer;
 }
-#theme-toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; }
-#theme-toggle button:hover:not([aria-pressed="true"]) { color: var(--accent); }
+.theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @media (max-width: 640px) {
   main { padding: 0.75rem; }

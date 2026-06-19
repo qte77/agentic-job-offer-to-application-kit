@@ -23,8 +23,10 @@ uv run python -m http.server 8000 --directory ui
 
 - **Brand:** EyeRest tokens from `qte77/qte77/brand/DESIGN.md` — warm amber,
   **zero-blue**, as CSS custom properties in [`style.css`](style.css).
-- **Theme:** three-state `system` / `light` / `dark`, persisted to `localStorage`
-  and the URL (`?theme=`). Chart colors re-read the tokens on each flip.
+- **Theme:** an `auto` / `light` / `dark` **cycle button** (mirrors the canonical
+  `qte77/qte77.github.io` toggle) — applied as `data-theme` on `<html>`, persisted to
+  `localStorage`, with an inline `<head>` script preventing a flash of the wrong theme.
+  The chart re-reads the tokens on each flip (via a `themechange` event).
 - **Fonts:** brand families (Inter / JetBrains Mono) with system fallbacks — no
   webfont fetch (offline-first; the brand TTFs are not vendored).
 
@@ -33,8 +35,9 @@ uv run python -m http.server 8000 --directory ui
 | File | Purpose |
 | --- | --- |
 | `index.html` | Shell markup: header + theme toggle, shortlist table, trends chart |
-| `style.css` | EyeRest tokens (light/dark/system) + components |
-| `app.js` | Theme resolver, shortlist render + filter, Chart.js trends |
+| `style.css` | EyeRest tokens (light/dark/auto via `data-theme`) + components |
+| `app.js` | Shortlist render + filter, Chart.js trends (rebuilt on `themechange`) |
+| `theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
 | `data/demo.json` | Synthetic demo data (shortlist + trends) |
 | `favicon.svg` | Brand favicon (adaptive light/dark) |
 | `vendor/` | Vendored Chart.js (see [vendor/README.md](vendor/README.md)) |
