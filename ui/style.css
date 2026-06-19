@@ -97,6 +97,12 @@ header {
   gap: 0.6rem;
 }
 
+/* Neutral header mark — inherits --text via currentColor (zero-blue, theme-adaptive). */
+.brand-mark {
+  color: var(--text);
+  flex: none;
+}
+
 .brand h1 {
   font-size: 1.125rem;
   margin: 0;
