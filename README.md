@@ -42,7 +42,8 @@ Dev loop: `make help` · `make check` (lint + types + complexity + tests) · `ma
 
 ```bash
 make install                                          # sync the dev env (uv)
-# create config/seed.json with your sources, e.g.:
+# the kit ships a tracked default source list (config/default-seed.json) — runs out of the box.
+# to use your own, create config/seed.json (git-ignored); it overrides the default, e.g.:
 #   {"feeds": [], "ats": [{"ats": "greenhouse", "slug": "acme", "company": "Acme", "lane": "engineering"}]}
 POLYFETCH_DIR=../polyfetch-scrape make ingest         # -> results/jobs-raw.json
 make chunk                                            # -> results/batches/ + manifest.json

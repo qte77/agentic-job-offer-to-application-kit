@@ -405,11 +405,19 @@ ATS: dict[str, Callable[[dict[str, str]], Iterable[dict[str, Any]]]] = {
 
 # --- run ------------------------------------------------------------------------------
 def load_sources(config_dir: Path) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
-    """Load (feeds, ats) from ``config/seed.json``; fail loud if it is missing."""
+    """Load (feeds, ats) from ``config/seed.json``, else the shipped ``default-seed.json``.
+
+    The git-ignored ``config/seed.json`` holds your run's sources and wins when present; absent
+    it, the tracked ``config/default-seed.json`` (a ToS-vetted default) is used. Fail loud only
+    when neither exists. Keys beyond ``feeds`` / ``ats`` (e.g. ``_blocked``) are ignored.
+    """
     path = config_dir / "seed.json"
     if not path.is_file():
+        path = config_dir / "default-seed.json"
+    if not path.is_file():
         raise FileNotFoundError(
-            f"missing {path} — create it (keys: feeds, ats; see README)",
+            f"missing {config_dir}/seed.json (no default-seed.json either) — "
+            "create it (keys: feeds, ats; see README)",
         )
     cfg = json.loads(path.read_text())
     return cfg.get("feeds", []), cfg.get("ats", [])
