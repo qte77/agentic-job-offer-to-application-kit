@@ -27,8 +27,8 @@ uv run python -m http.server 8000 --directory ui
   `qte77/qte77.github.io` toggle) — applied as `data-theme` on `<html>`, persisted to
   `localStorage`, with an inline `<head>` script preventing a flash of the wrong theme.
   The chart re-reads the tokens on each flip (via a `themechange` event).
-- **Fonts:** brand families (Inter / JetBrains Mono) with system fallbacks — no
-  webfont fetch (offline-first; the brand TTFs are not vendored).
+- **Fonts:** Inter (400/700) vendored as TTF under `vendor/fonts/` (SIL OFL 1.1)
+  with system fallbacks — offline-first, no CDN. Same fonts as the `paperverse` UI.
 
 ## Files
 
@@ -39,8 +39,8 @@ uv run python -m http.server 8000 --directory ui
 | `app.js` | Shortlist render + filter, Chart.js trends (rebuilt on `themechange`) |
 | `theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
 | `data/demo.json` | Synthetic demo data (shortlist + trends) |
-| `favicon.svg` | Brand favicon (adaptive light/dark) |
-| `vendor/` | Vendored Chart.js (see [vendor/README.md](vendor/README.md)) |
+| `favicon.svg` | qte77 brand mark (adaptive light/dark) — same as `paperverse` |
+| `vendor/` | Vendored Chart.js + Inter font TTFs (see [vendor/README.md](vendor/README.md)) |
 
 [i11]: https://github.com/qte77/agentic-job-offer-to-application-kit/issues/11
 [i52]: https://github.com/qte77/agentic-job-offer-to-application-kit/issues/52

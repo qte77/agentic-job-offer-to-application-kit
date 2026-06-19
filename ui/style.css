@@ -1,3 +1,20 @@
+/* Inter (vendored TTF, OFL 1.1) — same fonts as the paperverse UI. Offline-first,
+   no CDN; system-ui paints first, then Inter swaps in (font-display: swap). */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("vendor/fonts/Inter-Regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("vendor/fonts/Inter-Bold.ttf") format("truetype");
+}
+
 /* EyeRest theme tokens — qte77 brand DESIGN.md (zero-blue, warm amber).
    Never a blue accent. Same source as the analyze-stock-kpi dashboard. */
 /* Light tokens — the default, and the explicit "light" choice (which wins over the
@@ -54,9 +71,8 @@
 * { box-sizing: border-box; }
 
 body {
-  /* Brand families with system fallbacks — no webfont fetch (the brand TTFs
-     are not vendored; the dashboard is offline-first per #11). */
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Inter (vendored above) with system fallbacks — same stack as the paperverse UI. */
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
   margin: 0;
@@ -64,6 +80,8 @@ body {
 }
 
 header {
+  max-width: 1000px;
+  margin: 0 auto;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -211,6 +229,8 @@ td.empty-state {
 .chart-wrap { position: relative; height: 300px; }
 
 footer {
+  max-width: 1000px;
+  margin: 0 auto;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border);
   color: var(--muted);
