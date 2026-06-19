@@ -101,4 +101,4 @@ the repo (see [docs/architecture.md §Data layout](docs/architecture.md#data-lay
 
 ## License
 
-Apache-2.0 © 2026 qte77. See [LICENSE](LICENSE).
+Apache-2.0 © 2026 qte77. See [LICENSE](LICENSE) and [NOTICE](NOTICE) (third-party components — vendored Chart.js, MIT).
