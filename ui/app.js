@@ -3,8 +3,6 @@
 // issue #11 skeleton; the live version swaps data/demo.json for pseudonymized
 // data fetched from the `data` branch at runtime.
 
-const THEMES = ["system", "light", "dark"];
-
 /** @type {{lanes:{key:string,label:string}[], shortlist:any[], trends:{weeks:string[], series:{keyword:string,counts:number[]}[]}, generated:string}|null} */
 let data = null;
 let laneLabel = {};
@@ -23,30 +21,6 @@ const esc = (s) =>
 // Only allow http(s) hrefs — blocks javascript:/data: even if the (future
 // data-branch) feed is tampered with. esc() then handles quote-breakout.
 const safeUrl = (u) => (/^https?:\/\//i.test(String(u)) ? String(u) : "#");
-
-// ── Theme: system / light / dark, persisted to localStorage + URL ──
-function resolveTheme() {
-  const fromUrl = new URL(location.href).searchParams.get("theme");
-  const t = fromUrl || localStorage.getItem("theme") || "system";
-  return THEMES.includes(t) ? t : "system";
-}
-
-function applyTheme(theme) {
-  document.body.classList.remove("theme-system", "theme-light", "theme-dark");
-  document.body.classList.add(`theme-${theme}`);
-  for (const b of document.querySelectorAll("#theme-toggle button")) {
-    b.setAttribute("aria-pressed", String(b.dataset.theme === theme));
-  }
-}
-
-function setTheme(theme) {
-  applyTheme(theme);
-  localStorage.setItem("theme", theme);
-  const url = new URL(location.href);
-  url.searchParams.set("theme", theme);
-  history.replaceState(null, "", url);
-  if (data) renderTrends(data.trends); // tokens changed → rebuild chart colors
-}
 
 // ── Shortlist table ──
 function scoreClass(score) {
@@ -134,10 +108,11 @@ function renderTrends(trends) {
 
 // ── Init ──
 async function init() {
-  applyTheme(resolveTheme());
-  for (const b of document.querySelectorAll("#theme-toggle button")) {
-    b.addEventListener("click", () => setTheme(b.dataset.theme));
-  }
+  // theme.js owns the toggle (sets data-theme on <html>); rebuild the chart when it
+  // flips, since Chart.js caches the CSS-variable colors at construction time.
+  document.addEventListener("themechange", () => {
+    if (data) renderTrends(data.trends);
+  });
 
   data = await fetch("data/demo.json").then((r) => r.json());
   laneLabel = Object.fromEntries(data.lanes.map((l) => [l.key, l.label]));
