@@ -1,7 +1,8 @@
 {
-  "_comment": "Shipped default source list — the one git-tracked file in config/ (public board slugs, no PII). Loaded by `ajoa-kit ingest` when the git-ignored config/seed.json is absent; copy + trim into config/seed.json for your own runs. Every entry was reachability-probed on a no-auth tier-1 fetch and is ToS/ToU-vetted (Greenhouse/Ashby/Lever/Personio public endpoints + an official RSS feed). _blocked entries are excluded by ToS/ToU and are NOT loaded (the loader reads only feeds + ats).",
+  "_comment": "Shipped default source list — the one git-tracked file in config/ (public board slugs, no PII). Loaded by `ajoa-kit ingest` when the git-ignored config/seed.json is absent; copy + trim into config/seed.json for your own runs. Every `ats`/`feeds` entry is reachability-probed (no-auth tier-1 fetch) and ToS/ToU-vetted. The loader reads ONLY `feeds` + `ats`; `_blocked` (ToS/ToU-excluded) and `_deferred` (ToS-permitting but needs a JSON adapter the kit lacks) are documentation, never loaded.",
   "feeds": [
-    {"source": "swissdevjobs", "url": "https://swissdevjobs.ch/rss"}
+    {"source": "swissdevjobs", "url": "https://swissdevjobs.ch/rss"},
+    {"source": "weworkremotely", "url": "https://weworkremotely.com/remote-jobs.rss"}
   ],
   "ats": [
     {"ats": "greenhouse", "slug": "anthropic", "company": "Anthropic", "lane": "engineering"},
@@ -56,10 +57,27 @@
   ],
   "_blocked": [
     {"ats": "workable", "slug": "huggingface", "company": "Hugging Face", "lane": "engineering",
-     "_reason": "Workable widget endpoint is undocumented + robots.txt carries an ai-train=no signal; only ATS where Hugging Face resolves. Revisit if Workable's terms clarify."},
+     "_reason": "Our widget endpoint is undocumented + apply.workable.com robots.txt ai-train=no (a documented public jobs API exists, but third-party use is a grey zone with no explicit permission). Only ATS where HF resolves."},
     {"_platform": "recruitee",
-     "_reason": "Adapter is wired, but Recruitee ships a separate API Terms PDF that was not verifiable; add slugs only after a terms review."},
+     "_reason": "Public /api/offers is unauthenticated, but the separate API-Terms PDF (v2022.1.0) targets integration partners and could not be fully verified — exclude until reviewed."},
+    {"_platform": "remoteok",
+     "_reason": "Aggregator: 403 to automated fetchers + robots.txt ai-train=no, blocks AI crawlers; ToS inaccessible — exclude."},
     {"_platform": "linkedin",
-     "_reason": "User Agreement bars automation on LinkedIn's own platform — paste only, never ingested (see research.md §Delivery)."}
+     "_reason": "User Agreement bars scraping/automation + redistribution; robots.txt blocks job paths — paste only, never ingested."},
+    {"_platform": "indeed",
+     "_reason": "Publisher API deprecated (301 to partners), RSS 404; ToS + robots.txt (/jobs, /api) bar automation — paste only."},
+    {"_platform": "stepstone",
+     "_reason": "No public read API (api.stepstone.com is inbound-only); ToS bars scraping; robots.txt disallows /public-api + parameterized URLs — paste only."},
+    {"_platform": "jobs.ch",
+     "_reason": "No public API/RSS (JobCloud); ToS bars crawlers/scrapers/automation; robots.txt disallows /api + detail pages — paste only."}
+  ],
+  "_deferred": [
+    {"_note": "Public JSON aggregators — usable only after a JSON-feed adapter exists (the kit ships only an RSS adapter + the 6 ATS adapters) AND each source's condition below is met. Tracked as a follow-up issue.",
+     "sources": [
+       {"name": "arbeitnow", "url": "https://www.arbeitnow.com/api/job-board-api", "_tos": "requires a backlink to arbeitnow.com; broad commercial-use clause ambiguous for derived analytics"},
+       {"name": "jobicy", "url": "https://jobicy.com/api/v2/remote-jobs", "_tos": "commercial use needs Jobicy approval; robots ai-train=yes (permissive)"},
+       {"name": "himalayas", "url": "https://himalayas.app/jobs/api", "_tos": "commercial use needs authorization; verify himalayas.app/docs API terms"},
+       {"name": "remotive", "url": "https://remotive.com/api/remote-jobs", "_tos": "free API is traffic-back-only; keyword-trend use likely needs the paid tier (~$5k/mo); max 4 req/day; attribution required"}
+     ]}
   ]
 }

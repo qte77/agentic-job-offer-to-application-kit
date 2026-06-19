@@ -1,21 +1,18 @@
 """Value-add tests for ingest source loading.
 
-Cover the seed.json -> default-seed.json fallback contract only (the behavior with real
-branches): the git-ignored run config wins, the shipped default is the fallback, and a
-config dir holding neither fails loud. Adapter parsing / pre-filter is covered elsewhere.
+Cover the seed.json -> default-seed.json fallback contract and the integrity of the shipped
+default-seed.json (so a malformed committed default can't silently break out-of-box ingest).
+Adapter parsing / pre-filter is covered elsewhere.
 """
 
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 
 from ajoa_kit import ingest
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def _write(path: Path, slug: str) -> None:
@@ -39,3 +36,11 @@ def test_load_sources_falls_back_to_default(tmp_path: Path) -> None:
 def test_load_sources_fails_loud_when_neither_present(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError, match=r"seed\.json"):
         ingest.load_sources(tmp_path)
+
+
+def test_shipped_default_seed_is_valid() -> None:
+    path = Path(__file__).resolve().parents[1] / "config" / "default-seed.json"
+    cfg = json.loads(path.read_text())  # raises on malformed JSON
+    assert cfg["ats"], "default-seed.json must list ats sources"
+    assert all({"ats", "slug", "company", "lane"} <= e.keys() for e in cfg["ats"])
+    assert all({"source", "url"} <= f.keys() for f in cfg["feeds"])
