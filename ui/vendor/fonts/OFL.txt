@@ -1,60 +1,20 @@
-agentic-job-offer-to-application-kit
-Copyright 2026 qte77
-
-This product is licensed under the Apache License, Version 2.0 (the "License");
-you may not use this product except in compliance with the License. A copy of
-the License is in the LICENSE file, or at:
-
-    https://www.apache.org/licenses/LICENSE-2.0
-
-================================================================================
-Third-party components
-================================================================================
-
-The deployed web UI (ui/) bundles and redistributes the third-party software and
-font assets listed below. Their copyright notices and license texts are reproduced
-verbatim. (The Python pipeline's dependencies — pydantic, pydantic-settings,
-defusedxml — are not redistributed: they are declared dependencies installed
-separately, so they are not reproduced here.)
-
---------------------------------------------------------------------------------
-Chart.js — https://www.chartjs.org/ — MIT License
---------------------------------------------------------------------------------
-
-Vendored at ui/vendor/chart.umd.min.js (v4.5.1).
-
-The MIT License (MIT)
-
-Copyright (c) 2014-2025 Chart.js Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
---------------------------------------------------------------------------------
-Inter (font) — https://github.com/rsms/inter — SIL Open Font License 1.1
---------------------------------------------------------------------------------
-
-Vendored at ui/vendor/fonts/Inter-Regular.ttf and ui/vendor/fonts/Inter-Bold.ttf;
-the full license also ships beside the fonts at ui/vendor/fonts/OFL.txt.
+This file bundles the SIL Open Font License (OFL), Version 1.1, for every
+OFL-licensed font vendored by brand/scripts/install_fonts.py. The copyright
+and Reserved Font Name notices for each bundled font are stacked below, ahead
+of the single shared license body. See README.md in this directory for the
+font-to-license mapping.
 
 Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
+Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)
+Copyright (c) 2019 - Present, Microsoft Corporation, with Reserved Font Name Cascadia Code.
+Digitized data copyright (c) 2012-2015, The Mozilla Foundation and Telefonica S.A., with Reserved Font Name < Fira >.
+© 2023 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'. All Rights Reserved. Source is a trademark of Adobe in the United States and/or other countries.
+Copyright © 2017 IBM Corp. with Reserved Font Name "Plex"
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+https://openfontlicense.org
+
 
 -----------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
@@ -73,8 +33,8 @@ fonts, including any derivative works, can be bundled, embedded,
 redistributed and/or sold with any software provided that any reserved
 names are not used by derivative works. The fonts and derivatives,
 however, cannot be released under any other type of license. The
-requirement for fonts to remain under this license does not apply to any
-document created using the fonts or their derivatives.
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
 
 DEFINITIONS
 "Font Software" refers to the set of files released by the Copyright
