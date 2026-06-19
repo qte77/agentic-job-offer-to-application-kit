@@ -7,8 +7,10 @@
 
 # Real config at the repo root is git-ignored; the directory is kept via .gitkeep.
 # Covers seed.json + future PII-bearing portfolio.md / work-history.md / cv + cover-letter samples.
+# Exception: the shipped, ToS-vetted config/default-seed.json IS tracked (the ingest fallback).
 /config/*
 !/config/.gitkeep
+!/config/default-seed.json
 
 # Python / tooling
 __pycache__/

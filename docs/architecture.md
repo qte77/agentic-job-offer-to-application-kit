@@ -61,8 +61,8 @@ agentic-job-offer-to-application-kit/
 ├── src/ajoa_kit/               # engine: ingest, chunk, persist_scored, persist_offer, ats_check,
 │                               #   style, prefill, slug_probe, settings, __main__ (CLI)
 ├── scripts/ingest.sh           # thin env shim -> ajoa-kit ingest (borrows polyfetch's uv env via POLYFETCH_DIR)
-├── config/                     # your inputs — git-ignored, dir kept via .gitkeep
-│                               #   seed.json + future portfolio/work-history/lanes/locale/writing-samples
+├── config/                     # your inputs — git-ignored except the tracked default-seed.json
+│                               #   default-seed.json (shipped sources) · your seed.json overrides it
 ├── tests/                      # value-add suite (pre-filter, canonical_url, dedup, adapters)
 ├── examples/alexis-doe/        # self-contained example mirroring config/ + results/ (committed)
 ├── results/                    # generated outputs — git-ignored, dir kept via .gitkeep
@@ -77,7 +77,9 @@ The authoritative list of git-ignored, never-committed paths (so no PII is ever 
 single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 
 - `config/` — inputs you author (`seed.json`, optional `style.json` / `keywords.json`); git-ignored
-  (dir kept via `.gitkeep`). Copy a starting `seed.json` from `examples/alexis-doe/config/`.
+  **except** the tracked, PII-free `config/default-seed.json` (the shipped, ToS-vetted default
+  source list of public board slugs). Your `config/seed.json` overrides it when present; absent it,
+  ingest falls back to the default.
 - `results/` — everything generated (`jobs-raw.json`, `trends.ndjson`, `<lane>/shortlist.*`,
   `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`).
 - `library/`, `input/` — additional generated/working directories; git-ignored.
