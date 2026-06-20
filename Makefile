@@ -3,7 +3,7 @@ SHELL := bash
 .SILENT:
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
-.PHONY: help install lint format preview check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
+.PHONY: help install lint format preview trends-ui check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
 
 help: ## List available targets
 	awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-11s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -19,6 +19,14 @@ format: ## Ruff format (write)
 
 preview: ## Serve the ui/ dashboard locally (PORT defaults to 8000)
 	uv run python -m http.server "$${PORT:-8000}" --directory ui
+
+trends-ui: ## Copy results/trends.ndjson into ui/data/ so the dashboard shows real trends
+	if [ -f results/trends.ndjson ]; then
+		cp results/trends.ndjson ui/data/trends.ndjson
+		echo "copied results/trends.ndjson -> ui/data/trends.ndjson"
+	else
+		echo "no results/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"
+	fi
 
 check: ## Lint + types + complexity + format-check + offline tests + coverage (CI parity)
 	uv run ruff check .

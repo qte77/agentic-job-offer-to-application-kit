@@ -1,7 +1,8 @@
 // EyeRest dashboard shell — vanilla ES module, no build step.
-// Renders synthetic demo data (shortlist + keyword trends). Becomes the
-// issue #11 skeleton; the live version swaps data/demo.json for pseudonymized
-// data fetched from the `data` branch at runtime.
+// Renders the synthetic shortlist from data/demo.json; the keyword-trends chart shows the real
+// backfilled aggregate series from data/trends.ndjson (non-PII {week,counts}) when present, else
+// the synthetic trends. Issue #11 skeleton; the live shortlist feed (pseudonymized, from the
+// `data` branch at runtime) stays gated on #52.
 
 /** @type {{lanes:{key:string,label:string}[], shortlist:any[], trends:{week:string,counts:Record<string,number>}[], generated:string}|null} */
 let data = null;
@@ -85,6 +86,23 @@ function pivot(records) {
   return { labels, latest, keys };
 }
 
+// Load the real backfilled trends from data/trends.ndjson (one {week,counts} JSON record per
+// line, written by `ajoa-kit trend-snapshot` and copied in via `make trends-ui`). Returns null on
+// any miss (absent file / non-200 / bad line) so the caller falls back to the synthetic set.
+async function loadRealTrends() {
+  try {
+    const res = await fetch("data/trends.ndjson");
+    if (!res.ok) return null;
+    const records = (await res.text())
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line) => JSON.parse(line));
+    return records.length ? records : null;
+  } catch {
+    return null;
+  }
+}
+
 function renderLine(records) {
   const canvas = document.getElementById("trends-line");
   if (!canvas || typeof Chart === "undefined") return;
@@ -159,8 +177,12 @@ function renderBar(records) {
 
 function renderTrends() {
   if (!data) return;
-  renderLine(data.trends);
-  renderBar(data.trends);
+  // Sort once here (not in pivot) so the line/bar datasets, which map over this same array, stay
+  // aligned with the labels. Real trends.ndjson is upsert-appended so it may not be in order;
+  // ISO-week strings ("YYYY-Www", zero-padded) sort chronologically as plain strings.
+  const records = [...data.trends].sort((a, b) => a.week.localeCompare(b.week));
+  renderLine(records);
+  renderBar(records);
   trendsRendered = true;
 }
 
@@ -205,6 +227,10 @@ async function init() {
   });
 
   data = await fetch("data/demo.json").then((r) => r.json());
+  // Trends are aggregate {week,counts} (non-PII), so the real backfilled series can be shown when
+  // present; the shortlist stays synthetic/local. Any miss keeps demo.json's synthetic trends.
+  const realTrends = await loadRealTrends();
+  if (realTrends) data.trends = realTrends;
   laneLabel = Object.fromEntries(data.lanes.map((l) => [l.key, l.label]));
 
   renderShortlist();
