@@ -36,7 +36,7 @@ uv run python -m http.server 8000 --directory ui
 | --- | --- |
 | `index.html` | Shell markup: header + theme toggle, two view tabs (Shortlist table / Market-trends charts) |
 | `style.css` | EyeRest tokens (light/dark/auto via `data-theme`) + components + tabs |
-| `app.js` | Shortlist render + filter, tab switching, Chart.js line + bar trends (rebuilt on `themechange`) |
+| `app.js` | Shortlist render + filter, tab switching, Chart.js line + stacked bars + bubbles (rebuilt on `themechange`) |
 | `theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
 | `data/demo.json` | Synthetic demo data — shortlist (Tab A) + trends as `{week,counts}[]` records (Tab B) |
 | `favicon.svg` | qte77 brand mark (adaptive light/dark) — same as `paperverse` |

@@ -68,7 +68,7 @@
   ],
   "aggregators": [
     {"name": "arbeitnow", "_date_verified": "2026-06-20",
-     "_tos": "Public job-board-api, robots-ALLOWED (200, x-ratelimit-limit:5); ToS §11 requires a backlink to arbeitnow.com — rendered in the dashboard footer (#11). Promoted from _deferred (#94, ADR-0002)."}
+     "_tos": "Public job-board-api, robots-ALLOWED (200, x-ratelimit-limit:5); ToS §11 asks for a backlink when reusing arbeitnow content. The published dashboard emits only aggregate {week,counts} facts (Feist), never arbeitnow listings, so no on-page backlink is required; attribution is recorded here for provenance. Promoted from _deferred (#94, ADR-0002)."}
   ],
   "_blocked": [
     {"ats": "workable", "slug": "huggingface", "company": "Hugging Face", "lane": "engineering", "_date_verified": "2026-06-19",
