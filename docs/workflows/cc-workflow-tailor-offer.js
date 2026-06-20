@@ -19,8 +19,9 @@
 // (writes results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md — human reviews + submits).
 //
 // SCOPE: pre-fill + human submit only, NO auto-apply (verified safe in research.md §Delivery, #8).
-// The prefill pack is assembled for a human to review and submit; run `ajoa-kit ats-check` (#9) on the
-// emitted cv.md for parse-safety.
+// The prefill pack is assembled for a human to review and submit; `persist_offer` auto-runs the
+// `ats-check` parse-safety pass (#9, #75) on the CV and writes `cv-ats-check.md` if it flags anything
+// (non-blocking review aid — `ajoa-kit ats-check <cv.md>` can still be run manually).
 //
 // Hooks: agent(), parallel(), phase(), log(). agent(prompt,{schema}) returns the
 // schema-validated object. The script has no filesystem access, but its agents do (they Read

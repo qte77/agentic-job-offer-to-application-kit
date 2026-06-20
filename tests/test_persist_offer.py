@@ -65,6 +65,18 @@ def test_write_pack_emits_coverage_report_only_with_must_haves(tmp_path: Path) -
     assert "| Python | covered | Acme |" in report
 
 
+def test_write_pack_flags_unsafe_cv_without_failing(tmp_path: Path) -> None:
+    # A parse-unsafe CV (markdown table) must surface a cv-ats-check.md for human review (#75),
+    # but never block the pack — it's a review aid, not a gate. A clean CV writes no such file
+    # (covered by test_write_pack_emits_one_md_per_artifact, whose PACK cv is clean).
+    unsafe = {**PACK, "cv": "## Experience\n\n| Role | Years |\n|---|---|\n| Eng | 5 |\n"}
+    offer_dir = persist_offer.write_pack(unsafe, slug="acme-ai-101", results_dir=tmp_path)
+    names = sorted(p.name for p in offer_dir.glob("*.md"))
+    assert "cv-ats-check.md" in names
+    assert "cv.md" in names  # the full pack still wrote — non-blocking
+    assert "table" in (offer_dir / "cv-ats-check.md").read_text().lower()
+
+
 def test_write_pack_incomplete_writes_nothing(tmp_path: Path) -> None:
     incomplete = {k: v for k, v in PACK.items() if k != "cover_letter"}
     with pytest.raises(ValueError, match="cover_letter"):
