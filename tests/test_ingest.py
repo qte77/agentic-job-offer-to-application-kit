@@ -44,3 +44,19 @@ def test_shipped_default_seed_is_valid() -> None:
     assert cfg["ats"], "default-seed.json must list ats sources"
     assert all({"ats", "slug", "company", "lane"} <= e.keys() for e in cfg["ats"])
     assert all({"source", "url"} <= f.keys() for f in cfg["feeds"])
+
+
+def test_collect_warn_and_continues_on_failing_source() -> None:
+    # A raising source (e.g. a non-200 -> FetchError, or a bad slug) is recorded in `failures`
+    # and never aborts the run — the other sources still collect (run-level resilience).
+    def boom() -> list[dict]:
+        raise RuntimeError("boom")
+
+    def ok() -> list[dict]:
+        return [ingest.record(id="x", ats="rss", source="s", title="Engineer")]
+
+    state = ingest.collect([("bad", boom), ("good", ok)])
+    assert any("bad" in f and "RuntimeError" in f for f in state["failures"])
+    assert state["counts"]["good"] == 1  # the healthy source still collected
+    assert "bad" not in state["counts"]  # the failing source contributes no counts entry
+    assert len(state["jobs"]) == 1
