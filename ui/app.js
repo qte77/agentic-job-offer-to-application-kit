@@ -70,7 +70,7 @@ const chartPalette = () => [
   cssVar("--data-positive"),
   cssVar("--data-alt"),
   cssVar("--data-caution"),
-  cssVar("--accent"),
+  cssVar("--primary"),
   cssVar("--data-negative"),
 ];
 
@@ -91,7 +91,7 @@ function renderLine(records) {
   const { labels, keys } = pivot(records);
   const pal = chartPalette();
   const grid = cssVar("--border");
-  const tick = cssVar("--muted");
+  const tick = cssVar("--text-muted");
   const label = cssVar("--text");
 
   if (lineChart) lineChart.destroy();
@@ -130,7 +130,7 @@ function renderBar(records) {
   const { labels, keys } = pivot(records);
   const pal = chartPalette();
   const grid = cssVar("--border");
-  const tick = cssVar("--muted");
+  const tick = cssVar("--text-muted");
   const label = cssVar("--text");
 
   if (barChart) barChart.destroy();

@@ -23,11 +23,11 @@
 :root,
 :root[data-theme="light"] {
   --bg: #ece8d8;
-  --panel: #e2dec8;
+  --surface: #e2dec8;
   --text: #2c2818;
-  --muted: #686040;
+  --text-muted: #686040;
   --border: #c8c4b0;
-  --accent: #7a6010;
+  --primary: #7a6010;
   /* Zero-blue data arc — drives score chips + chart lines + lane badges. */
   --data-positive: #4a6818;
   --data-caution: #787010;
@@ -40,11 +40,11 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1c1a14;
-    --panel: #242018;
+    --surface: #242018;
     --text: #d8d0b8;
-    --muted: #a89878;
+    --text-muted: #a89878;
     --border: #383428;
-    --accent: #c8a858;
+    --primary: #c8a858;
     --data-positive: #8aa860;
     --data-caution: #c8b868;
     --data-negative: #c08060;
@@ -56,11 +56,11 @@
 /* Explicit dark — always wins, regardless of OS preference. */
 :root[data-theme="dark"] {
   --bg: #1c1a14;
-  --panel: #242018;
+  --surface: #242018;
   --text: #d8d0b8;
-  --muted: #a89878;
+  --text-muted: #a89878;
   --border: #383428;
-  --accent: #c8a858;
+  --primary: #c8a858;
   --data-positive: #8aa860;
   --data-caution: #c8b868;
   --data-negative: #c08060;
@@ -110,7 +110,7 @@ header {
 }
 
 .brand .sub {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.8125rem;
 }
 
@@ -121,7 +121,7 @@ main {
 }
 
 section {
-  background: var(--panel);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.25rem;
@@ -141,14 +141,14 @@ h2 {
   font-size: 0.8125rem;
   font-weight: 600;
   margin: 0;
-  color: var(--muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
-.count { color: var(--muted); font-size: 0.8125rem; }
+.count { color: var(--text-muted); font-size: 0.8125rem; }
 
-/* Inputs sit on --bg so they read as inset against the --panel section. */
+/* Inputs sit on --bg so they read as inset against the --surface section. */
 #filter {
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--border);
@@ -159,7 +159,7 @@ h2 {
   font-size: 0.875rem;
   min-width: 12rem;
 }
-#filter:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+#filter:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 
 /* ── Shortlist table ── */
 .table-wrap { overflow-x: auto; }
@@ -176,7 +176,7 @@ thead th {
   padding: 0.5rem 0.75rem;
   border-bottom: 2px solid var(--border);
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -190,14 +190,14 @@ tbody tr:last-child td { border-bottom: none; }
 
 td .role-title { font-weight: 500; }
 td .role-title a { color: var(--text); text-decoration: none; }
-td .role-title a:hover { color: var(--accent); text-decoration: underline; }
-td .rationale { color: var(--muted); font-size: 0.8125rem; margin-top: 0.15rem; max-width: 38ch; }
+td .role-title a:hover { color: var(--primary); text-decoration: underline; }
+td .rationale { color: var(--text-muted); font-size: 0.8125rem; margin-top: 0.15rem; max-width: 38ch; }
 
 .num { text-align: center; font-variant-numeric: tabular-nums; }
 
 td.empty-state {
   text-align: center;
-  color: var(--muted);
+  color: var(--text-muted);
   font-style: italic;
   padding: 2rem 1rem;
 }
@@ -206,9 +206,9 @@ td.empty-state {
 .lane {
   display: inline-block;
   padding: 0.1rem 0.55rem;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--primary);
   border-radius: 999px;
-  color: var(--accent);
+  color: var(--primary);
   font-size: 0.75rem;
   white-space: nowrap;
 }
@@ -228,7 +228,7 @@ td.empty-state {
 .score-mid { background: var(--data-caution); }
 .score-bad { background: var(--data-negative); }
 
-.verdict { font-size: 0.8125rem; color: var(--muted); text-transform: capitalize; }
+.verdict { font-size: 0.8125rem; color: var(--text-muted); text-transform: capitalize; }
 .verdict.is-shortlist { color: var(--data-positive); font-weight: 500; }
 
 /* ── Trends charts ── */
@@ -238,7 +238,7 @@ td.empty-state {
   font-size: 0.8125rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 footer {
@@ -246,11 +246,11 @@ footer {
   margin: 0 auto;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border);
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.8125rem;
   text-align: center;
 }
-footer a { color: var(--accent); text-decoration: none; }
+footer a { color: var(--primary); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 
 .synthetic-note {
@@ -258,7 +258,7 @@ footer a:hover { text-decoration: underline; }
   padding: 0.6rem 0.9rem;
   border: 1px dashed var(--border);
   border-radius: 6px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.8125rem;
 }
 
@@ -280,11 +280,11 @@ footer a:hover { text-decoration: underline; }
   line-height: 1;
   cursor: pointer;
 }
-.tab:hover { color: var(--accent); border-color: var(--accent); }
-.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tab:hover { color: var(--primary); border-color: var(--primary); }
+.tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .tab[aria-selected="true"] {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--primary);
+  border-color: var(--primary);
   color: var(--bg);
 }
 
@@ -301,13 +301,13 @@ footer a:hover { text-decoration: underline; }
   letter-spacing: 0.02em;
   cursor: pointer;
 }
-.theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
-.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-toggle:hover { color: var(--primary); border-color: var(--primary); }
+.theme-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-/* Reserve the widest label ("○ Light") so the pill doesn't resize as it cycles
-   auto/light/dark — same sizer trick as the analyze-stock-kpi toggle. */
+/* Reserve the widest label ("◐ System") so the pill doesn't resize as it cycles
+   system/light/dark — same sizer trick as the analyze-stock-kpi toggle. */
 .theme-toggle::before {
-  content: "○ Light";
+  content: "◐ System";
   display: block;
   height: 0;
   overflow: hidden;
@@ -324,6 +324,7 @@ footer a:hover { text-decoration: underline; }
   margin: -1px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }

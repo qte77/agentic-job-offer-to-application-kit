@@ -13,7 +13,7 @@
       // Anti-flash: apply a saved explicit theme before first paint (auto = no attr).
       (function () {
         try {
-          var t = localStorage.getItem("theme");
+          var t = localStorage.getItem("qte77-theme");
           if (t === "light" || t === "dark")
             document.documentElement.setAttribute("data-theme", t);
         } catch (e) {}
