@@ -407,6 +407,35 @@ def from_rss(f: dict[str, str]) -> Iterable[dict[str, Any]]:
         )
 
 
+def from_arbeitnow(a: dict[str, str]) -> Iterable[dict[str, Any]]:
+    """Yield normalized records from the arbeitnow public job-board API (a broad aggregator).
+
+    Aggregators span many employers from one endpoint and expose no department taxonomy, so the
+    job ``tags`` populate ``department`` — that lets the existing pre-filter keep on tags OR title
+    with no ``keep()`` change. ``a`` is the config entry (only the dispatch name); the endpoint is
+    fixed. Attribution (a backlink to arbeitnow.com, ToS §11) is rendered in the dashboard footer.
+
+    Page 1 only (~100 jobs): a deliberate v1 cut honoring the source's courtesy rate limit;
+    bounded pagination is a follow-up if recall proves thin.
+    """
+    data, backend = get_json("https://www.arbeitnow.com/api/job-board-api")
+    for j in data.get("data", []):
+        yield record(
+            id=f"arbeitnow:{j.get('slug', '')}",
+            source="arbeitnow",
+            ats="arbeitnow",
+            company=j.get("company_name", ""),
+            department=", ".join(j.get("tags") or []),
+            fetched_backend=backend,
+            title=j.get("title", ""),
+            location=j.get("location", "") or "",
+            remote=j.get("remote"),
+            url=j.get("url", ""),
+            posted_at=str(j.get("created_at", "") or ""),
+            description=html_to_text(j.get("description", "")),
+        )
+
+
 ATS: dict[str, Callable[[dict[str, str]], Iterable[dict[str, Any]]]] = {
     "greenhouse": from_greenhouse,
     "ashby": from_ashby,
@@ -416,14 +445,22 @@ ATS: dict[str, Callable[[dict[str, str]], Iterable[dict[str, Any]]]] = {
     "personio": from_personio,
 }
 
+# Aggregators are a third source type (one endpoint -> many employers); see ADR-0001/ADR-0002.
+AGGREGATORS: dict[str, Callable[[dict[str, str]], Iterable[dict[str, Any]]]] = {
+    "arbeitnow": from_arbeitnow,
+}
+
 
 # --- run ------------------------------------------------------------------------------
-def load_sources(config_dir: Path) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
-    """Load (feeds, ats) from ``config/seed.json``, else the shipped ``default-seed.json``.
+def load_sources(
+    config_dir: Path,
+) -> tuple[list[dict[str, str]], list[dict[str, str]], list[dict[str, str]]]:
+    """Load (feeds, ats, aggregators) from ``config/seed.json``, else ``default-seed.json``.
 
     The git-ignored ``config/seed.json`` holds your run's sources and wins when present; absent
     it, the tracked ``config/default-seed.json`` (a ToS-vetted default) is used. Fail loud only
-    when neither exists. Keys beyond ``feeds`` / ``ats`` (e.g. ``_blocked``) are ignored.
+    when neither exists. Keys beyond ``feeds`` / ``ats`` / ``aggregators`` (e.g. ``_blocked``,
+    ``_deferred``) are ignored.
     """
     path = config_dir / "seed.json"
     if not path.is_file():
@@ -431,10 +468,10 @@ def load_sources(config_dir: Path) -> tuple[list[dict[str, str]], list[dict[str,
     if not path.is_file():
         raise FileNotFoundError(
             f"missing {config_dir}/seed.json (no default-seed.json either) — "
-            "create it (keys: feeds, ats; see README)",
+            "create it (keys: feeds, ats, aggregators; see README)",
         )
     cfg = json.loads(path.read_text())
-    return cfg.get("feeds", []), cfg.get("ats", [])
+    return cfg.get("feeds", []), cfg.get("ats", []), cfg.get("aggregators", [])
 
 
 def collect(
@@ -518,12 +555,15 @@ def main() -> None:
     settings = AppSettings()
     results = settings.results_dir
     results.mkdir(parents=True, exist_ok=True)
-    feeds, seed = load_sources(settings.config_dir)
+    feeds, seed, aggregators = load_sources(settings.config_dir)
     pat_interest, pat_title = build_patterns(*load_keywords(settings.config_dir))
     sources: list[tuple[str, Callable[[], Iterable[dict[str, Any]]]]] = [
         (f"feed/{f['source']}", (lambda f=f: from_rss(f))) for f in feeds
     ]
     sources += [(f"{c['ats']}/{c['slug']}", (lambda c=c: ATS[c["ats"]](c))) for c in seed]
+    sources += [
+        (f"aggregator/{a['name']}", (lambda a=a: AGGREGATORS[a["name"]](a))) for a in aggregators
+    ]
 
     state = collect(sources, pat_interest, pat_title)
     deduped = dedupe(state["jobs"])

@@ -23,6 +23,8 @@
   `run-with-keywords` workflow (#79).
 - Source ToS/ToU tiers: ADR-0002 classifies ingest sources OK/CAUTION/BLOCKED with per-source
   verified findings + `_date_verified` stamps in `config/default-seed.json` (#95).
+- Broad/recall ingest lane: arbeitnow JSON-aggregator adapter under the loaded `aggregators` key
+  (#94, ToS-tiered in ADR-0002; jobicy/himalayas/remotive stay `_deferred`).
 
 ## Next
 
@@ -35,6 +37,7 @@
 - Trends dashboard UI (#11 PR-B / #71, keyword-only); `pseudonymize-text` (#52, belt-and-suspenders).
 - Full L1 org-settings apply: branch protection, broader SHA allowlist (#54).
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
-- Broaden ingest reach: JSON aggregator adapters (#94, arbeitnow-first; ToS-tiered in ADR-0002),
-  re-probe + add OK-tier companies (#96). Outlook (no issue yet): slug-discovery from public board
-  directories, and keyed aggregators (e.g. Jooble) — both outside the current no-auth/no-key model.
+- Broaden ingest reach: re-probe + add OK-tier companies (#96); more JSON aggregators as their
+  robots/ToS clear (jobicy/himalayas/remotive — #94 deferred follow-ups). Outlook (no issue yet):
+  slug-discovery from public board directories, and keyed aggregators (e.g. Jooble) — both outside
+  the current no-auth/no-key model.

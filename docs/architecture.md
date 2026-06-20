@@ -12,7 +12,7 @@ governed by [ADR-0002](decisions/0002-source-tos-tiers.md).
 
 ```text
 config/seed.json
-  → src/ajoa_kit/ingest.py   (ATS/feed adapters → word-boundary pre-filter → dedupe)
+  → src/ajoa_kit/ingest.py   (ATS / feed / aggregator adapters → word-boundary pre-filter → dedupe)
   → results/jobs-raw.json
   → src/ajoa_kit/chunk.py    → results/batches/ + manifest.json
   → docs/workflows/cc-workflow-relevance.js   (parallel LLM lane-screen)

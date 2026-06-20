@@ -73,6 +73,7 @@ hard-coded; each adapter yields one normalized record shape. Parsing is stdlib-o
 | Workable | `apply.workable.com/api/v1/widget/accounts/<slug>` |
 | Personio | `<slug>.jobs.personio.de/xml?language=en` (XML) |
 | RSS / Atom | any feed URL |
+| Aggregator (arbeitnow) | `www.arbeitnow.com/api/job-board-api` (JSON, multi-employer; backlink per ToS §11) |
 
 These are **read-only** public endpoints. Application *submission* is deliberately
 out of scope: the kit delivers a human-reviewed pre-fill pack, never an automated
