@@ -32,3 +32,6 @@
 - Trends dashboard UI (#11 PR-B / #71, keyword-only); `pseudonymize-text` (#52, belt-and-suspenders).
 - Full L1 org-settings apply: branch protection, broader SHA allowlist (#54).
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
+- Broaden ingest reach: JSON aggregator adapters (#94, arbeitnow-first; ToS-tiered in ADR-0002),
+  re-probe + add OK-tier companies (#96). Outlook (no issue yet): slug-discovery from public board
+  directories, and keyed aggregators (e.g. Jooble) — both outside the current no-auth/no-key model.

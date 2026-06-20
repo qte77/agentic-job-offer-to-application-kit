@@ -1,5 +1,5 @@
 {
-  "_comment": "Shipped default source list — the one git-tracked file in config/ (public board slugs, no PII). Loaded by `ajoa-kit ingest` when the git-ignored config/seed.json is absent; copy + trim into config/seed.json for your own runs. Every `ats`/`feeds` entry is reachability-probed (no-auth tier-1 fetch) and ToS/ToU-vetted. The loader reads ONLY `feeds` + `ats`; `_blocked` (ToS/ToU-excluded) and `_deferred` (ToS-permitting but needs a JSON adapter the kit lacks) are documentation, never loaded.",
+  "_comment": "Shipped default source list — the one git-tracked file in config/ (public board slugs, no PII). Loaded by `ajoa-kit ingest` when the git-ignored config/seed.json is absent; copy + trim into config/seed.json for your own runs. Every `ats`/`feeds` entry is reachability-probed (no-auth tier-1 fetch) and ToS/ToU-vetted. The loader reads ONLY `feeds` + `ats`; `_blocked` (ToS/ToU-excluded) and `_deferred` (ToS-permitting but needs a JSON adapter the kit lacks) are documentation, never loaded. ToS/ToU tiering rationale + per-source findings: docs/decisions/0002-source-tos-tiers.md (ADR-0002).",
   "feeds": [
     {"source": "swissdevjobs", "url": "https://swissdevjobs.ch/rss"},
     {"source": "weworkremotely", "url": "https://weworkremotely.com/remote-jobs.rss"}
@@ -56,28 +56,30 @@
     {"ats": "personio", "slug": "personio", "company": "Personio", "lane": "engineering"}
   ],
   "_blocked": [
-    {"ats": "workable", "slug": "huggingface", "company": "Hugging Face", "lane": "engineering",
+    {"ats": "workable", "slug": "huggingface", "company": "Hugging Face", "lane": "engineering", "_date_verified": "2026-06-19",
      "_reason": "Our widget endpoint is undocumented + apply.workable.com robots.txt ai-train=no (a documented public jobs API exists, but third-party use is a grey zone with no explicit permission). Only ATS where HF resolves."},
-    {"_platform": "recruitee",
+    {"_platform": "recruitee", "_date_verified": "2026-06-19",
      "_reason": "Public /api/offers is unauthenticated, but the separate API-Terms PDF (v2022.1.0) targets integration partners and could not be fully verified — exclude until reviewed."},
-    {"_platform": "remoteok",
-     "_reason": "Aggregator: 403 to automated fetchers + robots.txt ai-train=no, blocks AI crawlers; ToS inaccessible — exclude."},
-    {"_platform": "linkedin",
+    {"_platform": "remoteok", "_date_verified": "2026-06-20",
+     "_reason": "Aggregator: API returns 200 with an in-payload notice requiring a follow backlink, but robots.txt blocks ClaudeBot/GPTBot and declares ai-train=no (AI-crawler-hostile) — exclude. See ADR-0002."},
+    {"_platform": "linkedin", "_date_verified": "2026-06-20",
      "_reason": "User Agreement bars scraping/automation + redistribution; robots.txt blocks job paths — paste only, never ingested."},
-    {"_platform": "indeed",
+    {"_platform": "indeed", "_date_verified": "2026-06-20",
      "_reason": "Publisher API deprecated (301 to partners), RSS 404; ToS + robots.txt (/jobs, /api) bar automation — paste only."},
-    {"_platform": "stepstone",
+    {"_platform": "stepstone", "_date_verified": "2026-06-19",
      "_reason": "No public read API (api.stepstone.com is inbound-only); ToS bars scraping; robots.txt disallows /public-api + parameterized URLs — paste only."},
-    {"_platform": "jobs.ch",
-     "_reason": "No public API/RSS (JobCloud); ToS bars crawlers/scrapers/automation; robots.txt disallows /api + detail pages — paste only."}
+    {"_platform": "jobs.ch", "_date_verified": "2026-06-19",
+     "_reason": "No public API/RSS (JobCloud); ToS bars crawlers/scrapers/automation; robots.txt disallows /api + detail pages — paste only."},
+    {"_platform": "google-for-jobs", "_date_verified": "2026-06-20",
+     "_reason": "Search surface, not a data source — no public candidate-side listings API; the only path is scraping SERPs, which violates Google ToS + robots.txt (Disallow: /search). See ADR-0002."}
   ],
   "_deferred": [
     {"_note": "Public JSON aggregators — usable only after a JSON-feed adapter exists (the kit ships only an RSS adapter + the 6 ATS adapters) AND each source's condition below is met. Tracked as a follow-up issue.",
      "sources": [
-       {"name": "arbeitnow", "url": "https://www.arbeitnow.com/api/job-board-api", "_tos": "requires a backlink to arbeitnow.com; broad commercial-use clause ambiguous for derived analytics"},
-       {"name": "jobicy", "url": "https://jobicy.com/api/v2/remote-jobs", "_tos": "commercial use needs Jobicy approval; robots ai-train=yes (permissive)"},
-       {"name": "himalayas", "url": "https://himalayas.app/jobs/api", "_tos": "commercial use needs authorization; verify himalayas.app/docs API terms"},
-       {"name": "remotive", "url": "https://remotive.com/api/remote-jobs", "_tos": "free API is traffic-back-only; keyword-trend use likely needs the paid tier (~$5k/mo); max 4 req/day; attribution required"}
+       {"name": "arbeitnow", "_date_verified": "2026-06-20", "url": "https://www.arbeitnow.com/api/job-board-api", "_tos": "robots-allowed API (200, x-ratelimit-limit:5); ToS §11 requires a backlink to arbeitnow.com. OK to adopt with attribution — promote first (#94, ADR-0002)."},
+       {"name": "jobicy", "_date_verified": "2026-06-20", "url": "https://jobicy.com/api/v2/remote-jobs", "_tos": "open API (ai-train=yes, full JD) BUT robots.txt Disallow:/api/ + no redistribution to other aggregators + asks <=~1 poll/hr — robots conflict, deferred (ADR-0002)."},
+       {"name": "himalayas", "_date_verified": "2026-06-20", "url": "https://himalayas.app/jobs/api", "_tos": "public /jobs/api returns 200 unauth, but general ToS §30 requires prior written approval for automated tools; no dedicated API-ToS grant (ADR-0002)."},
+       {"name": "remotive", "_date_verified": "2026-06-20", "url": "https://remotive.com/api/remote-jobs", "_tos": "robots.txt Disallow:/api/*; attribution (follow link + name) + <=4 req/day + 24h delay; private paid API for heavy use, no public price (ADR-0002)."}
      ]}
   ]
 }

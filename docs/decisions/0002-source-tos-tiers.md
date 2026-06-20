@@ -1,0 +1,87 @@
+# ADR-0002 — Source ToS/ToU tiers for ingest adapters
+
+**Status:** Accepted (2026-06-20)
+
+**Relates to:** [ADR-0001](0001-backend-cli-ui-separation.md) (Layer 1 sourcing model + PII gate);
+the safe/unsafe delivery boundary in [research.md §Delivery](../research.md#delivery); the shipped
+[config/default-seed.json](../../config/default-seed.json) registry (#10). Issues #94 (aggregator
+adapters), #95 (this ADR), #96 (company re-probe).
+
+## Context
+
+The kit ingests job descriptions by *reading* public, no-auth board endpoints (ADR-0001 Layer 1).
+Which sources are safe to ship in `config/default-seed.json` was a recurring judgement scattered
+across `_reason` / `_tos` strings in the seed file and prose in `research.md`. This ADR makes the
+tiering explicit and records both the legal backbone and a 2026-06-20 empirical re-verification
+(read-only `polyfetch` probes of each API + `robots.txt` + ToS page).
+
+The loader (`ingest.load_sources`) consumes **only** `feeds` + `ats`; `_blocked` and `_deferred` are
+documentation, never loaded — so this ADR governs what graduates *into* `feeds` / `ats`.
+
+## Decision
+
+Classify every candidate source into one of three tiers. Only **OK** sources ship in `feeds` / `ats`.
+
+### Tier table
+
+| Tier | Sources | Basis |
+| --- | --- | --- |
+| **OK — ship/ingest** | Greenhouse, Lever, Ashby, Personio (no-auth public GET board APIs); RSS/Atom feeds (built for consumption) | Documented public endpoints; Lever README states postings "may be scraped by third parties" |
+| **CAUTION — keep in `_blocked` / `_deferred`, do not ship** | Recruitee, Workable; JSON aggregators jobicy / himalayas / remotive | API exists but a robots/ToS conflict is unresolved (see per-source) |
+| **BLOCKED — never ingest (paste-only or structurally impossible)** | LinkedIn, Indeed, StepStone, jobs.ch, RemoteOK, Google for Jobs | ToS bars automation, robots disallows job/api paths, or there is no public listings API |
+
+### Per-source findings (read-only polyfetch probes, 2026-06-20)
+
+- **arbeitnow** — *cleanest aggregator.* API is robots-allowed, returns HTTP 200 with
+  `x-ratelimit-limit: 5`; ToS §11 requires a link back to arbeitnow.com. Adopt in #94 with a source
+  backlink (attribution).
+- **jobicy** — open API (`ai-train=yes`, full JD) **but** `robots.txt` `Disallow: /api/` + asks for
+  ≤~1 poll/hour + bans redistribution to other aggregators. Robots conflict → CAUTION, not shipped.
+- **himalayas** — public `/jobs/api` returns 200 unauthenticated, but the general ToS §30 requires
+  *prior written approval* for automated tools; no dedicated API-ToS grant → CAUTION.
+- **remotive** — `robots.txt` `Disallow: /api/*`; ToS requires attribution (follow link + name) +
+  ≤4 req/day + a 24h delay, with a private *paid* API for heavier use → GATED (deferred).
+- **RemoteOK** — JSON API returns 200 with an in-payload notice requiring a *follow* backlink; but
+  `robots.txt` blocks `ClaudeBot` / `GPTBot` and declares `ai-train=no` → BLOCKED (AI-crawler-hostile).
+- **Google for Jobs** — a search surface, **not** a data source: no public candidate-side listings
+  API. The only path is scraping SERPs, which violates Google ToS + `robots.txt` (`Disallow: /search`)
+  → BLOCKED.
+- **LinkedIn / Indeed** — `robots.txt` disallows `/jobs*` + `/api/*`, and the User Agreement / ToS bar
+  automation (see research.md §Delivery) → paste-only, BLOCKED.
+
+### Legal backbone
+
+Reading a public, no-auth endpoint is not "unauthorized access" under the US CFAA (Van Buren, 2021;
+hiQ v. LinkedIn, 9th Cir. 2022). Aggregate keyword counts are non-copyrightable facts (Feist) —
+verbatim JD text is not, which is why the public dashboard ships only aggregate `{week, counts}` data
+(ADR-0001 PII gate + #11). Full citations and the submit-side boundary live in
+[research.md §Delivery](../research.md#delivery); this ADR does not restate them.
+
+## Consequences
+
+- `config/default-seed.json` `_comment` points here; `_blocked` gains Google for Jobs, and RemoteOK's
+  `_reason` is corrected to match the probe (API 200 + attribution; AI-crawlers blocked — not a blanket
+  403). Every `_blocked` / `_deferred` entry carries a `_date_verified` stamp (date of the last
+  ToS/reachability check). crewai / latticeflow stay `_blocked` via the #96 re-probe, where their
+  reasons are verified.
+- #94 builds the **arbeitnow** adapter first (OK with a backlink); jobicy / himalayas / remotive stay
+  `_deferred` pending the robots/ToS resolutions above.
+- The kit stays **no-auth / no-key**; keyed aggregators are out of model (see Out of scope).
+
+## Out of scope (future outlook)
+
+- **Slug-discovery** (auto-deriving board tokens from public directories) — such directories are
+  unofficial (their own ToS/quality risk) and it stays per-board underneath, so it only moves curation
+  from a JSON file to a scraper. Deferred (roadmap outlook), not pursued now.
+- **Jooble** — has an official API, but it is **keyed + commercial ToS**, outside the kit's no-auth
+  model. Outlook only.
+- **Operational gaps:** `robots.txt` parsing/enforcement in the fetch path, plus a courtesy
+  rate-limit / crawl-delay — tracked as open gaps, not yet implemented.
+
+## References
+
+- [ADR-0001](0001-backend-cli-ui-separation.md) — four-layer split, Layer 1 sourcing model, PII gate.
+- [research.md §Delivery](../research.md#delivery) — safe/unsafe boundary, per-platform READ/SUBMIT
+  analysis, CFAA/GDPR citations, and primary sources (retrieved 2026-06-14).
+- [config/default-seed.json](../../config/default-seed.json) — the shipped registry this ADR governs.
+- Kit issues #10 (sources catalog), #94 (aggregator adapters), #95 (this ADR), #96 (company re-probe).
