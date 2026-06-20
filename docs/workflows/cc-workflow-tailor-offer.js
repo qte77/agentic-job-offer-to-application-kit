@@ -68,6 +68,33 @@ const strField = (name, desc) => ({
   required: [name],
 })
 
+// Match schema: the prose assessment PLUS a structured must_haves array (one object per JD
+// must-have). strField() only builds single-string schemas, so this is hand-written. must_haves
+// is OPTIONAL (not in `required`) so a refusal or older run still validates on `match` alone.
+const matchSchema = {
+  type: 'object',
+  properties: {
+    match: { type: 'string', description: 'markdown match assessment' },
+    must_haves: {
+      type: 'array',
+      description: "the JD's must-have requirements and whether the candidate covers each",
+      items: {
+        type: 'object',
+        properties: {
+          requirement: { type: 'string', description: 'one must-have requirement from the JD' },
+          covered: { type: 'boolean', description: 'true if the candidate genuinely covers it' },
+          evidence: {
+            type: ['string', 'null'],
+            description: 'short citation from the evidence library / CV, or null if a gap',
+          },
+        },
+        required: ['requirement', 'covered'],
+      },
+    },
+  },
+  required: ['match'],
+}
+
 // Writing-style directive for an artifact (blank unless `style` was passed). #16.
 const styleLine = (k) =>
   STYLE[k] ? `\n\nSTYLE — write in the candidate's configured voice:\n${STYLE[k]}` : ''
@@ -80,8 +107,13 @@ const match = await agent(
 
 Assess this ONE offer against the candidate. Write a concise markdown "match assessment": the
 JD's real must-haves and nice-to-haves, which the candidate genuinely covers (cite evidence),
-and which they do not. Be strict and honest — no overstatement. Return it as "match".`,
-  { schema: strField('match', 'markdown match assessment'), phase: 'Match', label: 'match' },
+and which they do not. Be strict and honest — no overstatement. Return the prose as "match".
+
+Also return "must_haves": an array with one object per JD must-have requirement —
+{ requirement: the must-have (verbatim or tightly paraphrased), covered: true/false for whether the
+candidate genuinely meets it, evidence: a short citation from the evidence library / CV, or null if
+it is a gap }.`,
+  { schema: matchSchema, phase: 'Match', label: 'match' },
 )
 
 phase('Tailor')
@@ -156,6 +188,7 @@ return {
   lane,
   offer_id: offerId,
   match: match.match,
+  must_haves: match.must_haves,
   cv: cv.cv,
   cover_letter: cover.cover_letter,
   gap_report: gap.gap_report,

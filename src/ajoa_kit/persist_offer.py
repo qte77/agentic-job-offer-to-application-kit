@@ -5,9 +5,9 @@ returned JSON into on-disk markdown artifacts a human reviews before submitting.
 
     python -m ajoa_kit.persist_offer <path-to-workflow-result.json> [--slug SLUG]
 
-Writes ``results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md``. The
-results root comes from ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate
-workspace works.
+Writes ``results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md`` (plus a
+``coverage-report.md`` when the pack carries ``must_haves``). The results root comes from
+``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate workspace works.
 
 No submission, no auto-apply: the prefill pack is a human-review artifact only — it lists
 application fields for a person to fill and submit manually, never a script or link that
@@ -21,6 +21,7 @@ import json
 import re
 from pathlib import Path
 
+from ajoa_kit.coverage import coverage_summary
 from ajoa_kit.settings import AppSettings
 
 # (pack key, output filename, rendered H1 heading) — the order files are written in.
@@ -81,6 +82,8 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     """Write the validated pack to ``results_dir/offers/<safe-slug>/``.
 
     Validation happens before any write, so an incomplete pack leaves the disk untouched.
+    When the pack carries ``must_haves``, a ``coverage-report.md`` is also written — outside
+    the all-or-nothing artifact set, so packs without it are unaffected.
 
     Args:
         pack: The tailor result.
@@ -95,6 +98,11 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     offer_dir.mkdir(parents=True, exist_ok=True)
     for filename, content in files:
         (offer_dir / filename).write_text(content)
+    # Optional 6th artifact — kept OUT of ARTIFACTS so render()'s all-or-nothing
+    # validation never requires it (older packs carry no must_haves).
+    if pack.get("must_haves"):
+        body = coverage_summary(pack["must_haves"], pack.get("gap_report", ""))
+        (offer_dir / "coverage-report.md").write_text(f"# Coverage report\n\n{body}")
     return offer_dir
 
 

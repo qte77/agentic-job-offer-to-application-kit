@@ -17,7 +17,15 @@ dependencies = [
 ajoa-kit = "ajoa_kit.__main__:main"
 
 [dependency-groups]
-dev = ["pytest>=9.1.0", "pytest-cov>=7.0", "ruff>=0.6", "scriv[toml]>=1.8", "pyright>=1.1.400", "complexipy>=5.6.1"]
+dev = [
+    "pytest>=9.1.0",
+    "pytest-cov>=7.0",
+    "ruff>=0.6",
+    "scriv[toml]>=1.8",
+    "pyright>=1.1.400",
+    "complexipy>=5.6.1",
+    "hypothesis>=6.151.9",
+]
 
 [build-system]
 requires = ["hatchling"]
