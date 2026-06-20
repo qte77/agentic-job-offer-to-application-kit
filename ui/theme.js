@@ -9,16 +9,16 @@
   var btn = document.getElementById("theme-toggle");
   if (!btn) return;
 
-  var ORDER = ["auto", "light", "dark"];
-  var WORD = { auto: "Auto", light: "Light", dark: "Dark" };
-  var GLYPH = { auto: "◐", light: "○", dark: "●" };
+  var ORDER = ["system", "light", "dark"];
+  var WORD = { system: "System", light: "Light", dark: "Dark" };
+  var GLYPH = { system: "◐", light: "○", dark: "●" };
 
   function current() {
     try {
-      var t = localStorage.getItem("theme");
-      return t === "light" || t === "dark" ? t : "auto";
+      var t = localStorage.getItem("qte77-theme");
+      return t === "light" || t === "dark" ? t : "system";
     } catch (e) {
-      return "auto";
+      return "system";
     }
   }
 
@@ -29,8 +29,8 @@
       root.removeAttribute("data-theme");
     }
     try {
-      if (mode === "auto") localStorage.removeItem("theme");
-      else localStorage.setItem("theme", mode);
+      if (mode === "system") localStorage.removeItem("qte77-theme");
+      else localStorage.setItem("qte77-theme", mode);
     } catch (e) {}
     btn.textContent = GLYPH[mode] + " " + WORD[mode];
     btn.setAttribute("aria-label", "Color theme: " + WORD[mode] + " (click to change)");
