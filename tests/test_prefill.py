@@ -7,6 +7,9 @@ options. No getter/constant trivia. The network fetch is a thin wrapper, unteste
 
 from __future__ import annotations
 
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
 from ajoa_kit import prefill
 
 GH_JOB = {
@@ -64,3 +67,26 @@ def test_render_marks_required_and_lists_options_only_where_present() -> None:
     assert "(required)" in lines["First Name"]
     assert "Yes" in lines["Are you authorized to work?"]  # select options surfaced
     assert "(required)" not in lines["LinkedIn"]  # optional field not marked required
+
+
+class TestRenderFieldsProperties:
+    _LINE = st.text().filter(lambda s: "\n" not in s and "\r" not in s)
+    _FIELD = st.fixed_dictionaries(
+        {},
+        optional={
+            "label": _LINE,
+            "name": _LINE,
+            "type": _LINE,
+            "required": st.booleans(),
+            "values": st.lists(_LINE),
+        },
+    )
+
+    # Reason: pure renderer over realistic (partial) field dicts; deadline off.
+    @given(fields=st.lists(_FIELD, max_size=12))
+    @settings(deadline=None)
+    def test_one_bullet_per_field_never_raises(self, fields: list[dict]) -> None:
+        out = prefill.render_fields(fields)
+        assert isinstance(out, str)
+        bullets = [ln for ln in out.splitlines() if ln.startswith("- ")]
+        assert len(bullets) == len(fields)

@@ -95,7 +95,8 @@ TITLE_ROLES = [
 ]
 
 # --- helpers --------------------------------------------------------------------------
-_TAG = re.compile(r"<[^>]+>")
+# Quote-aware so a '>' inside a quoted attribute value doesn't end the tag early.
+_TAG = re.compile(r"<(?:\"[^\"]*\"|'[^']*'|[^'\">])*>")
 _WS = re.compile(r"\s+")
 _TRACKING = {"gclid", "fbclid", "mc_cid", "mc_eid", "igshid", "ref_src"}
 
