@@ -75,7 +75,7 @@ source = ["ajoa_kit"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 41
+fail_under = 58
 
 # Changelog fragments — each PR adds one under changelog.d/ via `make
 # changelog_new`; `make changelog_preview` shows the assembled entry;
