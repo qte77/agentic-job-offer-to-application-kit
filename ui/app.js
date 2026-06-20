@@ -3,11 +3,13 @@
 // issue #11 skeleton; the live version swaps data/demo.json for pseudonymized
 // data fetched from the `data` branch at runtime.
 
-/** @type {{lanes:{key:string,label:string}[], shortlist:any[], trends:{weeks:string[], series:{keyword:string,counts:number[]}[]}, generated:string}|null} */
+/** @type {{lanes:{key:string,label:string}[], shortlist:any[], trends:{week:string,counts:Record<string,number>}[], generated:string}|null} */
 let data = null;
 let laneLabel = {};
-/** @type {any} Chart.js instance (rebuilt on theme flip to re-read tokens). */
-let trendsChart = null;
+/** @type {any} Chart.js instances (rebuilt on theme flip to re-read tokens). */
+let lineChart = null;
+let barChart = null;
+let trendsRendered = false; // charts in a hidden tab panel size to 0 → render on first reveal
 
 const cssVar = (name) =>
   getComputedStyle(document.body).getPropertyValue(name).trim();
@@ -61,33 +63,47 @@ function renderShortlist(filter = "") {
     .join("");
 }
 
-// ── Keyword trends (Chart.js) ──
-function renderTrends(trends) {
-  const canvas = document.getElementById("trends-chart");
-  if (!canvas || typeof Chart === "undefined") return;
+// ── Keyword trends (vendored Chart.js — no CDN) ──
+// Categorical zero-blue palette from the data arc + accent (re-read each render so a theme flip
+// repaints the charts).
+const chartPalette = () => [
+  cssVar("--data-positive"),
+  cssVar("--data-alt"),
+  cssVar("--data-caution"),
+  cssVar("--accent"),
+  cssVar("--data-negative"),
+];
 
-  // Categorical zero-blue palette from the data arc + accent.
-  const palette = [
-    cssVar("--data-positive"),
-    cssVar("--data-alt"),
-    cssVar("--data-caution"),
-    cssVar("--accent"),
-    cssVar("--data-negative"),
-  ];
+// Pivot the {week,counts}[] log into chart shapes. `keys` is the union of keywords across weeks,
+// 0-filled and ordered by latest-week volume (desc) so colors and the bar top-N are stable.
+function pivot(records) {
+  const labels = records.map((r) => r.week);
+  const latest = records.length ? records[records.length - 1].counts : {};
+  const keys = [...new Set(records.flatMap((r) => Object.keys(r.counts)))].sort(
+    (a, b) => (latest[b] || 0) - (latest[a] || 0) || a.localeCompare(b),
+  );
+  return { labels, latest, keys };
+}
+
+function renderLine(records) {
+  const canvas = document.getElementById("trends-line");
+  if (!canvas || typeof Chart === "undefined") return;
+  const { labels, keys } = pivot(records);
+  const pal = chartPalette();
   const grid = cssVar("--border");
   const tick = cssVar("--muted");
   const label = cssVar("--text");
 
-  if (trendsChart) trendsChart.destroy();
-  trendsChart = new Chart(canvas, {
+  if (lineChart) lineChart.destroy();
+  lineChart = new Chart(canvas, {
     type: "line",
     data: {
-      labels: trends.weeks,
-      datasets: trends.series.map((s, i) => ({
-        label: s.keyword,
-        data: s.counts,
-        borderColor: palette[i % palette.length],
-        backgroundColor: palette[i % palette.length],
+      labels,
+      datasets: keys.map((k, i) => ({
+        label: k,
+        data: records.map((r) => r.counts[k] || 0),
+        borderColor: pal[i % pal.length],
+        backgroundColor: pal[i % pal.length],
         tension: 0.3,
         pointRadius: 2,
         borderWidth: 2,
@@ -106,12 +122,87 @@ function renderTrends(trends) {
   });
 }
 
+function renderBar(records) {
+  const canvas = document.getElementById("trends-bar");
+  if (!canvas || typeof Chart === "undefined") return;
+  const { latest, keys } = pivot(records);
+  const top = keys.slice(0, 8);
+  const pal = chartPalette();
+  const grid = cssVar("--border");
+  const tick = cssVar("--muted");
+
+  if (barChart) barChart.destroy();
+  barChart = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: top,
+      datasets: [
+        {
+          label: "latest week",
+          data: top.map((k) => latest[k] || 0),
+          backgroundColor: top.map((_, i) => pal[i % pal.length]),
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
+        y: { grid: { color: grid }, ticks: { color: tick } },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+function renderTrends() {
+  if (!data) return;
+  renderLine(data.trends);
+  renderBar(data.trends);
+  trendsRendered = true;
+}
+
+// ── Tabs (WAI-ARIA tabs pattern: roving tabindex + arrow keys) ──
+function initTabs() {
+  const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+  function select(tab) {
+    tabs.forEach((t) => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      const panel = document.getElementById(t.getAttribute("aria-controls"));
+      if (panel) panel.hidden = !on;
+    });
+    // Charts in a hidden panel render at 0 size — (re)render on first reveal of the trends tab.
+    if (tab.getAttribute("aria-controls") === "trends-section" && !trendsRendered) renderTrends();
+  }
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => select(tab));
+    tab.addEventListener("keydown", (e) => {
+      const i = tabs.indexOf(tab);
+      let j = -1;
+      if (e.key === "ArrowRight") j = (i + 1) % tabs.length;
+      else if (e.key === "ArrowLeft") j = (i - 1 + tabs.length) % tabs.length;
+      if (j < 0) return;
+      e.preventDefault();
+      tabs[j].focus();
+      select(tabs[j]);
+    });
+  });
+}
+
 // ── Init ──
 async function init() {
-  // theme.js owns the toggle (sets data-theme on <html>); rebuild the chart when it
-  // flips, since Chart.js caches the CSS-variable colors at construction time.
+  // theme.js owns the toggle (sets data-theme on <html>); rebuild the charts when it flips, since
+  // Chart.js caches the CSS-variable colors at construction time. When the trends tab is hidden,
+  // defer to its next reveal — a hidden canvas would size to 0.
   document.addEventListener("themechange", () => {
-    if (data) renderTrends(data.trends);
+    if (!data) return;
+    trendsRendered = false;
+    if (!document.getElementById("trends-section").hidden) renderTrends();
   });
 
   data = await fetch("data/demo.json").then((r) => r.json());
@@ -123,7 +214,7 @@ async function init() {
     .getElementById("filter")
     .addEventListener("input", (e) => renderShortlist(e.target.value));
 
-  renderTrends(data.trends);
+  initTabs();
 }
 
 document.addEventListener("DOMContentLoaded", init);

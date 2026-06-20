@@ -57,7 +57,12 @@
         dashboard (issue #11) fetches pseudonymized data and is gated on the PII helper (#52).
       </p>
 
-      <section id="shortlist-section" aria-labelledby="shortlist-h">
+      <div class="tabs" role="tablist" aria-label="Dashboard views">
+        <button id="tab-shortlist" class="tab" type="button" role="tab" aria-selected="true" aria-controls="shortlist-section" tabindex="0">Shortlist</button>
+        <button id="tab-trends" class="tab" type="button" role="tab" aria-selected="false" aria-controls="trends-section" tabindex="-1">Market trends</button>
+      </div>
+
+      <section id="shortlist-section" role="tabpanel" aria-labelledby="tab-shortlist" tabindex="0">
         <div class="section-head">
           <h2 id="shortlist-h">Tailored shortlist</h2>
           <input
@@ -84,13 +89,18 @@
         </div>
       </section>
 
-      <section id="trends-section" aria-labelledby="trends-h">
+      <section id="trends-section" role="tabpanel" aria-labelledby="tab-trends" tabindex="0" hidden>
         <div class="section-head">
           <h2 id="trends-h">Job-market keyword trends</h2>
-          <span class="count">per ISO week · click legend to toggle</span>
+          <span class="count">aggregate keyword counts per ISO week · click legend to toggle</span>
         </div>
-        <div class="chart-wrap">
-          <canvas id="trends-chart"></canvas>
+        <div class="chart-block">
+          <h3 class="chart-title">Keyword frequency over time</h3>
+          <div class="chart-wrap"><canvas id="trends-line"></canvas></div>
+        </div>
+        <div class="chart-block">
+          <h3 class="chart-title">Top keywords — latest week</h3>
+          <div class="chart-wrap"><canvas id="trends-bar"></canvas></div>
         </div>
       </section>
     </main>
@@ -100,6 +110,8 @@
       <a href="https://github.com/qte77/agentic-job-offer-to-application-kit"
         >agentic-job-offer-to-application-kit</a
       >
+      · trends data incl.
+      <a href="https://www.arbeitnow.com" target="_blank" rel="noopener">arbeitnow</a>
       · EyeRest brand · no PII
     </footer>
   </body>

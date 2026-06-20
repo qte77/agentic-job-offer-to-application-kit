@@ -18,12 +18,26 @@ import json
 from datetime import date
 from typing import TYPE_CHECKING
 
+from pydantic import BaseModel
+
 from ajoa_kit.ingest import build_patterns, load_keywords
 from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
     import re
     from pathlib import Path
+
+
+class WeekCounts(BaseModel):
+    """One ISO week's aggregate keyword frequencies — the publishable trends contract.
+
+    The single typed shape written to ``results/trends.ndjson`` and read by the dashboard's pivot
+    layer: ``{week, counts}`` where ``counts`` is ``{keyword: document-frequency}``. No JD content,
+    company, title, or per-posting row ever appears here (ADR-0001 PII gate).
+    """
+
+    week: str
+    counts: dict[str, int]
 
 
 def extract_counts(jobs: list[dict], pattern: re.Pattern[str]) -> dict[str, int]:
@@ -45,7 +59,9 @@ def upsert_week(path: Path, week: str, counts: dict[str, int]) -> None:
 
     Idempotent: re-running for the same ISO week overwrites that week's record.
     """
-    record = json.dumps({"week": week, "counts": counts}, ensure_ascii=False, sort_keys=True)
+    record = json.dumps(
+        WeekCounts(week=week, counts=counts).model_dump(), ensure_ascii=False, sort_keys=True
+    )
     kept: list[str] = []
     if path.is_file():
         # Split on "\n" only — NOT str.splitlines(), which also breaks on Unicode line

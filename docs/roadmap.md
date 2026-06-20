@@ -21,6 +21,9 @@
 - Keyword-trend pipeline: runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
   `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A); reusable
   `run-with-keywords` workflow (#79).
+- Two-tab trends dashboard (#11 PR-B): static no-build gh-pages page — Tab A synthetic shortlist,
+  Tab B real aggregate `{week,counts}` keyword timeline (line + bar, vendored Chart.js); `WeekCounts`
+  pydantic contract.
 - Source ToS/ToU tiers: ADR-0002 classifies ingest sources OK/CAUTION/BLOCKED with per-source
   verified findings + `_date_verified` stamps in `config/default-seed.json` (#95).
 - Broad/recall ingest lane: arbeitnow JSON-aggregator adapter under the loaded `aggregators` key
@@ -34,7 +37,8 @@
 ## Later — hardening & reach
 
 - Per-adapter error/edge handling + error-branch test coverage (#53).
-- Trends dashboard UI (#11 PR-B / #71, keyword-only); `pseudonymize-text` (#52, belt-and-suspenders).
+- `pseudonymize-text` (#52, belt-and-suspenders) for the live dashboard data feed. #71 Vite not
+  adopted — the dashboard stays no-build.
 - Full L1 org-settings apply: branch protection, broader SHA allowlist (#54).
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
 - Broaden ingest reach: re-probe + add OK-tier companies (#96); more JSON aggregators as their
