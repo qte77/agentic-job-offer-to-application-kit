@@ -116,6 +116,14 @@ relying on any claim. Tracked in #8.
 Across all four, **submission is gated behind an employer-issued key** a candidate
 tool cannot hold — there is no unauthenticated candidate-side submit endpoint.
 
+**Application-question schema (the prefill pack's input, #56):** only **Greenhouse** exposes it
+unauth (`?questions=true`, which the docs invite you to use). Verified 2026-06-20: **Ashby's** public
+`posting-api/job-board/<slug>` GET returns job metadata + an `applyUrl` only (keys: `title`,
+`location`, `department`, `descriptionHtml`, `applyUrl`, … ) — **no** embedded form/question schema
+(the form renders behind the apply flow). Lever/Workable are submit-key-gated; Recruitee/Personio
+unverified. So `prefill.py` fetches the live schema for Greenhouse and falls back to `GENERIC_FIELDS`
+for every other ATS.
+
 ### LinkedIn / Indeed
 
 Both prohibit automation on **their own** platforms: LinkedIn's User Agreement §8.2
@@ -140,8 +148,9 @@ the line the kit stays behind.
 
 - **Personio, Recruitee:** not verified this cycle; assumed employer-keyed submit by
   pattern. Check their developer docs before trusting either.
-- **Ashby / Workable question schema:** whether the *application question* schema is
-  fetchable without an employer key (as Greenhouse's is) is unconfirmed.
+- **Workable question schema:** whether the *application question* schema is fetchable without an
+  employer key (as Greenhouse's is) is unconfirmed. (**Ashby** verified 2026-06-20 — *not* exposed;
+  see the application-question schema note above.)
 - **Non-US computer-misuse law** (UK CMA 1990; EU Directive 2013/40; DE StGB §202a; CH
   StGB Art. 143bis): no primary-source claims survived verification. These generally
   criminalise access to systems one is *not authorised* to access; reading a documented
