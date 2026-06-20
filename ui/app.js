@@ -122,7 +122,8 @@ function renderLine(records) {
   });
 }
 
-// Vertical grouped bars: one cluster per ISO week, one bar per keyword (side by side).
+// Vertical stacked bars: one column per ISO week, keywords piled. Each week is its own counts
+// (no running total across weeks).
 function renderBar(records) {
   const canvas = document.getElementById("trends-bar");
   if (!canvas || typeof Chart === "undefined") return;
@@ -148,8 +149,8 @@ function renderBar(records) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { grid: { color: grid }, ticks: { color: tick } },
-        y: { beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
+        x: { stacked: true, grid: { color: grid }, ticks: { color: tick } },
+        y: { stacked: true, beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
       },
       plugins: { legend: { labels: { color: label } } },
     },
