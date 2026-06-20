@@ -2,7 +2,8 @@
 // applied as data-theme on <html>. Mirrors qte77/qte77.github.io/assets/theme.js.
 // Dispatches a "themechange" event so the dashboard can rebuild Chart.js, which
 // caches the CSS-variable colors at construction time. Keyboard: native <button>;
-// the current state is announced via a dynamic aria-label.
+// the current state is a dynamic aria-label, and each change is announced via the
+// #theme-status polite live region (a focused button's changed label is not re-read).
 (function () {
   var root = document.documentElement;
   var btn = document.getElementById("theme-toggle");
@@ -42,5 +43,9 @@
   btn.addEventListener("click", function () {
     var next = ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length];
     apply(next);
+    // Announce the new mode to screen readers — focus stays on the button, so the
+    // changed aria-label alone is not re-read; the polite live region carries the update.
+    var status = document.getElementById("theme-status");
+    if (status) status.textContent = "Theme set to " + WORD[next];
   });
 })();

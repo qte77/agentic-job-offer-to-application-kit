@@ -271,6 +271,30 @@ footer a:hover { text-decoration: underline; }
 .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
 .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* Reserve the widest label ("○ Light") so the pill doesn't resize as it cycles
+   auto/light/dark — same sizer trick as the analyze-stock-kpi toggle. */
+.theme-toggle::before {
+  content: "○ Light";
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+/* Screen-reader-only: visually hidden but exposed to assistive tech (the theme
+   live region #theme-status announces the selected mode on change). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (max-width: 640px) {
   main { padding: 0.75rem; }
   section { padding: 0.9rem; }
