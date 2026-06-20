@@ -27,12 +27,14 @@ the synthetic `examples/alexis-doe/` workspace is committed.
 
 ## US4 — Tailor per offer
 
-As a candidate, I want a tailored CV + cover letter + human-review prefill pack per shortlisted offer,
-so I apply faster without auto-submitting anything.
+As a candidate, I want a tailored CV + cover letter + human-review prefill pack — plus a check of how
+well I cover the JD's must-haves — per shortlisted offer, so I apply faster without auto-submitting
+anything.
 
 Accept: `cc-workflow-tailor-offer.js` → `ajoa-kit persist-offer` writes
-`results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md`; `ajoa-kit ats-check` gates
-the CV for parse-safety; no automated submission.
+`results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md` (plus `coverage-report.md`,
+a must-have / covered-gap / evidence table, when the match returns `must_haves`, #55); `ajoa-kit
+ats-check` gates the CV for parse-safety; no automated submission.
 
 ## US5 — Tailor in my voice
 

@@ -94,6 +94,7 @@ the repo (see [docs/architecture.md §Data layout](docs/architecture.md#data-lay
 - [docs/roadmap.md](docs/roadmap.md) — what's built, what's next, what's deferred
 - [docs/userstory.md](docs/userstory.md) — user stories with acceptance criteria
 - [docs/research.md](docs/research.md) — fetching, ATS, and positioning research
+- Decisions (ADRs): [ADR-0001 layering](docs/decisions/0001-backend-cli-ui-separation.md) · [ADR-0002 source ToS tiers](docs/decisions/0002-source-tos-tiers.md)
 - [examples/alexis-doe/](examples/alexis-doe/) — synthetic end-to-end example
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to set up, test, and open a PR
 - [AGENTS.md](AGENTS.md) — operating rules for AI coding agents
