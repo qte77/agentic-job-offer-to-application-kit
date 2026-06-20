@@ -10,6 +10,9 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
 from ajoa_kit import ingest
 from ajoa_kit.ingest import is_interesting, is_role_title, keep
 
@@ -66,3 +69,46 @@ def test_custom_keyword_set_matches_on_word_boundary() -> None:
     # 'rust' inside 'Trust' is not a whole word -> must NOT match
     assert not is_interesting("Trust & Safety Lead", pat_interest)
     assert is_role_title("Rust Developer", pat_title)
+
+
+def test_punctuation_terms_match_as_whole_tokens() -> None:
+    pat, _ = ingest.build_patterns(["c++", ".net", "node.js", "ci-cd", "c#"], [])
+    assert is_interesting("Senior C++ Engineer", pat)
+    assert is_interesting("Built on .NET 8", pat)
+    assert is_interesting("Node.js backend", pat)
+    assert is_interesting("owns the CI-CD pipeline", pat)
+    assert is_interesting("strong C# skills", pat)
+
+
+def test_single_letter_term_not_matched_inside_punctuated_token() -> None:
+    pat, _ = ingest.build_patterns(["c"], [])
+    assert not is_interesting("C++ developer", pat)  # 'c' must not leak into 'c++'
+    assert is_interesting("the C language", pat)  # but matches as a standalone token
+
+
+def test_plain_word_boundary_allows_trailing_sentence_punctuation() -> None:
+    pat, _ = ingest.build_patterns(["python", "go"], [])
+    assert is_interesting("We use Python.", pat)  # trailing period is still a boundary
+    assert is_interesting("ships in Go, daily", pat)  # trailing comma too
+    assert not is_interesting("Pythonic idioms", pat)  # not a sub-token
+    assert not is_interesting("Golang role", pat)
+
+
+class TestBuildPatternsProperties:
+    _TERM = st.text(alphabet="abcde0123+#.- ", min_size=1).map(str.strip).filter(bool)
+    _CONT = st.sampled_from("abZ09+#_")  # chars that always continue a token
+
+    # Reason: pure regex compile+match over generated terms; deadline off so coverage
+    # instrumentation timing cannot flake the property.
+    @given(t=_TERM)
+    @settings(deadline=None)
+    def test_term_matches_when_space_delimited(self, t: str) -> None:
+        pat, _ = ingest.build_patterns([t], [])
+        assert pat.search(f" {t} ")
+
+    @given(t=_TERM, c=_CONT)
+    @settings(deadline=None)
+    def test_term_not_matched_inside_a_larger_token(self, t: str, c: str) -> None:
+        pat, _ = ingest.build_patterns([t], [])
+        assert not pat.search(t + c)
+        assert not pat.search(c + t)

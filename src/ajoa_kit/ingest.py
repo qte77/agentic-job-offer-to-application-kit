@@ -99,14 +99,27 @@ _TAG = re.compile(r"<[^>]+>")
 _WS = re.compile(r"\s+")
 _TRACKING = {"gclid", "fbclid", "mc_cid", "mc_eid", "igshid", "ref_src"}
 
+# Token boundaries for keyword matching. A tech token continues across \w/+/# always, and across
+# . or - only mid-token (flanked by word chars) — so "c++"/".net"/"node.js"/"ci-cd" match whole and
+# "c" never leaks into "c++", while a plain word before sentence punctuation ("Go.") still matches.
+# BEHIND is two stacked lookbehinds because re requires each lookbehind to be fixed-width.
+_BOUNDARY_AHEAD = r"(?![\w+#])(?![.\-]\w)"
+_BOUNDARY_BEHIND = r"(?<![\w+#])(?<!\w[.\-])"
+
 
 def build_patterns(
     interest: list[str], title_roles: list[str]
 ) -> tuple[re.Pattern[str], re.Pattern[str]]:
-    """Compile case-insensitive, word-boundary match patterns for the two keyword sets."""
+    """Compile case-insensitive, token-boundary match patterns for the two keyword sets.
+
+    Tech terms with punctuation (``c++``, ``.net``, ``node.js``, ``ci-cd``) match as whole tokens;
+    a short term never leaks into a larger token (``c`` not in ``c++``); plain words still match
+    before ordinary sentence punctuation.
+    """
 
     def _compile(terms: list[str]) -> re.Pattern[str]:
-        return re.compile(r"\b(" + "|".join(re.escape(t) for t in terms) + r")\b", re.I)
+        body = "|".join(re.escape(t) for t in terms)
+        return re.compile(rf"{_BOUNDARY_BEHIND}({body}){_BOUNDARY_AHEAD}", re.I)
 
     return _compile(interest), _compile(title_roles)
 
