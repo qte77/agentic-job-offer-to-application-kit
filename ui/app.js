@@ -9,6 +9,7 @@ let laneLabel = {};
 /** @type {any} Chart.js instances (rebuilt on theme flip to re-read tokens). */
 let lineChart = null;
 let barChart = null;
+let bubbleChart = null;
 let trendsRendered = false; // charts in a hidden tab panel size to 0 → render on first reveal
 
 const cssVar = (name) =>
@@ -75,7 +76,7 @@ const chartPalette = () => [
 ];
 
 // Pivot the {week,counts}[] log into chart shapes. `keys` is the union of keywords across weeks,
-// 0-filled and ordered by latest-week volume (desc) so colors and the bar top-N are stable.
+// ordered by latest-week volume (desc) so each keyword keeps one stable color across all three charts.
 function pivot(records) {
   const labels = records.map((r) => r.week);
   const latest = records.length ? records[records.length - 1].counts : {};
@@ -122,38 +123,96 @@ function renderLine(records) {
   });
 }
 
+// Vertical bars, one column per ISO week, keywords stacked — reads as total weekly volume + its
+// keyword composition.
 function renderBar(records) {
   const canvas = document.getElementById("trends-bar");
   if (!canvas || typeof Chart === "undefined") return;
-  const { latest, keys } = pivot(records);
-  const top = keys.slice(0, 8);
+  const { labels, keys } = pivot(records);
   const pal = chartPalette();
   const grid = cssVar("--border");
   const tick = cssVar("--muted");
+  const label = cssVar("--text");
 
   if (barChart) barChart.destroy();
   barChart = new Chart(canvas, {
     type: "bar",
     data: {
-      labels: top,
-      datasets: [
-        {
-          label: "latest week",
-          data: top.map((k) => latest[k] || 0),
-          backgroundColor: top.map((_, i) => pal[i % pal.length]),
-          borderWidth: 0,
-        },
-      ],
+      labels,
+      datasets: keys.map((k, i) => ({
+        label: k,
+        data: records.map((r) => r.counts[k] || 0),
+        backgroundColor: pal[i % pal.length],
+        borderWidth: 0,
+      })),
     },
     options: {
-      indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
-        y: { grid: { color: grid }, ticks: { color: tick } },
+        x: { stacked: true, grid: { color: grid }, ticks: { color: tick } },
+        y: { stacked: true, beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
       },
-      plugins: { legend: { display: false } },
+      plugins: { legend: { labels: { color: label } } },
+    },
+  });
+}
+
+// Bubble grid: x = ISO week, y = keyword, radius ∝ √count (area perception). One dataset per
+// keyword so the legend + colors match the other charts; zero-count cells are dropped.
+function renderBubble(records) {
+  const canvas = document.getElementById("trends-bubble");
+  if (!canvas || typeof Chart === "undefined") return;
+  const { labels, keys } = pivot(records);
+  const pal = chartPalette();
+  const grid = cssVar("--border");
+  const tick = cssVar("--muted");
+  const label = cssVar("--text");
+
+  if (bubbleChart) bubbleChart.destroy();
+  bubbleChart = new Chart(canvas, {
+    type: "bubble",
+    data: {
+      datasets: keys.map((k, ki) => ({
+        label: k,
+        data: records
+          .map((r, wi) => ({ x: wi, y: ki, r: 3 + Math.sqrt(r.counts[k] || 0) * 3.5, v: r.counts[k] || 0 }))
+          .filter((p) => p.v > 0),
+        backgroundColor: pal[ki % pal.length],
+        borderColor: pal[ki % pal.length],
+      })),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        // Force ticks at exact integer slots (0..n-1) so the callbacks hit real labels — a stepSize
+        // from a -0.5 min would otherwise land on half-integers and render blank ticks.
+        x: {
+          min: -0.5,
+          max: labels.length - 0.5,
+          afterBuildTicks: (axis) => {
+            axis.ticks = labels.map((_, i) => ({ value: i }));
+          },
+          grid: { color: grid },
+          ticks: { color: tick, callback: (v) => labels[v] ?? "" },
+        },
+        y: {
+          min: -0.5,
+          max: keys.length - 0.5,
+          afterBuildTicks: (axis) => {
+            axis.ticks = keys.map((_, i) => ({ value: i }));
+          },
+          grid: { color: grid },
+          ticks: { color: tick, callback: (v) => keys[v] ?? "" },
+        },
+      },
+      plugins: {
+        legend: { labels: { color: label } },
+        tooltip: {
+          callbacks: { label: (ctx) => `${ctx.dataset.label} · ${labels[ctx.raw.x]}: ${ctx.raw.v}` },
+        },
+      },
     },
   });
 }
@@ -162,6 +221,7 @@ function renderTrends() {
   if (!data) return;
   renderLine(data.trends);
   renderBar(data.trends);
+  renderBubble(data.trends);
   trendsRendered = true;
 }
 
@@ -207,7 +267,6 @@ async function init() {
 
   data = await fetch("data/demo.json").then((r) => r.json());
   laneLabel = Object.fromEntries(data.lanes.map((l) => [l.key, l.label]));
-  document.getElementById("generated").textContent = data.generated;
 
   renderShortlist();
   document

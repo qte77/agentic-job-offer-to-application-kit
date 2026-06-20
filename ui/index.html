@@ -53,8 +53,10 @@
 
     <main>
       <p class="synthetic-note">
-        Demo shell — <strong>synthetic data only</strong> (fictional companies, no PII). The live
-        dashboard (issue #11) fetches pseudonymized data and is gated on the PII helper (#52).
+        Demo shell — <strong>synthetic data only</strong> (fictional companies, no PII). In live use
+        the shortlist stays local — real company/title/url are never published — and only the
+        aggregate keyword counts (the safe <code>{week, counts}</code> timeline) reach this page,
+        which are non-PII facts.
       </p>
 
       <div class="tabs" role="tablist" aria-label="Dashboard views">
@@ -99,19 +101,21 @@
           <div class="chart-wrap"><canvas id="trends-line"></canvas></div>
         </div>
         <div class="chart-block">
-          <h3 class="chart-title">Top keywords — latest week</h3>
+          <h3 class="chart-title">Keyword volume per week</h3>
           <div class="chart-wrap"><canvas id="trends-bar"></canvas></div>
+        </div>
+        <div class="chart-block">
+          <h3 class="chart-title">Keyword volume by week</h3>
+          <div class="chart-wrap"><canvas id="trends-bubble"></canvas></div>
         </div>
       </section>
     </main>
 
     <footer>
-      Generated <span id="generated">—</span> ·
+      Generated 2026-06-17 ·
       <a href="https://github.com/qte77/agentic-job-offer-to-application-kit"
         >agentic-job-offer-to-application-kit</a
       >
-      · trends data incl.
-      <a href="https://www.arbeitnow.com" target="_blank" rel="noopener">arbeitnow</a>
       · EyeRest brand · no PII
     </footer>
   </body>
