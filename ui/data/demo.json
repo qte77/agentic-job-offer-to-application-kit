@@ -90,14 +90,14 @@
       "rationale": "Domain (health) is adjacent; role leans team-scale ownership over IC depth."
     }
   ],
-  "trends": {
-    "weeks": ["2026-W18", "2026-W19", "2026-W20", "2026-W21", "2026-W22", "2026-W23", "2026-W24", "2026-W25"],
-    "series": [
-      { "keyword": "ai", "counts": [5, 6, 8, 9, 11, 12, 14, 15] },
-      { "keyword": "backend", "counts": [7, 7, 8, 7, 8, 8, 9, 9] },
-      { "keyword": "cloud", "counts": [5, 5, 6, 6, 7, 6, 7, 8] },
-      { "keyword": "platform", "counts": [4, 4, 5, 5, 4, 5, 6, 6] },
-      { "keyword": "security", "counts": [2, 2, 3, 3, 3, 4, 4, 5] }
-    ]
-  }
+  "trends": [
+    { "week": "2026-W18", "counts": { "ai": 5, "backend": 7, "cloud": 5, "platform": 4, "security": 2 } },
+    { "week": "2026-W19", "counts": { "ai": 6, "backend": 7, "cloud": 5, "platform": 4, "security": 2 } },
+    { "week": "2026-W20", "counts": { "ai": 8, "backend": 8, "cloud": 6, "platform": 5, "security": 3 } },
+    { "week": "2026-W21", "counts": { "ai": 9, "backend": 7, "cloud": 6, "platform": 5, "security": 3 } },
+    { "week": "2026-W22", "counts": { "ai": 11, "backend": 8, "cloud": 7, "platform": 4, "security": 3 } },
+    { "week": "2026-W23", "counts": { "ai": 12, "backend": 8, "cloud": 6, "platform": 5, "security": 4 } },
+    { "week": "2026-W24", "counts": { "ai": 14, "backend": 9, "cloud": 7, "platform": 6, "security": 4 } },
+    { "week": "2026-W25", "counts": { "ai": 15, "backend": 9, "cloud": 8, "platform": 6, "security": 5 } }
+  ]
 }

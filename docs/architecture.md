@@ -104,9 +104,10 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   must-have coverage, #55); `ajoa-kit ats-check` parse-safety (#9);
   style/tone tailoring (#16); cited delivery safety note (research.md §Delivery, #8); structured board
   catalog (#10) with ToS/ToU tiers (ADR-0002, #95); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
-  `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A); the reusable
-  `run-with-keywords` workflow (#79); baseline gates (ruff, pyright, complexipy, pytest,
-  CodeQL/Dependabot/CI, markdownlint+lychee).
-- **Designed:** locale-aware document conventions (#12); the trends dashboard UI (#11 PR-B / #71,
-  keyword-only — the `pseudonymize-text` PII gate (#52) is now belt-and-suspenders).
+  `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A) rendered by the two-tab
+  no-build `ui/` dashboard (#11 PR-B, vendored Chart.js — synthetic Tab A + aggregate `{week,counts}`
+  Tab B); the reusable `run-with-keywords` workflow (#79); baseline gates (ruff, pyright, complexipy,
+  pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
+- **Designed:** locale-aware document conventions (#12); `pseudonymize-text` PII gate (#52,
+  belt-and-suspenders for the live dashboard data feed). #71 Vite intentionally not adopted (no-build).
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks.
