@@ -10,7 +10,7 @@ classifiers = ["License :: OSI Approved :: Apache Software License"]
 dependencies = [
     "defusedxml>=0.7.1",
     "pydantic>=2.0",
-    "pydantic-settings>=2.0",
+    "pydantic-settings>=2.14.2",
 ]
 
 [project.scripts]
