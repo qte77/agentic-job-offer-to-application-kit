@@ -50,6 +50,31 @@ RSS_XML = b"""<?xml version="1.0"?>
 </channel></rss>
 """
 
+# arbeitnow returns parsed JSON (get_json), not bytes. Second job omits tags/location.
+ARBEITNOW_JSON = {
+    "data": [
+        {
+            "slug": "senior-backend-engineer-acme-123",
+            "company_name": "Acme AI",
+            "title": "Senior Backend Engineer",
+            "description": "Build <b>backend</b> systems &amp; APIs.",
+            "remote": True,
+            "url": "https://www.arbeitnow.com/jobs/acme-123?utm_source=feed",
+            "tags": ["engineering", "python"],
+            "location": "Berlin",
+            "created_at": 1767225600,
+        },
+        {
+            "slug": "product-designer-acme-124",
+            "company_name": "Acme AI",
+            "title": "Product Designer",
+            "description": "Design things.",
+            "remote": False,
+            "url": "https://www.arbeitnow.com/jobs/acme-124",
+        },
+    ]
+}
+
 
 def test_personio_normalizes_and_tolerates_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(ingest, "get_bytes", lambda _url: (PERSONIO_XML, "httpx"))
@@ -81,3 +106,26 @@ def test_rss_normalizes_and_canonicalizes_url(monkeypatch: pytest.MonkeyPatch) -
     assert r["url"] == "https://ex.co/jobs/1"  # utm_source dropped
     assert r["id"] == "demo:https://ex.co/jobs/1"
     assert "stuff" in r["description"]
+
+
+def test_arbeitnow_normalizes_and_tolerates_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(ingest, "get_json", lambda _url: (ARBEITNOW_JSON, "httpx"))
+    recs = list(ingest.from_arbeitnow({"name": "arbeitnow"}))
+
+    assert len(recs) == 2
+    first = recs[0]
+    assert first["id"] == "arbeitnow:senior-backend-engineer-acme-123"
+    assert first["source"] == "arbeitnow"
+    assert first["ats"] == "arbeitnow"
+    assert first["company"] == "Acme AI"
+    assert first["title"] == "Senior Backend Engineer"
+    assert first["remote"] is True
+    assert first["department"] == "engineering, python"  # tags -> department for the pre-filter
+    assert first["url"] == "https://www.arbeitnow.com/jobs/acme-123"  # utm_source dropped
+    assert "backend" in first["description"].lower()
+    assert "<b>" not in first["description"]  # tags stripped
+    assert "&amp;" not in first["description"]  # entity decoded
+
+    # second job: no tags / no location -> tolerated (empty), not skipped
+    assert recs[1]["department"] == ""
+    assert recs[1]["location"] == ""

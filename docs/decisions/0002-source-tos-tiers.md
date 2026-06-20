@@ -15,8 +15,9 @@ across `_reason` / `_tos` strings in the seed file and prose in `research.md`. T
 tiering explicit and records both the legal backbone and a 2026-06-20 empirical re-verification
 (read-only `polyfetch` probes of each API + `robots.txt` + ToS page).
 
-The loader (`ingest.load_sources`) consumes **only** `feeds` + `ats`; `_blocked` and `_deferred` are
-documentation, never loaded — so this ADR governs what graduates *into* `feeds` / `ats`.
+The loader (`ingest.load_sources`) consumes **only** `feeds` + `ats` + `aggregators`; `_blocked` and
+`_deferred` are documentation, never loaded — so this ADR governs what graduates *into* those loaded
+keys.
 
 ## Decision
 
@@ -26,15 +27,15 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
 
 | Tier | Sources | Basis |
 | --- | --- | --- |
-| **OK — ship/ingest** | Greenhouse, Lever, Ashby, Personio (no-auth public GET board APIs); RSS/Atom feeds (built for consumption) | Documented public endpoints; Lever README states postings "may be scraped by third parties" |
+| **OK — ship/ingest** | Greenhouse, Lever, Ashby, Personio (no-auth public GET board APIs); RSS/Atom feeds (built for consumption); the arbeitnow aggregator API (robots-allowed, backlink required) | Documented public endpoints; Lever README states postings "may be scraped by third parties" |
 | **CAUTION — keep in `_blocked` / `_deferred`, do not ship** | Recruitee, Workable; JSON aggregators jobicy / himalayas / remotive | API exists but a robots/ToS conflict is unresolved (see per-source) |
 | **BLOCKED — never ingest (paste-only or structurally impossible)** | LinkedIn, Indeed, StepStone, jobs.ch, RemoteOK, Google for Jobs | ToS bars automation, robots disallows job/api paths, or there is no public listings API |
 
 ### Per-source findings (read-only polyfetch probes, 2026-06-20)
 
 - **arbeitnow** — *cleanest aggregator.* API is robots-allowed, returns HTTP 200 with
-  `x-ratelimit-limit: 5`; ToS §11 requires a link back to arbeitnow.com. Adopt in #94 with a source
-  backlink (attribution).
+  `x-ratelimit-limit: 5`; ToS §11 requires a link back to arbeitnow.com. Shipped in #94 under the
+  loaded `aggregators` key, with the backlink rendered in the dashboard footer.
 - **jobicy** — open API (`ai-train=yes`, full JD) **but** `robots.txt` `Disallow: /api/` + asks for
   ≤~1 poll/hour + bans redistribution to other aggregators. Robots conflict → CAUTION, not shipped.
 - **himalayas** — public `/jobs/api` returns 200 unauthenticated, but the general ToS §30 requires
@@ -64,8 +65,8 @@ verbatim JD text is not, which is why the public dashboard ships only aggregate 
   403). Every `_blocked` / `_deferred` entry carries a `_date_verified` stamp (date of the last
   ToS/reachability check). crewai / latticeflow stay `_blocked` via the #96 re-probe, where their
   reasons are verified.
-- #94 builds the **arbeitnow** adapter first (OK with a backlink); jobicy / himalayas / remotive stay
-  `_deferred` pending the robots/ToS resolutions above.
+- #94 shipped the **arbeitnow** adapter (loaded `aggregators` key, footer backlink); jobicy /
+  himalayas / remotive stay `_deferred` pending the robots/ToS resolutions above.
 - The kit stays **no-auth / no-key**; keyed aggregators are out of model (see Out of scope).
 
 ## Out of scope (future outlook)

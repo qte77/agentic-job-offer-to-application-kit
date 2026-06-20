@@ -23,13 +23,13 @@ def _write(path: Path, slug: str) -> None:
 def test_load_sources_prefers_seed_over_default(tmp_path: Path) -> None:
     _write(tmp_path / "seed.json", "from-seed")
     _write(tmp_path / "default-seed.json", "from-default")
-    _, ats = ingest.load_sources(tmp_path)
+    _, ats, _ = ingest.load_sources(tmp_path)
     assert [a["slug"] for a in ats] == ["from-seed"]  # the run config wins
 
 
 def test_load_sources_falls_back_to_default(tmp_path: Path) -> None:
     _write(tmp_path / "default-seed.json", "from-default")  # no seed.json present
-    _, ats = ingest.load_sources(tmp_path)
+    _, ats, _ = ingest.load_sources(tmp_path)
     assert [a["slug"] for a in ats] == ["from-default"]
 
 
