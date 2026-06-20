@@ -313,3 +313,55 @@ def test_workable_shortcode_id_and_telecommuting(monkeypatch: pytest.MonkeyPatch
     # no shortcode -> numeric id; url falls back to application_url
     assert recs[1]["id"] == "workable:acme:100"
     assert recs[1]["url"] == "https://w/apply/100"
+
+
+THEMUSE_JSON = {
+    "results": [
+        {
+            "id": 123,
+            "name": " Senior Backend Engineer ",
+            "company": {"id": 1, "short_name": "acme", "name": "Acme AI"},
+            "locations": [{"name": "Flexible / Remote"}, {"name": "New York, NY"}],
+            "categories": [{"name": "Software Engineering"}],
+            "refs": {"landing_page": "https://www.themuse.com/jobs/acme/be?utm_source=x"},
+            "publication_date": "2026-01-05T00:00:00Z",
+            "contents": "Build <b>systems</b>.",
+        },
+        {
+            "id": 124,
+            "name": "Designer",
+            "company": {"name": "Acme AI"},
+            "locations": [],
+            "categories": [],
+            "refs": {},
+            "contents": "",
+        },
+    ]
+}
+
+
+def test_themuse_normalizes_nested_fields_and_tolerates_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(ingest, "get_json", lambda _u: (THEMUSE_JSON, "httpx"))
+    recs = list(ingest.from_themuse({"name": "themuse"}))
+
+    assert len(recs) == 2
+    first = recs[0]
+    assert first["id"] == "themuse:123"
+    assert first["ats"] == "themuse"
+    assert first["company"] == "Acme AI"  # nested company.name
+    assert first["company_slug"] == "acme"  # nested company.short_name
+    assert first["title"] == "Senior Backend Engineer"  # leading space stripped
+    assert first["location"] == "Flexible / Remote, New York, NY"  # locations joined
+    assert first["remote"] is True  # a "Remote" location is detected
+    assert first["department"] == "Software Engineering"  # categories joined
+    assert first["url"] == "https://www.themuse.com/jobs/acme/be"  # refs.landing_page, utm dropped
+    assert "systems" in first["description"]
+    assert "<b>" not in first["description"]
+    # second job: missing company fields + empty locations/categories/refs -> tolerated
+    assert recs[1]["company_slug"] == ""
+    assert recs[1]["location"] == ""
+    assert recs[1]["department"] == ""
+    assert recs[1]["remote"] is None
+    assert recs[1]["url"] == ""

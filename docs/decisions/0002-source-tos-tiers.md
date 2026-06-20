@@ -27,7 +27,7 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
 
 | Tier | Sources | Basis |
 | --- | --- | --- |
-| **OK — ship/ingest** | Greenhouse, Lever, Ashby, Personio (no-auth public GET board APIs); RSS/Atom feeds (built for consumption); the arbeitnow aggregator API (robots-allowed, backlink required) | Documented public endpoints; Lever README states postings "may be scraped by third parties" |
+| **OK — ship/ingest** | Greenhouse, Lever, Ashby, Personio (no-auth public GET board APIs); RSS/Atom feeds (built for consumption); the arbeitnow + The Muse aggregator APIs (robots-allowed, attribution requested) | Documented public endpoints; Lever README states postings "may be scraped by third parties" |
 | **CAUTION — keep in `_blocked` / `_deferred`, do not ship** | Recruitee, Workable; JSON aggregators jobicy / himalayas / remotive | API exists but a robots/ToS conflict is unresolved (see per-source) |
 | **BLOCKED — never ingest (paste-only or structurally impossible)** | LinkedIn, Indeed, StepStone, jobs.ch, RemoteOK, Google for Jobs | ToS bars automation, robots disallows job/api paths, or there is no public listings API |
 
@@ -38,6 +38,11 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
   Shipped in #94 under the loaded `aggregators` key. The published dashboard emits only aggregate
   `{week,counts}` facts (Feist), never arbeitnow listings, so no on-page backlink is required;
   attribution is recorded in `config/default-seed.json` + this ADR for provenance.
+- **The Muse** — public `api/public/jobs` returns HTTP 200 no-auth with full JD + nested metadata;
+  `robots.txt` `User-agent: *` disallows only `/api/users*` (**not** `/api/public`). API ToS requests
+  attribution (a themuse.com link). Shipped via `from_themuse` (page-1 + an eng-relevant `category`
+  filter); aggregate-only `{week,counts}` output reproduces no Muse content (Feist), so no on-page
+  backlink is required — recorded in config + this ADR for provenance.
 - **jobicy** — open API (`ai-train=yes`, full JD) **but** `robots.txt` `Disallow: /api/` + asks for
   ≤~1 poll/hour + bans redistribution to other aggregators. Robots conflict → CAUTION, not shipped.
 - **himalayas** — public `/jobs/api` returns 200 unauthenticated, but the general ToS §30 requires
@@ -78,8 +83,9 @@ verbatim JD text is not, which is why the public dashboard ships only aggregate 
 - **Slug-discovery** (auto-deriving board tokens from public directories) — such directories are
   unofficial (their own ToS/quality risk) and it stays per-board underneath, so it only moves curation
   from a JSON file to a scraper. Deferred (roadmap outlook), not pursued now.
-- **Jooble** — has an official API, but it is **keyed + commercial ToS**, outside the kit's no-auth
-  model. Outlook only.
+- **Jooble / Adzuna / Reed** — official APIs, but all **keyed + commercial ToS** (Adzuna covers FR/UK/
+  US/IT; Reed is UK), outside the kit's no-auth/no-key model. Outlook only (#109). Welcome to the
+  Jungle (FR) and similar SPA boards expose no public no-auth listings API → paste-only.
 - **Operational gaps:** `robots.txt` parsing/enforcement in the fetch path, plus a courtesy
   rate-limit / crawl-delay — tracked as open gaps, not yet implemented.
 

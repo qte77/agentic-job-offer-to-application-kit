@@ -45,7 +45,7 @@ make install                                          # sync the dev env (uv)
 # the kit ships a tracked default source list (config/default-seed.json) — runs out of the box.
 # to use your own, create config/seed.json (git-ignored); it overrides the default, e.g.:
 #   {"feeds": [], "ats": [{"ats": "greenhouse", "slug": "acme", "company": "Acme", "lane": "engineering"}],
-#    "aggregators": [{"name": "arbeitnow"}]}   # broad no-auth aggregator; its ToS needs a backlink (shown in the dashboard footer)
+#    "aggregators": [{"name": "arbeitnow"}, {"name": "themuse"}]}   # broad no-auth aggregators (ToS-tiered in ADR-0002)
 POLYFETCH_DIR=../polyfetch-scrape make ingest         # -> results/jobs-raw.json
 make chunk                                            # -> results/batches/ + manifest.json
 # relevance — Claude Code Workflow tool; batchCount = results/batches/manifest.json .batch_count:
