@@ -3,7 +3,8 @@
 Greenhouse is the one ATS that exposes its application question schema with no auth
 (``GET boards-api.greenhouse.io/v1/boards/<slug>/jobs/<id>?questions=true`` — see
 ``research.md`` §Delivery); this normalizes that payload into a flat field list and
-renders it as a checklist. For any other ATS, fall back to :data:`GENERIC_FIELDS`.
+renders it as a checklist. For any other ATS, fall back to :data:`GENERIC_FIELDS` — Ashby's public
+job-board GET carries no question schema (verified, #56), and Lever/Workable are submit-key-gated.
 
 Preview the fields for an offer (Greenhouse fetch needs the polyfetch env)::
 
