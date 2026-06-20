@@ -48,6 +48,20 @@ def test_write_pack_emits_one_md_per_artifact(tmp_path: Path) -> None:
     assert (offer_dir / "match.md").read_text().startswith("# ")  # rendered heading
 
 
+def test_write_pack_emits_coverage_report_only_with_must_haves(tmp_path: Path) -> None:
+    pack = {
+        **PACK,
+        "must_haves": [{"requirement": "Python", "covered": True, "evidence": "Acme"}],
+    }
+    offer_dir = persist_offer.write_pack(pack, slug="acme-ai-101", results_dir=tmp_path)
+    names = sorted(p.name for p in offer_dir.glob("*.md"))
+    assert "coverage-report.md" in names
+    assert len(names) == 6  # the 5 core artifacts + the optional coverage report
+    report = (offer_dir / "coverage-report.md").read_text()
+    assert report.startswith("# Coverage report")
+    assert "| Python | covered | Acme |" in report
+
+
 def test_write_pack_incomplete_writes_nothing(tmp_path: Path) -> None:
     incomplete = {k: v for k, v in PACK.items() if k != "cover_letter"}
     with pytest.raises(ValueError, match="cover_letter"):
