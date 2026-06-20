@@ -5,7 +5,8 @@ on-demand orchestrator (Workflow-tool scripts), but the phases are described age
 other coding agents can drive them.
 
 The repo follows a four-layer separation — backend / CLI / orchestration / UI, one-way imports
-only — per [ADR-0001](decisions/0001-backend-cli-ui-separation.md).
+only — per [ADR-0001](decisions/0001-backend-cli-ui-separation.md). Ingest source ToS/ToU tiers are
+governed by [ADR-0002](decisions/0002-source-tos-tiers.md).
 
 ## Pipeline
 
@@ -17,7 +18,7 @@ config/seed.json
   → docs/workflows/cc-workflow-relevance.js   (parallel LLM lane-screen)
   → results/<lane>/shortlist.{json,md}
   → cc-workflow-tailor-offer.js   (per-offer tailor pass)
-  → results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md
+  → results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md (+ coverage-report.md when must_haves, #55)
 ```
 
 Run-once upstream: `cc-workflow-evidence-library.js` → `results/evidence-library.json`.
@@ -78,7 +79,8 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 
 - `config/` — inputs you author (`seed.json`, optional `style.json` / `keywords.json`); git-ignored
   **except** the tracked, PII-free `config/default-seed.json` (the shipped, ToS-vetted default
-  source list of public board slugs). Your `config/seed.json` overrides it when present; absent it,
+  source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)). Your
+  `config/seed.json` overrides it when present; absent it,
   ingest falls back to the default.
 - `results/` — everything generated (`jobs-raw.json`, `trends.ndjson`, `<lane>/shortlist.*`,
   `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`).
@@ -98,9 +100,10 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 
 - **Built:** `src/ajoa_kit/` engine; `AppSettings` config + `ajoa-kit` CLI (ADR-0001 L1/L2);
   `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; `cc-workflow-tailor-offer.js` Stage-3
-  tailor pack (match/CV/cover-letter/gap-report/prefill-pack); `ajoa-kit ats-check` parse-safety (#9);
+  tailor pack (match/CV/cover-letter/gap-report/prefill-pack + optional coverage-report on JD
+  must-have coverage, #55); `ajoa-kit ats-check` parse-safety (#9);
   style/tone tailoring (#16); cited delivery safety note (research.md §Delivery, #8); structured board
-  catalog (#10); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
+  catalog (#10) with ToS/ToU tiers (ADR-0002, #95); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
   `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A); the reusable
   `run-with-keywords` workflow (#79); baseline gates (ruff, pyright, complexipy, pytest,
   CodeQL/Dependabot/CI, markdownlint+lychee).

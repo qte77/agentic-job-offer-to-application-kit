@@ -11,7 +11,8 @@
 - Release tooling: scriv changelog fragments under `changelog.d/`.
 - Governance, docs, and a synthetic worked example (`examples/alexis-doe/`).
 - Stage 3 tailoring (`cc-workflow-tailor-offer.js` + `persist_offer`): per-offer pack — match → CV +
-  cover letter + gap report + human-review prefill pack (`results/offers/<slug>/`). `ajoa-kit ats-check`
+  cover letter + gap report + human-review prefill pack + optional JD must-have coverage report (#55)
+  (`results/offers/<slug>/`). `ajoa-kit ats-check`
   résumé parse-safety (#9); style/tone from `config/style.json` (#16); cited ToU/CFAA/GDPR delivery
   safety note (`research.md` §Delivery, #8).
 - Repo hardening: coverage gate (#33), docs-only CI `paths-ignore` (#34), `CONTRIBUTING.md` (#35),
@@ -20,11 +21,13 @@
 - Keyword-trend pipeline: runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
   `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A); reusable
   `run-with-keywords` workflow (#79).
+- Source ToS/ToU tiers: ADR-0002 classifies ingest sources OK/CAUTION/BLOCKED with per-source
+  verified findings + `_date_verified` stamps in `config/default-seed.json` (#95).
 
 ## Next
 
 - Locale-aware document conventions (#12).
-- JD must-have coverage in the tailor pass (#55); prefill-pack reach beyond Greenhouse (#56).
+- Prefill-pack reach beyond Greenhouse (#56).
 
 ## Later — hardening & reach
 

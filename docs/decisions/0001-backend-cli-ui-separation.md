@@ -122,6 +122,8 @@ The UI uses the EyeRest tokens from `qte77/qte77/brand/DESIGN.md`
 ## References
 
 - `analyze-stock-kpi` ADR-0007 — three-scope model + one-way import rule.
+- [ADR-0002](0002-source-tos-tiers.md) — source ToS/ToU tiers (codifies the sourcing-model seam this
+  ADR's Consequences anticipated).
 - `../2026-06-job-research/HANDOFF.md` — predecessor pipeline + sourcing
   model + Stage-3 tailoring design.
 - Kit issues #4 (cc-workflow naming), #5 (ingest adapters), #6 (slug

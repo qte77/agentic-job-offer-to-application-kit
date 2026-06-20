@@ -51,9 +51,10 @@ RSS/Atom or JSON feed are the cheapest to ingest and are flagged below.
 | Research / RSE | `jobs.ac.uk`, EURAXESS, HigherEdJobs, Society of RSE board | RSS/Atom feeds common (feed-first); some institutional pages SPA → paste |
 | Executive / fractional | Toptal, Catalant, Chief, Go Fractional, Continuum | SPA, mostly login-gated → paste |
 | Co-founder / VC / accelerator | YC "Work at a Startup", VC talent-network boards (Getro / Consider-powered), CoFoundersLab | Getro/Consider boards often expose a JSON API (feed-first); YC SPA → paste |
-| Aggregators | Google Jobs (structured `JobPosting` data), Adzuna, Jooble | Adzuna has a public API; Google Jobs reads structured data; others SPA → paste |
+| Aggregators | Google Jobs (structured `JobPosting` data), Adzuna, Jooble | Adzuna has a public API; Google for Jobs has no candidate-side listings API — blocked in the default config (ADR-0002); Jooble is keyed (out of the no-auth model); others SPA → paste |
 
-Verify any source before relying on it — board APIs, feeds, and terms change.
+Verify any source before relying on it — board APIs, feeds, and terms change. The authoritative
+ToS/ToU tier classification for shipped sources is [ADR-0002](decisions/0002-source-tos-tiers.md).
 
 ## ATS feed/API endpoints (no-auth)
 
