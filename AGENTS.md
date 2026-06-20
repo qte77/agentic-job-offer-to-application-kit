@@ -22,7 +22,8 @@ base — operational recipes and machine-specific quirks belong in local memory,
 - **No automated submission; read-only public GET only.** A human reviews and submits. See
   [docs/research.md §Delivery](docs/research.md#delivery) for the safe/unsafe boundary.
 - **Source ToS tiers (ADR-0002).** New/changed ingest sources must be ToS/ToU-tiered (OK/CAUTION/
-  BLOCKED) and reachability-verified before shipping in `config/default-seed.json` `feeds`/`ats` — see
+  BLOCKED) and reachability-verified before shipping in `config/default-seed.json`
+  `feeds`/`ats`/`aggregators` — see
   [docs/decisions/0002-source-tos-tiers.md](docs/decisions/0002-source-tos-tiers.md).
 - **Python**: target `pydantic` for structured config/models (no `TypedDict` / `dataclass`);
   keep pure logic importable without the network layer (lazy-import `polyfetch_scrape`).

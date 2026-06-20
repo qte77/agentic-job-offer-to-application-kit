@@ -51,7 +51,7 @@ RSS/Atom or JSON feed are the cheapest to ingest and are flagged below.
 | Research / RSE | `jobs.ac.uk`, EURAXESS, HigherEdJobs, Society of RSE board | RSS/Atom feeds common (feed-first); some institutional pages SPA → paste |
 | Executive / fractional | Toptal, Catalant, Chief, Go Fractional, Continuum | SPA, mostly login-gated → paste |
 | Co-founder / VC / accelerator | YC "Work at a Startup", VC talent-network boards (Getro / Consider-powered), CoFoundersLab | Getro/Consider boards often expose a JSON API (feed-first); YC SPA → paste |
-| Aggregators | Google Jobs (structured `JobPosting` data), Adzuna, Jooble | Adzuna has a public API; Google for Jobs has no candidate-side listings API — blocked in the default config (ADR-0002); Jooble is keyed (out of the no-auth model); others SPA → paste |
+| Aggregators | arbeitnow + The Muse (adopted); Adzuna, Reed, Jooble, Google Jobs | arbeitnow + The Muse are no-auth + robots-allowed → shipped under the `aggregators` key (ADR-0002); Adzuna/Reed/Jooble have public APIs but are **keyed + commercial** (out of the no-auth/no-key model, #109 outlook); Google for Jobs has no candidate-side listings API — blocked; others SPA → paste |
 
 Verify any source before relying on it — board APIs, feeds, and terms change. The authoritative
 ToS/ToU tier classification for shipped sources is [ADR-0002](decisions/0002-source-tos-tiers.md).
@@ -74,6 +74,7 @@ hard-coded; each adapter yields one normalized record shape. Parsing is stdlib-o
 | Personio | `<slug>.jobs.personio.de/xml?language=en` (XML) |
 | RSS / Atom | any feed URL |
 | Aggregator (arbeitnow) | `www.arbeitnow.com/api/job-board-api` (JSON, multi-employer; backlink per ToS §11) |
+| Aggregator (The Muse) | `www.themuse.com/api/public/jobs` (JSON, multi-employer; robots-allowed; attribution per API ToS) |
 
 These are **read-only** public endpoints. Application *submission* is deliberately
 out of scope: the kit delivers a human-reviewed pre-fill pack, never an automated

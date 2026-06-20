@@ -26,9 +26,10 @@
   pydantic contract.
 - Source ToS/ToU tiers: ADR-0002 classifies ingest sources OK/CAUTION/BLOCKED with per-source
   verified findings + `_date_verified` stamps in `config/default-seed.json` (#95).
-- Broad/recall ingest lane: arbeitnow JSON-aggregator adapter under the loaded `aggregators` key
-  (#94, ToS-tiered in ADR-0002; jobicy/himalayas/remotive stay `_deferred`); +11 re-probed OK-tier
-  company boards in `config/default-seed.json` (#96).
+- Broad/recall ingest lane: arbeitnow + The Muse JSON-aggregator adapters under the loaded
+  `aggregators` key (#94, ToS-tiered in ADR-0002; jobicy/himalayas/remotive stay `_deferred`,
+  keyed Adzuna/Reed/Jooble are #109 outlook); +11 re-probed OK-tier company boards (#96) and +21
+  FR/UK/IT/US company boards for geographic breadth in `config/default-seed.json`.
 
 ## Next
 

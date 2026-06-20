@@ -89,7 +89,9 @@
   ],
   "aggregators": [
     {"name": "arbeitnow", "_date_verified": "2026-06-20",
-     "_tos": "Public job-board-api, robots-ALLOWED (200, x-ratelimit-limit:5); ToS §11 asks for a backlink when reusing arbeitnow content. The published dashboard emits only aggregate {week,counts} facts (Feist), never arbeitnow listings, so no on-page backlink is required; attribution is recorded here for provenance. Promoted from _deferred (#94, ADR-0002)."}
+     "_tos": "Public job-board-api, robots-ALLOWED (200, x-ratelimit-limit:5); ToS §11 asks for a backlink when reusing arbeitnow content. The published dashboard emits only aggregate {week,counts} facts (Feist), never arbeitnow listings, so no on-page backlink is required; attribution is recorded here for provenance. Promoted from _deferred (#94, ADR-0002)."},
+    {"name": "themuse", "_date_verified": "2026-06-20",
+     "_tos": "Public /api/public/jobs, robots-ALLOWED (User-agent:* disallows only /api/users*, not /api/public); no-auth 200 with full JD + nested metadata. API ToS requests attribution (link to themuse.com); the dashboard emits only aggregate {week,counts} facts (Feist), not Muse listings, so no on-page backlink is required. Fetched page-1 with an eng-relevant category filter (ADR-0002)."}
   ],
   "_blocked": [
     {"ats": "workable", "slug": "huggingface", "company": "Hugging Face", "lane": "engineering", "_date_verified": "2026-06-19",

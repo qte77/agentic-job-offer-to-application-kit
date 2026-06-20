@@ -436,6 +436,44 @@ def from_arbeitnow(a: dict[str, str]) -> Iterable[dict[str, Any]]:
         )
 
 
+def from_themuse(a: dict[str, str]) -> Iterable[dict[str, Any]]:
+    """Yield normalized records from The Muse public job-board API (a broad aggregator).
+
+    Like arbeitnow, a no-auth aggregator spanning many employers; nested fields (``company.name``,
+    ``locations[]``, ``refs.landing_page``) are flattened into the record shape, and the job
+    ``categories`` populate ``department`` so the existing pre-filter applies. ``a`` is the dispatch
+    entry; the endpoint is fixed — page 1 + an eng-relevant ``category`` filter (a v1 cut). The API
+    ToS requests attribution (a themuse.com link); the aggregate-only output reproduces no Muse
+    content (Feist), so it is recorded in config/ADR, not rendered on the page.
+    """
+    params = [
+        ("category", "Software Engineering"),
+        ("category", "Data Science"),
+        ("category", "Computer and IT"),
+        ("category", "Engineering"),
+        ("page", "1"),
+    ]
+    data, backend = get_json(f"https://www.themuse.com/api/public/jobs?{urlencode(params)}")
+    for j in data.get("results", []):
+        company = j.get("company") or {}
+        locs = [loc.get("name", "") for loc in j.get("locations") or []]
+        yield record(
+            id=f"themuse:{j.get('id')}",
+            source="themuse",
+            ats="themuse",
+            company=company.get("name", ""),
+            company_slug=company.get("short_name", ""),
+            department=", ".join(c.get("name", "") for c in j.get("categories") or []),
+            fetched_backend=backend,
+            title=(j.get("name") or "").strip(),
+            location=", ".join(x for x in locs if x),
+            remote=True if any("remote" in (x or "").lower() for x in locs) else None,
+            url=(j.get("refs") or {}).get("landing_page", ""),
+            posted_at=j.get("publication_date", "") or "",
+            description=html_to_text(j.get("contents", "")),
+        )
+
+
 ATS: dict[str, Callable[[dict[str, str]], Iterable[dict[str, Any]]]] = {
     "greenhouse": from_greenhouse,
     "ashby": from_ashby,
@@ -448,6 +486,7 @@ ATS: dict[str, Callable[[dict[str, str]], Iterable[dict[str, Any]]]] = {
 # Aggregators are a third source type (one endpoint -> many employers); see ADR-0001/ADR-0002.
 AGGREGATORS: dict[str, Callable[[dict[str, str]], Iterable[dict[str, Any]]]] = {
     "arbeitnow": from_arbeitnow,
+    "themuse": from_themuse,
 }
 
 
