@@ -45,6 +45,9 @@ jobs:
           set -euo pipefail
           site="$(mktemp -d)"
           cp -r ui/. "$site/"
+          # Stamp the real deploy date into the published copy (no-build; the committed
+          # #gen-date value is only the local-preview default).
+          sed -i -E "s#(<span id=\"gen-date\">)[^<]*#\1$(date -u +%F)#" "$site/index.html"
           touch "$site/.nojekyll"  # serve paths verbatim (no Jekyll processing)
           cd "$site"
           git init -q -b gh-pages
