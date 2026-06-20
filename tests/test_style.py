@@ -11,6 +11,8 @@ import json
 from typing import TYPE_CHECKING
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from ajoa_kit import style
 
@@ -54,3 +56,27 @@ def test_sample_text_is_capped(tmp_path: Path) -> None:
     (tmp_path / "style.json").write_text(json.dumps({"cv_sample": "style/cv.md"}))
     brief = style.load_style(tmp_path)
     assert len(brief.cv_sample) == style.SAMPLE_CAP
+
+
+class TestDirectiveProperties:
+    # Reason: pure precedence logic over generated briefs; deadline off.
+    @given(
+        tone=st.text(),
+        cv=st.text(),
+        cover=st.text(),
+        kind=st.sampled_from(["cv", "cover_letter"]),
+    )
+    @settings(deadline=None)
+    def test_precedence_sample_over_tone_over_neutral(
+        self, tone: str, cv: str, cover: str, kind: str
+    ) -> None:
+        brief = style.StyleBrief(tone=tone, cv_sample=cv, cover_letter_sample=cover)
+        out = style.directive(brief, kind)
+        assert isinstance(out, str)
+        sample = cv if kind == "cv" else cover
+        if sample:
+            assert sample in out  # a sample wins for its artifact
+        elif tone:
+            assert tone in out  # else the tone applies
+        else:
+            assert out == ""  # neutral when nothing configured

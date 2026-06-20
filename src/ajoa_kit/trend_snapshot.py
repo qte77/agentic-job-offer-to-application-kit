@@ -48,9 +48,11 @@ def upsert_week(path: Path, week: str, counts: dict[str, int]) -> None:
     record = json.dumps({"week": week, "counts": counts}, ensure_ascii=False, sort_keys=True)
     kept: list[str] = []
     if path.is_file():
+        # Split on "\n" only — NOT str.splitlines(), which also breaks on Unicode line
+        # separators (NEL \x85, LS, PS) that json.dumps leaves unescaped, corrupting a record.
         kept = [
             line
-            for line in path.read_text().splitlines()
+            for line in path.read_text().split("\n")
             if line.strip() and json.loads(line).get("week") != week
         ]
     kept.append(record)

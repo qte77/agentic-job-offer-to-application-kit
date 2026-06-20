@@ -8,9 +8,12 @@ resolution via ``AppSettings`` / ``AJOA_RESULTS_DIR`` — not trivial getters.
 from __future__ import annotations
 
 import json
+import re
 from typing import TYPE_CHECKING
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from ajoa_kit import persist_offer
 
@@ -81,3 +84,17 @@ def test_main_honors_results_dir_env(tmp_path: Path, monkeypatch: pytest.MonkeyP
     monkeypatch.setenv("AJOA_RESULTS_DIR", str(tmp_path / "ws"))
     persist_offer.main(src=src)
     assert (tmp_path / "ws" / "offers" / "acme-ai-101" / "match.md").exists()
+
+
+class TestSafeSlugProperties:
+    _SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+    # Reason: pure sanitizer over arbitrary text; deadline off. Security: path confinement.
+    @given(raw=st.text())
+    @settings(deadline=None)
+    def test_slug_is_confined_or_raises(self, raw: str) -> None:
+        try:
+            out = persist_offer.safe_slug(raw)
+        except ValueError:
+            return  # empty-after-sanitize is the documented failure mode
+        assert self._SLUG.fullmatch(out)  # only [a-z0-9-]; no '/', '..', or edge/double dash

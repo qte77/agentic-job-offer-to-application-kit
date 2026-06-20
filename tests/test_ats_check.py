@@ -9,6 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from ajoa_kit import ats_check
 
@@ -72,3 +74,17 @@ def test_main_passes_clean_cv(tmp_path: Path) -> None:
     cv = tmp_path / "cv.md"
     cv.write_text(CLEAN_CV)
     ats_check.main(src=cv)  # no SystemExit
+
+
+class TestParseSafetyProperties:
+    # Reason: pure detector over arbitrary text; deadline off.
+    @given(a=st.text(), b=st.text())
+    @settings(deadline=None)
+    def test_positive_warnings_monotone_under_concatenation(self, a: str, b: str) -> None:
+        def positives(s: str) -> set[str]:
+            # the absence-of-headings warning is anti-monotone by design; exclude it
+            return {w for w in ats_check.parse_safety_warnings(s) if "heading" not in w.lower()}
+
+        combined = positives(a + b)
+        assert positives(a) <= combined  # a flagged issue never vanishes when text is appended
+        assert positives(b) <= combined
