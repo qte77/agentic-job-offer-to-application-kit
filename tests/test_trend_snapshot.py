@@ -11,6 +11,7 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
@@ -78,3 +79,39 @@ class TestTrendSnapshotProperties:
                 assert wb in weeks  # other week preserved
             wa_counts = next(r["counts"] for r in records if r["week"] == wa)
             assert wa_counts == {"python": 3}  # re-upsert updated wa's counts
+
+
+# 2024-01-15 is a Monday in ISO week 2024-W03; every adapter's posted_at format below resolves
+# to that same week, so backfill buckets a JD by when it was really posted (not the run date).
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "2024-01-15T10:30:00+02:00",  # ISO-8601 with offset (greenhouse/ashby/themuse)
+        "2024-01-15T10:30:00Z",  # ISO-8601 Zulu suffix
+        "2024-01-15",  # ISO date-only (workable published_on)
+        "Mon, 15 Jan 2024 10:30:00 +0000",  # RFC-822 (RSS pubDate)
+        "1705276800",  # epoch seconds = 2024-01-15 00:00 UTC (arbeitnow created_at)
+        "1705276800000",  # epoch milliseconds, same instant (lever createdAt)
+    ],
+)
+def test_parse_week_resolves_each_adapter_format(raw: str) -> None:
+    assert trend_snapshot.parse_week(raw) == "2024-W03"
+
+
+@pytest.mark.parametrize("raw", ["", "   ", "not a date", "2024-13-99"])
+def test_parse_week_returns_none_when_unparseable(raw: str) -> None:
+    assert trend_snapshot.parse_week(raw) is None
+
+
+def test_bucket_by_week_groups_by_posted_week_and_counts_skipped() -> None:
+    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    jobs = [
+        {"title": "Python Dev", "description": "python", "posted_at": "2024-01-15"},  # W03
+        {"title": "More Python", "description": "python", "posted_at": "2024-01-16"},  # W03
+        {"title": "Rust Dev", "description": "rust", "posted_at": "2024-01-22"},  # W04
+        {"title": "Undated", "description": "python", "posted_at": ""},  # no date -> skipped
+    ]
+    weeks, skipped = trend_snapshot.bucket_by_week(jobs, pat)
+    assert weeks["2024-W03"] == {"python": 2}  # document frequency within the week
+    assert weeks["2024-W04"] == {"rust": 1}
+    assert skipped == 1  # the undated JD cannot be placed in time

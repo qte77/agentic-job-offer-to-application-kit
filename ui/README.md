@@ -5,18 +5,27 @@ A static, **no-build** dashboard that visualizes the kit's output: a tailored
 [Chart.js](vendor/README.md); same playbook as the `qte77/analyze-stock-kpi`
 dashboard.
 
-This is a **shell**: it renders [`data/demo.json`](data/demo.json) — **synthetic
-data only** (fictional companies, no PII). It's the skeleton for the live
-job-market trends dashboard ([issue #11][i11]), which will fetch *pseudonymized*
-data from a separate `data` branch at runtime — gated on the PII helper
-([issue #52][i52]) per [ADR-0001](../docs/decisions/0001-backend-cli-ui-separation.md).
+It renders the **synthetic** shortlist from [`data/demo.json`](data/demo.json) (fictional
+companies, no PII). The **market-trends** chart shows the *real* backfilled aggregate series
+(`{week, counts}`, non-PII) from `data/trends.ndjson` when present, falling back to the synthetic
+trends otherwise. The live *shortlist* feed (pseudonymized, from a separate `data` branch at
+runtime) stays gated on the PII helper ([issue #52][i52], [issue #11][i11]) per
+[ADR-0001](../docs/decisions/0001-backend-cli-ui-separation.md).
 
 ## Run locally
 
 ```bash
 # from the repo root — fetch() + ES modules need a real HTTP origin (not file://)
-uv run python -m http.server 8000 --directory ui
+uv run python -m http.server 8000 --directory ui   # or: make preview
 # open http://localhost:8000/
+```
+
+To show **real** trends, generate then copy them in before serving:
+
+```bash
+uv run ajoa-kit trend-snapshot   # results/jobs-raw.json -> results/trends.ndjson (by posted week)
+make trends-ui                   # copy -> ui/data/trends.ndjson (gitignored)
+make preview
 ```
 
 ## Design
@@ -38,7 +47,8 @@ uv run python -m http.server 8000 --directory ui
 | `style.css` | EyeRest tokens (light/dark/auto via `data-theme`) + components + tabs |
 | `app.js` | Shortlist render + filter, tab switching, Chart.js line + stacked bars (rebuilt on `themechange`) |
 | `theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
-| `data/demo.json` | Synthetic demo data — shortlist (Tab A) + trends as `{week,counts}[]` records (Tab B) |
+| `data/demo.json` | Synthetic demo data — shortlist (Tab A) + fallback trends as `{week,counts}[]` records (Tab B) |
+| `data/trends.ndjson` | Real backfilled trends (`{week,counts}` per line), when present — copied from `results/` via `make trends-ui`; gitignored. Overrides `demo.json` trends. |
 | `favicon.svg` | qte77 brand mark (adaptive light/dark) — same as `paperverse` |
 | `vendor/` | Vendored Chart.js + Inter font TTFs (see [vendor/README.md](vendor/README.md)) |
 

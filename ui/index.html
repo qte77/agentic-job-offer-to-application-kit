@@ -53,10 +53,11 @@
 
     <main>
       <p class="synthetic-note">
-        Demo shell — <strong>synthetic data only</strong> (fictional companies, no PII). In live use
-        the shortlist stays local — real company/title/url are never published — and only the
-        aggregate keyword counts (the safe <code>{week, counts}</code> timeline) reach this page,
-        which are non-PII facts.
+        Demo shell — the <strong>shortlist is synthetic</strong> (fictional companies, no PII) and
+        stays local in real use: company/title/url are never published. The
+        <strong>market trends</strong> are the real aggregate keyword counts (the safe
+        <code>{week, counts}</code> timeline) when <code>data/trends.ndjson</code> is present, else
+        synthetic — non-PII facts either way.
       </p>
 
       <div class="tabs" role="tablist" aria-label="Dashboard views">
