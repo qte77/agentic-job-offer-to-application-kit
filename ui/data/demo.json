@@ -91,13 +91,13 @@
     }
   ],
   "trends": [
-    { "week": "2026-W18", "counts": { "ai": 5, "backend": 7, "cloud": 5, "platform": 4, "security": 2 } },
-    { "week": "2026-W19", "counts": { "ai": 6, "backend": 7, "cloud": 5, "platform": 4, "security": 2 } },
-    { "week": "2026-W20", "counts": { "ai": 8, "backend": 8, "cloud": 6, "platform": 5, "security": 3 } },
-    { "week": "2026-W21", "counts": { "ai": 9, "backend": 7, "cloud": 6, "platform": 5, "security": 3 } },
-    { "week": "2026-W22", "counts": { "ai": 11, "backend": 8, "cloud": 7, "platform": 4, "security": 3 } },
-    { "week": "2026-W23", "counts": { "ai": 12, "backend": 8, "cloud": 6, "platform": 5, "security": 4 } },
-    { "week": "2026-W24", "counts": { "ai": 14, "backend": 9, "cloud": 7, "platform": 6, "security": 4 } },
-    { "week": "2026-W25", "counts": { "ai": 15, "backend": 9, "cloud": 8, "platform": 6, "security": 5 } }
+    { "week": "2026-W18", "counts": { "ai": 15, "backend": 9, "cloud": 5, "platform": 7, "security": 7 } },
+    { "week": "2026-W19", "counts": { "ai": 16, "backend": 11, "cloud": 7, "platform": 2, "security": 5 } },
+    { "week": "2026-W20", "counts": { "ai": 16, "backend": 8, "cloud": 7, "platform": 4, "security": 3 } },
+    { "week": "2026-W21", "counts": { "ai": 9, "backend": 11, "cloud": 6, "platform": 3, "security": 3 } },
+    { "week": "2026-W22", "counts": { "ai": 12, "backend": 3, "cloud": 6, "platform": 8, "security": 1 } },
+    { "week": "2026-W23", "counts": { "ai": 10, "backend": 3, "cloud": 8, "platform": 2, "security": 4 } },
+    { "week": "2026-W24", "counts": { "ai": 12, "backend": 9, "cloud": 6, "platform": 5, "security": 6 } },
+    { "week": "2026-W25", "counts": { "ai": 6, "backend": 6, "cloud": 5, "platform": 7, "security": 1 } }
   ]
 }
