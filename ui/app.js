@@ -9,7 +9,6 @@ let laneLabel = {};
 /** @type {any} Chart.js instances (rebuilt on theme flip to re-read tokens). */
 let lineChart = null;
 let barChart = null;
-let bubbleChart = null;
 let trendsRendered = false; // charts in a hidden tab panel size to 0 → render on first reveal
 
 const cssVar = (name) =>
@@ -123,8 +122,7 @@ function renderLine(records) {
   });
 }
 
-// Vertical bars, one column per ISO week, keywords stacked — reads as total weekly volume + its
-// keyword composition.
+// Vertical grouped bars: one cluster per ISO week, one bar per keyword (side by side).
 function renderBar(records) {
   const canvas = document.getElementById("trends-bar");
   if (!canvas || typeof Chart === "undefined") return;
@@ -150,69 +148,10 @@ function renderBar(records) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { stacked: true, grid: { color: grid }, ticks: { color: tick } },
-        y: { stacked: true, beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
+        x: { grid: { color: grid }, ticks: { color: tick } },
+        y: { beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
       },
       plugins: { legend: { labels: { color: label } } },
-    },
-  });
-}
-
-// Bubble grid: x = ISO week, y = keyword, radius ∝ √count (area perception). One dataset per
-// keyword so the legend + colors match the other charts; zero-count cells are dropped.
-function renderBubble(records) {
-  const canvas = document.getElementById("trends-bubble");
-  if (!canvas || typeof Chart === "undefined") return;
-  const { labels, keys } = pivot(records);
-  const pal = chartPalette();
-  const grid = cssVar("--border");
-  const tick = cssVar("--muted");
-  const label = cssVar("--text");
-
-  if (bubbleChart) bubbleChart.destroy();
-  bubbleChart = new Chart(canvas, {
-    type: "bubble",
-    data: {
-      datasets: keys.map((k, ki) => ({
-        label: k,
-        data: records
-          .map((r, wi) => ({ x: wi, y: ki, r: 3 + Math.sqrt(r.counts[k] || 0) * 3.5, v: r.counts[k] || 0 }))
-          .filter((p) => p.v > 0),
-        backgroundColor: pal[ki % pal.length],
-        borderColor: pal[ki % pal.length],
-      })),
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        // Force ticks at exact integer slots (0..n-1) so the callbacks hit real labels — a stepSize
-        // from a -0.5 min would otherwise land on half-integers and render blank ticks.
-        x: {
-          min: -0.5,
-          max: labels.length - 0.5,
-          afterBuildTicks: (axis) => {
-            axis.ticks = labels.map((_, i) => ({ value: i }));
-          },
-          grid: { color: grid },
-          ticks: { color: tick, callback: (v) => labels[v] ?? "" },
-        },
-        y: {
-          min: -0.5,
-          max: keys.length - 0.5,
-          afterBuildTicks: (axis) => {
-            axis.ticks = keys.map((_, i) => ({ value: i }));
-          },
-          grid: { color: grid },
-          ticks: { color: tick, callback: (v) => keys[v] ?? "" },
-        },
-      },
-      plugins: {
-        legend: { labels: { color: label } },
-        tooltip: {
-          callbacks: { label: (ctx) => `${ctx.dataset.label} · ${labels[ctx.raw.x]}: ${ctx.raw.v}` },
-        },
-      },
     },
   });
 }
@@ -221,7 +160,6 @@ function renderTrends() {
   if (!data) return;
   renderLine(data.trends);
   renderBar(data.trends);
-  renderBubble(data.trends);
   trendsRendered = true;
 }
 
