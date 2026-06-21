@@ -10,7 +10,7 @@
 [![CodeQL](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml)
 [![Lint MD and Links](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/lint-md-links.yml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/lint-md-links.yml)
 
-<!-- A screenshot/diagram belongs here once there is a visual surface (e.g. the trends dashboard). -->
+**[▶ Live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** — interactive dashboard (synthetic demo data).
 
 ## Why
 
@@ -33,6 +33,27 @@ agent-agnostically so any coding agent can drive them.
 Five configurable **position lanes**: CxO/fractional · founding engineer · senior IC engineering ·
 cloud/DevOps/platform · architect (configurable defaults — see the `LANES` array in
 `cc-workflow-evidence-library.js`). Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
+
+<details>
+<summary>Screenshots — the dashboard (synthetic demo data; dark/light follows your GitHub theme)</summary>
+
+<br />
+
+<strong>Tailored shortlist</strong>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dashboard-offers-dark.png" />
+  <img alt="ajoa-kit dashboard — tailored shortlist tab" src="docs/assets/dashboard-offers-light.png" />
+</picture>
+
+<strong>Market keyword trends</strong>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dashboard-trends-dark.png" />
+  <img alt="ajoa-kit dashboard — market keyword trends tab" src="docs/assets/dashboard-trends-light.png" />
+</picture>
+
+</details>
 
 ## How
 
