@@ -22,6 +22,7 @@ dev = [
     "pytest-cov>=7.0",
     "ruff>=0.6",
     "scriv[toml]>=1.8",
+    "bump-my-version>=0.29",
     "pyright>=1.1.400",
     "complexipy>=5.6.1",
     "hypothesis>=6.151.9",
@@ -89,3 +90,34 @@ categories = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
 md_header_level = "2"
 entry_title_template = "[{{ version }}] - {{ date.strftime('%Y-%m-%d') }}"
 md_html_anchors = false
+
+# Version bumping (release flow). `gh workflow run bump-my-version.yaml -f bump_type=…`
+# rewrites the three files below, syncs uv.lock, collects fragments, and opens a
+# `chore(release)` PR; `tag-release.yaml` tags the merge commit (CI passes --no-tag).
+# See CONTRIBUTING.md "Releasing".
+[tool.bumpversion]
+current_version = "0.1.0"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+commit = true
+tag = true
+allow_dirty = false
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "v{new_version}"
+message = "chore(release): bump {current_version} -> {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "src/ajoa_kit/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "README.md"
+search = "version-{current_version}-informational"
+replace = "version-{new_version}-informational"
