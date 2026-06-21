@@ -15,7 +15,7 @@
 //                                // generate with `ajoa-kit prefill-fields ...`. Omit = generic fields.
 //   }})
 //
-// Persist the returned pack with: python -m ajoa_kit.persist_offer <output.json>
+// Persist the returned pack with: uv run ajoa-kit persist-offer <output.json>
 // (writes results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md — human reviews + submits).
 //
 // SCOPE: pre-fill + human submit only, NO auto-apply (verified safe in research.md §Delivery, #8).
@@ -39,7 +39,7 @@ export const meta = {
 }
 
 // --- config (override via args) -------------------------------------------------------
-const cfg = typeof args === 'object' && args ? args : {}
+const cfg = typeof args === 'string' ? JSON.parse(args) : (args && typeof args === 'object' ? args : {})
 const rootDir = cfg.rootDir || '.'
 const lane = cfg.lane
 const offerId = cfg.offerId

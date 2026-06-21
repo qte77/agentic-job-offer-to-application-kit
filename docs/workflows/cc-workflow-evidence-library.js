@@ -34,7 +34,7 @@ export const meta = {
 }
 
 // --- config (from args, with generic defaults) ---
-const cfg = (typeof args === 'object' && args) ? args : {}
+const cfg = typeof args === 'string' ? JSON.parse(args) : (args && typeof args === 'object' ? args : {})
 const WORKSPACE = cfg.workspaceRoot || '/path/to/workspace'
 const ACCOUNT = cfg.account || 'the candidate'
 const PROFILE_REPO = cfg.profileRepo || ''

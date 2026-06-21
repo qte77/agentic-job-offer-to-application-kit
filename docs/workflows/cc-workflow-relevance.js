@@ -13,7 +13,7 @@
 //     //   results/evidence-library.json (the Stage-1 output) for the candidate brief
 //   }})
 //
-// Persist the returned shortlist with: python -m ajoa_kit.persist_scored <output.json>
+// Persist the returned shortlist with: uv run ajoa-kit persist <output.json>  (or: make persist FILE=…)
 //
 // Hooks: agent(), parallel(), phase(), log(). agent(prompt,{schema}) returns the
 // schema-validated object. The Workflow script has no filesystem access, but its agents do
@@ -29,7 +29,7 @@ export const meta = {
 }
 
 // --- config (override via args) -------------------------------------------------------
-const cfg = typeof args === 'object' && args ? args : {}
+const cfg = typeof args === 'string' ? JSON.parse(args) : (args && typeof args === 'object' ? args : {})
 const rootDir = cfg.rootDir || '.'
 const dir = cfg.batchDir || `${rootDir}/results/batches`
 const batchCount = cfg.batchCount // REQUIRED: read results/batches/manifest.json before invoking

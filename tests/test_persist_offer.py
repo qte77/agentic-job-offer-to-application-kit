@@ -48,7 +48,7 @@ def test_write_pack_emits_one_md_per_artifact(tmp_path: Path) -> None:
     names = sorted(p.name for p in offer_dir.glob("*.md"))
     assert names == ["cover-letter.md", "cv.md", "gap-report.md", "match.md", "prefill-pack.md"]
     assert "Dear hiring team" in (offer_dir / "cover-letter.md").read_text()
-    assert (offer_dir / "match.md").read_text().startswith("# ")  # rendered heading
+    assert (offer_dir / "match.md").read_text().startswith('---\ntitle: "Match assessment"\n---')
 
 
 def test_write_pack_emits_coverage_report_only_with_must_haves(tmp_path: Path) -> None:
@@ -61,7 +61,7 @@ def test_write_pack_emits_coverage_report_only_with_must_haves(tmp_path: Path) -
     assert "coverage-report.md" in names
     assert len(names) == 6  # the 5 core artifacts + the optional coverage report
     report = (offer_dir / "coverage-report.md").read_text()
-    assert report.startswith("# Coverage report")
+    assert report.startswith('---\ntitle: "Coverage report"\n---')
     assert "| Python | covered | Acme |" in report
 
 
