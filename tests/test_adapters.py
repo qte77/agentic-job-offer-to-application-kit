@@ -142,6 +142,7 @@ def test_greenhouse_joins_departments_and_tolerates_null_location(
                 "departments": [{"name": "Engineering"}, {"name": "Platform"}],
                 "location": {"name": "Remote"},
                 "absolute_url": "https://gh/jobs/1?utm_source=x",
+                "first_published": "2025-12-20T10:00:00-05:00",
                 "updated_at": "2026-01-01",
                 "content": "Build &lt;b&gt;systems&lt;/b&gt;.",
             },
@@ -151,6 +152,7 @@ def test_greenhouse_joins_departments_and_tolerates_null_location(
                 "departments": [],
                 "location": None,
                 "absolute_url": "https://gh/jobs/2",
+                "updated_at": "2026-02-02",  # no first_published -> posted_at falls back to this
                 "content": "",
             },
         ]
@@ -163,9 +165,15 @@ def test_greenhouse_joins_departments_and_tolerates_null_location(
     assert recs[0]["url"] == "https://gh/jobs/1"  # utm dropped
     assert "<b>" not in recs[0]["description"]
     assert "systems" in recs[0]["description"]
+    # posted_at = true publish date (first_published); last_modified = updated_at (greenhouse-only)
+    assert recs[0]["posted_at"] == "2025-12-20T10:00:00-05:00"
+    assert recs[0]["last_modified"] == "2026-01-01"
     # null location + empty departments tolerated (the `or {}` guard), not skipped
     assert recs[1]["location"] == ""
     assert recs[1]["department"] == ""
+    # no first_published -> posted_at falls back to updated_at; last_modified still updated_at
+    assert recs[1]["posted_at"] == "2026-02-02"
+    assert recs[1]["last_modified"] == "2026-02-02"
 
 
 def test_ashby_joins_dept_team_and_url_description_fallbacks(

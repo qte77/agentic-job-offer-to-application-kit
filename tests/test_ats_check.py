@@ -85,6 +85,8 @@ class TestParseSafetyProperties:
             # the absence-of-headings warning is anti-monotone by design; exclude it
             return {w for w in ats_check.parse_safety_warnings(s) if "heading" not in w.lower()}
 
-        combined = positives(a + b)
+        # Newline-join, NOT bare concat: the table/HTML/etc. detectors are line-anchored (^...$),
+        # so merging a's tail and b's head onto one line could erase a match. Per-line, monotone.
+        combined = positives(a + "\n" + b)
         assert positives(a) <= combined  # a flagged issue never vanishes when text is appended
         assert positives(b) <= combined
