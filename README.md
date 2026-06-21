@@ -10,8 +10,6 @@
 [![CodeQL](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml)
 [![Lint MD and Links](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/lint-md-links.yml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/lint-md-links.yml)
 
-**[▶ Live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** — interactive dashboard (synthetic demo data).
-
 ## Why
 
 Job search is noisy: hundreds of postings, each needing a tailored CV and cover letter with an
@@ -34,8 +32,11 @@ Five configurable **position lanes**: CxO/fractional · founding engineer · sen
 cloud/DevOps/platform · architect (configurable defaults — see the `LANES` array in
 `cc-workflow-evidence-library.js`). Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
 
+**[▶ Live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** — the interactive
+dashboard (synthetic shortlist · **live** market trends, fetched at runtime from the `data` branch).
+
 <details>
-<summary>Screenshots — the dashboard (synthetic demo data; dark/light follows your GitHub theme)</summary>
+<summary>Screenshots — the dashboard (dark/light follows your GitHub theme)</summary>
 
 <br />
 
@@ -51,6 +52,13 @@ cloud/DevOps/platform · architect (configurable defaults — see the `LANES` ar
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dashboard-trends-dark.png" />
   <img alt="ajoa-kit dashboard — market keyword trends tab" src="docs/assets/dashboard-trends-light.png" />
+</picture>
+
+<strong>Live market data — real aggregate keyword trends (from the data branch)</strong>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dashboard-market-dark.png" />
+  <img alt="ajoa-kit dashboard — live market keyword trends from the data branch" src="docs/assets/dashboard-market-light.png" />
 </picture>
 
 </details>
