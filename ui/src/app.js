@@ -1,8 +1,22 @@
 // EyeRest dashboard shell — vanilla ES module, no build step.
 // Renders the synthetic shortlist from public/data/demo.json; the keyword-trends chart shows the
-// real backfilled aggregate series from public/data/trends.ndjson (non-PII {week,counts}) when present, else
-// the synthetic trends. Issue #11 skeleton; the live shortlist feed (pseudonymized, from the
-// `data` branch at runtime) stays gated on #52.
+// real aggregate series ({week,counts}, non-PII) fetched at RUNTIME from the deployment's own
+// `data` branch (see DATA_BASE_URL), falling back to the synthetic trends on any miss. Issue #11
+// skeleton; the live shortlist feed (pseudonymized) stays gated on #52.
+
+// Trends load at runtime from the deployment's own `data` branch (mirrors qte77/analyze-stock-kpi) —
+// the data is never bundled into ui/. Auto-derive the base from the GitHub Pages origin so every
+// fork self-hosts its own data; `?base=` overrides (local dev / custom domain), else the qte77 default.
+function defaultDataBase() {
+  const m = location.hostname.match(/^([^.]+)\.github\.io$/);
+  const repo = location.pathname.split("/").filter(Boolean)[0];
+  return m && repo
+    ? `https://raw.githubusercontent.com/${m[1]}/${repo}/data`
+    : "https://raw.githubusercontent.com/qte77/agentic-job-offer-to-application-kit/data";
+}
+const DATA_BASE_URL = (
+  new URLSearchParams(location.search).get("base") ?? defaultDataBase()
+).replace(/\/$/, "");
 
 /** @type {{lanes:{key:string,label:string}[], shortlist:any[], trends:{week:string,counts:Record<string,number>}[], generated:string}|null} */
 let data = null;
@@ -86,12 +100,13 @@ function pivot(records) {
   return { labels, latest, keys };
 }
 
-// Load the real backfilled trends from public/data/trends.ndjson (one {week,counts} JSON record per
-// line, written by `ajoa-kit trend-snapshot` and copied in via `make trends-ui`). Returns null on
-// any miss (absent file / non-200 / bad line) so the caller falls back to the synthetic set.
+// Load the real aggregate trends from the `data` branch at `${DATA_BASE_URL}/results/trends.ndjson`
+// (one {week,counts} JSON record per line, written by `ajoa-kit trend-snapshot` and pushed to the
+// data branch via `make trends-data`). Returns null on any miss (absent / non-200 / bad line /
+// offline) so the caller falls back to the synthetic set.
 async function loadRealTrends() {
   try {
-    const res = await fetch("public/data/trends.ndjson");
+    const res = await fetch(`${DATA_BASE_URL}/results/trends.ndjson`);
     if (!res.ok) return null;
     const records = (await res.text())
       .split("\n")

@@ -6,10 +6,12 @@ A static, **no-build** dashboard that visualizes the kit's output: a tailored
 dashboard.
 
 It renders the **synthetic** shortlist from [`public/data/demo.json`](public/data/demo.json)
-(fictional companies, no PII). The **market-trends** chart shows the *real* backfilled aggregate
-series (`{week, counts}`, non-PII) from `public/data/trends.ndjson` when present, falling back to
-the synthetic trends otherwise. The live *shortlist* feed (pseudonymized, from a separate `data`
-branch at runtime) stays gated on the PII helper ([issue #52][i52], [issue #11][i11]) per
+(fictional companies, no PII). The **market-trends** chart shows the *real* aggregate series
+(`{week, counts}`, non-PII) fetched at **runtime** from this deployment's own `data` branch
+(`raw.githubusercontent.com/<owner>/<repo>/data/results/trends.ndjson`, auto-derived from the Pages
+origin so every fork self-hosts; `?base=` overrides), **never bundled into `ui/`** — falling back to
+the synthetic trends on any miss. The live *shortlist* feed (pseudonymized) stays gated on the PII
+helper ([issue #52][i52], [issue #11][i11]) per
 [ADR-0001](../docs/decisions/0001-backend-cli-ui-separation.md).
 
 ## Layout
@@ -19,7 +21,7 @@ Vite/npm) so the files are served verbatim:
 
 - `index.html` — app shell at the served root
 - `src/` — source: `app.js`, `theme.js`, `style.css`
-- `public/` — static assets served as-is: `favicon.svg`, `data/`, `vendor/` (Chart.js + fonts)
+- `public/` — static assets served as-is: `favicon.svg`, `data/demo.json` (synthetic), `vendor/` (Chart.js + fonts)
 - `tests/` — folder-parity placeholder; no JS test runner (this repo tests Python modules only)
 
 ## Run locally
@@ -30,13 +32,17 @@ uv run python -m http.server 8000 --directory ui   # or: make preview
 # open http://localhost:8000/
 ```
 
-To show **real** trends, generate then copy them in before serving:
+**Real trends** live on the repo's `data` branch (never in `ui/`), fetched at runtime. Refresh them
+by generating locally and pushing to that branch:
 
 ```bash
 uv run ajoa-kit trend-snapshot   # results/jobs-raw.json -> results/trends.ndjson (by posted week)
-make trends-ui                   # copy -> ui/public/data/trends.ndjson (gitignored)
-make preview
+make trends-data                 # push results/trends.ndjson -> the `data` branch
 ```
+
+`make preview` with no `?base=` fetches the deployed `data` branch (or the synthetic `demo.json`
+fallback offline); for a local real-data preview, serve a data dir and open
+`http://localhost:8000/?base=<that-url>`.
 
 ## Design
 
@@ -58,7 +64,7 @@ make preview
 | `src/app.js` | Shortlist render + filter, tab switching, Chart.js line + stacked bars (rebuilt on `themechange`) |
 | `src/theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
 | `public/data/demo.json` | Synthetic demo data — shortlist (Tab A) + fallback trends as `{week,counts}[]` records (Tab B) |
-| `public/data/trends.ndjson` | Real backfilled trends (`{week,counts}` per line), when present — copied from `results/` via `make trends-ui`; gitignored. Overrides `demo.json` trends. |
+| *(real trends)* | Not in `ui/` — fetched at runtime from the repo's `data` branch (`results/trends.ndjson`); refresh via `make trends-data` |
 | `public/favicon.svg` | qte77 brand mark (adaptive light/dark) — same as `paperverse` |
 | `public/vendor/` | Vendored Chart.js + Inter font TTFs (see [public/vendor/README.md](public/vendor/README.md)) |
 | `tests/` | Folder-parity placeholder (`.gitkeep`); no JS test runner — Python modules are the tested surface |

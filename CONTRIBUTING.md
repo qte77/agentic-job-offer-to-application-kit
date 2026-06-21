@@ -62,3 +62,18 @@ make changelog_release VERSION=0.1.0       # scriv collect -> CHANGELOG.md (dele
 git -c tag.gpgSign=false tag -a v0.1.0 -m "Release v0.1.0" && git push origin v0.1.0
 gh workflow run publish-release.yaml -f tag=v0.1.0
 ```
+
+## Trends data branch
+
+The dashboard's real **market-trends** data lives only on the orphan **`data`** branch (never in
+`ui/` or `main`); the live site fetches it at runtime from
+`raw.githubusercontent.com/<owner>/<repo>/data/results/trends.ndjson` (auto-derived from the Pages
+origin, so a fork self-hosts its own). To refresh it:
+
+```bash
+uv run ajoa-kit trend-snapshot   # -> results/trends.ndjson (needs the polyfetch venv; not run in CI)
+make trends-data                 # force-push results/trends.ndjson -> the `data` branch
+```
+
+The live dashboard picks it up on the next page load — no redeploy. CI can't generate this data
+itself: `trend-snapshot` needs the `polyfetch-scrape` stack, which isn't available in Actions.

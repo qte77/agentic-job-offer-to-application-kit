@@ -3,7 +3,7 @@ SHELL := bash
 .SILENT:
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
-.PHONY: help install lint format preview trends-ui check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
+.PHONY: help install lint format preview trends-data check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
 
 help: ## List available targets
 	awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-11s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -20,13 +20,17 @@ format: ## Ruff format (write)
 preview: ## Serve the ui/ dashboard locally (PORT defaults to 8000)
 	uv run python -m http.server "$${PORT:-8000}" --directory ui
 
-trends-ui: ## Copy results/trends.ndjson into ui/public/data/ so the dashboard shows real trends
-	if [ -f results/trends.ndjson ]; then
-		cp results/trends.ndjson ui/public/data/trends.ndjson
-		echo "copied results/trends.ndjson -> ui/public/data/trends.ndjson"
-	else
-		echo "no results/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"
-	fi
+trends-data: ## Push results/trends.ndjson to the `data` branch (real trends for the live dashboard)
+	test -f results/trends.ndjson || { echo "no results/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"; exit 2; }
+	# One-file commit built in a throwaway index (never touches the working tree), force-pushed to the
+	# data branch; the live dashboard fetches it at runtime via raw.githubusercontent.com.
+	export GIT_INDEX_FILE="$$(mktemp -u)"
+	git read-tree --empty
+	git add -f results/trends.ndjson
+	tree="$$(git write-tree)"
+	commit="$$(git -c commit.gpgsign=false commit-tree "$$tree" -m "data: update trends.ndjson")"
+	git push -f origin "$$commit:refs/heads/data"
+	echo "pushed results/trends.ndjson -> data branch ($$commit)"
 
 check: ## Lint + types + complexity + format-check + offline tests + coverage (CI parity)
 	uv run ruff check .
