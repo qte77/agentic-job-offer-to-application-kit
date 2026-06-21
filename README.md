@@ -32,7 +32,7 @@ Five configurable **position lanes**: CxO/fractional · founding engineer · sen
 cloud/DevOps/platform · architect (configurable defaults — see the `LANES` array in
 `cc-workflow-evidence-library.js`). Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
 
-**[▶ Live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** — the interactive
+**[Live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** — the interactive
 dashboard (synthetic shortlist · **live** market trends, fetched at runtime from the `data` branch).
 
 <details>
@@ -94,7 +94,9 @@ env-overridable via `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR`.
 
 **Keyword trends (optional):** drop a `config/keywords.json` (`{"interest": [...], "title_roles": [...]}`)
 to override the default pre-filter vocabulary, then `ajoa-kit trend-snapshot` writes an aggregate,
-keyword-only per-ISO-week record to `results/trends.ndjson` (no JD/PII).
+keyword-only per-ISO-week record to `results/trends.ndjson` (no JD/PII). `make trends-data` pushes
+that snapshot to the `data` branch, where the live dashboard fetches it at runtime (never bundled
+into `ui/`; see [ui/README.md](ui/README.md)).
 
 Build the evidence library once, upstream, via the Stage-1 Workflow
 (`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
