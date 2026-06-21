@@ -21,7 +21,7 @@ separately, so they are not reproduced here.)
 Chart.js — https://www.chartjs.org/ — MIT License
 --------------------------------------------------------------------------------
 
-Vendored at ui/vendor/chart.umd.min.js (v4.5.1).
+Vendored at ui/public/vendor/chart.umd.min.js (v4.5.1).
 
 The MIT License (MIT)
 
@@ -49,8 +49,8 @@ THE SOFTWARE.
 Inter (font) — https://github.com/rsms/inter — SIL Open Font License 1.1
 --------------------------------------------------------------------------------
 
-Vendored at ui/vendor/fonts/Inter-Regular.ttf and ui/vendor/fonts/Inter-Bold.ttf;
-the full license also ships beside the fonts at ui/vendor/fonts/OFL.txt.
+Vendored at ui/public/vendor/fonts/Inter-Regular.ttf and ui/public/vendor/fonts/Inter-Bold.ttf;
+the full license also ships beside the fonts at ui/public/vendor/fonts/OFL.txt.
 
 Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
 

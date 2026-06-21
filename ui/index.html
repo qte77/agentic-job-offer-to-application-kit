@@ -8,7 +8,7 @@
       name="description"
       content="Demo dashboard shell for agentic-job-offer-to-application-kit: tailored shortlist + job-market keyword trends. Synthetic data only."
     />
-    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="public/favicon.svg" type="image/svg+xml" />
     <script>
       // Anti-flash: apply a saved explicit theme before first paint (auto = no attr).
       (function () {
@@ -19,10 +19,10 @@
         } catch (e) {}
       })();
     </script>
-    <link rel="stylesheet" href="style.css" />
-    <script src="vendor/chart.umd.min.js" defer></script>
-    <script src="theme.js" defer></script>
-    <script src="app.js" type="module"></script>
+    <link rel="stylesheet" href="src/style.css" />
+    <script src="public/vendor/chart.umd.min.js" defer></script>
+    <script src="src/theme.js" defer></script>
+    <script src="src/app.js" type="module"></script>
   </head>
   <body>
     <header>
@@ -56,8 +56,8 @@
         Demo shell — the <strong>shortlist is synthetic</strong> (fictional companies, no PII) and
         stays local in real use: company/title/url are never published. The
         <strong>market trends</strong> are the real aggregate keyword counts (the safe
-        <code>{week, counts}</code> timeline) when <code>data/trends.ndjson</code> is present, else
-        synthetic — non-PII facts either way.
+        <code>{week, counts}</code> timeline) when <code>public/data/trends.ndjson</code> is present,
+        else synthetic — non-PII facts either way.
       </p>
 
       <div class="tabs" role="tablist" aria-label="Dashboard views">

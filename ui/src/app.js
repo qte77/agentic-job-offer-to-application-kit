@@ -1,6 +1,6 @@
 // EyeRest dashboard shell — vanilla ES module, no build step.
-// Renders the synthetic shortlist from data/demo.json; the keyword-trends chart shows the real
-// backfilled aggregate series from data/trends.ndjson (non-PII {week,counts}) when present, else
+// Renders the synthetic shortlist from public/data/demo.json; the keyword-trends chart shows the
+// real backfilled aggregate series from public/data/trends.ndjson (non-PII {week,counts}) when present, else
 // the synthetic trends. Issue #11 skeleton; the live shortlist feed (pseudonymized, from the
 // `data` branch at runtime) stays gated on #52.
 
@@ -86,12 +86,12 @@ function pivot(records) {
   return { labels, latest, keys };
 }
 
-// Load the real backfilled trends from data/trends.ndjson (one {week,counts} JSON record per
+// Load the real backfilled trends from public/data/trends.ndjson (one {week,counts} JSON record per
 // line, written by `ajoa-kit trend-snapshot` and copied in via `make trends-ui`). Returns null on
 // any miss (absent file / non-200 / bad line) so the caller falls back to the synthetic set.
 async function loadRealTrends() {
   try {
-    const res = await fetch("data/trends.ndjson");
+    const res = await fetch("public/data/trends.ndjson");
     if (!res.ok) return null;
     const records = (await res.text())
       .split("\n")
@@ -226,7 +226,7 @@ async function init() {
     if (!document.getElementById("trends-section").hidden) renderTrends();
   });
 
-  data = await fetch("data/demo.json").then((r) => r.json());
+  data = await fetch("public/data/demo.json").then((r) => r.json());
   // Trends are aggregate {week,counts} (non-PII), so the real backfilled series can be shown when
   // present; the shortlist stays synthetic/local. Any miss keeps demo.json's synthetic trends.
   const realTrends = await loadRealTrends();

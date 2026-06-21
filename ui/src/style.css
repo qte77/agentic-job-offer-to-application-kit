@@ -5,14 +5,14 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("vendor/fonts/Inter-Regular.ttf") format("truetype");
+  src: url("../public/vendor/fonts/Inter-Regular.ttf") format("truetype");
 }
 @font-face {
   font-family: "Inter";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("vendor/fonts/Inter-Bold.ttf") format("truetype");
+  src: url("../public/vendor/fonts/Inter-Bold.ttf") format("truetype");
 }
 
 /* EyeRest theme tokens — qte77 brand DESIGN.md (zero-blue, warm amber).

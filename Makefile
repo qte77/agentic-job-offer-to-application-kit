@@ -20,10 +20,10 @@ format: ## Ruff format (write)
 preview: ## Serve the ui/ dashboard locally (PORT defaults to 8000)
 	uv run python -m http.server "$${PORT:-8000}" --directory ui
 
-trends-ui: ## Copy results/trends.ndjson into ui/data/ so the dashboard shows real trends
+trends-ui: ## Copy results/trends.ndjson into ui/public/data/ so the dashboard shows real trends
 	if [ -f results/trends.ndjson ]; then
-		cp results/trends.ndjson ui/data/trends.ndjson
-		echo "copied results/trends.ndjson -> ui/data/trends.ndjson"
+		cp results/trends.ndjson ui/public/data/trends.ndjson
+		echo "copied results/trends.ndjson -> ui/public/data/trends.ndjson"
 	else
 		echo "no results/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"
 	fi
