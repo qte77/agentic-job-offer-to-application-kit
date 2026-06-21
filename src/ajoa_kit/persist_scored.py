@@ -67,7 +67,7 @@ def write_shortlists(rel: list[dict], results_dir: Path) -> dict[str, int]:
         d = results_dir / lane
         d.mkdir(parents=True, exist_ok=True)
         (d / "shortlist.json").write_text(json.dumps(items, indent=2, ensure_ascii=False))
-        lines = [f"# {lane} — shortlist ({len(items)})", ""]
+        lines = [f'---\ntitle: "{lane} — shortlist ({len(items)})"\n---', ""]
         for j in items:
             tag = f"{j.get('score')}/{j.get('verdict')}"
             lines.append(f"- [{tag}] {j.get('title', '')} @ {j.get('company', '')}")

@@ -1,6 +1,6 @@
 # Synthetic worked example — "Alexis Doe"
 
-A fictional persona demonstrating the **ingest → relevance** happy path, laid out as a
+A fictional persona demonstrating the **ingest → relevance → tailor** happy path, laid out as a
 self-contained mini-workspace that **mirrors the real `config/` + `results/` structure**.
 **Generalized from a real run and de-identified** — not a real person, no real scraped job data,
 no personally identifiable information (PII).
@@ -23,19 +23,41 @@ examples/alexis-doe/
     └── cloud/shortlist.sample.md  # illustrative output (the LLM step is non-deterministic)
 ```
 
-## Run the relevance step against this workspace
+## Stage 2 — relevance screen against this workspace
 
 The relevance workflow is `rootDir`-aware and the batches are pre-generated, so point it straight
-at this folder — no ingest/chunk needed:
+at this folder — no `ingest`/`chunk` needed:
 
 ```text
 Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
            args: { rootDir: "examples/alexis-doe", batchCount: 1 } })
 ```
 
-The `results/<lane>/shortlist.sample.md` files show the shape of the output. Persisting it
-(`uv run python -m ajoa_kit.persist_scored <output.json>`) writes real shortlists to the
-**repo-root** `results/` — `chunk`/`persist_scored` are not `rootDir`-aware yet (tracked follow-up).
+The `results/<lane>/shortlist.sample.md` files show the shape of the output (the LLM step is
+non-deterministic, so your run may shortlist a different offer).
+
+## Stage 3 — persist, tailor, finalize one offer
+
+`persist` / `persist-offer` are **not** `rootDir`-aware — they honor `AJOA_RESULTS_DIR`, not the
+workflow `rootDir`. To keep the whole chain inside this example workspace, point `AJOA_RESULTS_DIR`
+at it so the tailor step can resolve `results/<lane>/shortlist.json`:
+
+```bash
+# 1. persist the relevance result INTO this workspace (-> results/<lane>/shortlist.{json,md})
+AJOA_RESULTS_DIR="$PWD/examples/alexis-doe/results" uv run ajoa-kit persist <relevance-output.json>
+
+# 2. tailor one shortlisted offer — lane + offerId come from the shortlist you just wrote:
+#    Workflow({ scriptPath: "docs/workflows/cc-workflow-tailor-offer.js",
+#               args: { rootDir: "examples/alexis-doe", lane: "engineering", offerId: "<id>" } })
+
+# 3. persist the pack, then run the ATS parse-safety gate on the tailored CV
+uv run ajoa-kit persist-offer <tailor-output.json>   # -> results/offers/<slug>/*.md
+uv run ajoa-kit ats-check results/offers/<slug>/cv.md
+```
+
+For a real run you persist without `AJOA_RESULTS_DIR` (writes to the **repo-root** `results/`); then
+the tailor workflow's `rootDir` is just `.`. Either way, the persisted shortlist and the tailor
+`rootDir` must point at the same `results/` tree.
 
 ## Start your own search
 

@@ -76,7 +76,9 @@ def render(pack: dict) -> list[tuple[str, str]]:
         value = pack.get(key)
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"pack missing required artifact: {key}")
-        rendered.append((filename, f"# {heading}\n\n{value.strip()}\n"))
+        # Title as YAML frontmatter (not a wrapping `# H1`) so each artifact keeps a single H1
+        # from its own body — markdownlint strips frontmatter, so no MD025 "multiple H1" noise.
+        rendered.append((filename, f'---\ntitle: "{heading}"\n---\n\n{value.strip()}\n'))
     return rendered
 
 
@@ -106,14 +108,15 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     # validation never requires it (older packs carry no must_haves).
     if pack.get("must_haves"):
         body = coverage_summary(pack["must_haves"], pack.get("gap_report", ""))
-        (offer_dir / "coverage-report.md").write_text(f"# Coverage report\n\n{body}")
+        cov = f'---\ntitle: "Coverage report"\n---\n\n{body}'
+        (offer_dir / "coverage-report.md").write_text(cov)
     # Auto parse-safety on the tailored CV (#75): surface ATS-hostile constructs for human review.
     # Non-blocking — a warning file appears only when there is something to fix; never raises.
     warnings = parse_safety_warnings(pack["cv"])
     if warnings:
         items = "\n".join(f"- {w}" for w in warnings)
         (offer_dir / "cv-ats-check.md").write_text(
-            "# CV ATS parse-safety\n\n"
+            '---\ntitle: "CV ATS parse-safety"\n---\n\n'
             "Review before submitting — non-blocking warnings, not errors.\n\n"
             f"{items}\n"
         )
