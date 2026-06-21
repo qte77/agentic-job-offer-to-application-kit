@@ -6,5 +6,5 @@
   theme. The skeleton for the live trends dashboard (#11); live data-branch wiring stays gated on
   the PII helper (#52) per ADR-0001.
 - `make preview` — serve the `ui/` dashboard locally (`PORT` defaults to 8000).
-- GitHub Pages deploy workflow (`.github/workflows/pages.yaml`) publishing `ui/` on changes to
+- GitHub Pages deploy workflow (`.github/workflows/gh-pages.yaml`) publishing `ui/` on changes to
   `main` (synthetic data only).
