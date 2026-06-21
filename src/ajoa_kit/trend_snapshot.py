@@ -32,6 +32,7 @@ from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
     import re
+    from collections.abc import Callable
     from pathlib import Path
 
 
@@ -112,19 +113,28 @@ def parse_week(posted_at: str) -> str | None:
     return None
 
 
-def bucket_by_week(
-    jobs: list[dict], pattern: re.Pattern[str]
-) -> tuple[dict[str, dict[str, int]], int]:
-    """Group JDs by the ISO week of their ``posted_at`` and count keywords per week.
+def _posted_at(job: dict) -> str:
+    """Default ``date_of`` for :func:`bucket_by_week` — bucket by the JD's posted date."""
+    return job.get("posted_at", "")
 
-    Returns ``({week: {keyword: document-frequency}}, skipped)`` where ``skipped`` counts JDs with
-    no parseable ``posted_at`` (they can't be placed in time). Reuses :func:`extract_counts` per
-    week, so the per-JD document-frequency semantics match the single-week path.
+
+def bucket_by_week(
+    jobs: list[dict],
+    pattern: re.Pattern[str],
+    date_of: Callable[[dict], str] = _posted_at,
+) -> tuple[dict[str, dict[str, int]], int]:
+    """Group JDs by the ISO week of a chosen date and count keywords per week.
+
+    ``date_of`` picks which date to bucket on (default: ``posted_at``); pass e.g.
+    ``lambda j: j.get("last_modified") or j.get("posted_at", "")`` for activity-dating. Returns
+    ``({week: {keyword: document-frequency}}, skipped)`` where ``skipped`` counts JDs whose date is
+    empty/unparseable (can't be placed in time). Reuses :func:`extract_counts` per week, so the
+    per-JD document-frequency semantics match the single-week path.
     """
     by_week: dict[str, list[dict]] = {}
     skipped = 0
     for job in jobs:
-        week = parse_week(job.get("posted_at", ""))
+        week = parse_week(date_of(job))
         if week is None:
             skipped += 1
             continue

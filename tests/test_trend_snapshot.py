@@ -103,6 +103,29 @@ def test_parse_week_returns_none_when_unparseable(raw: str) -> None:
     assert trend_snapshot.parse_week(raw) is None
 
 
+def test_bucket_by_week_activity_dating_prefers_last_modified_with_fallback() -> None:
+    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    jobs = [
+        # posted W03, but last-modified W08 -> activity dating must place it in W08
+        {
+            "title": "Python",
+            "description": "python",
+            "posted_at": "2024-01-15",
+            "last_modified": "2024-02-19",
+        },
+        # no last_modified -> activity dating falls back to posted_at (W04)
+        {"title": "Rust", "description": "rust", "posted_at": "2024-01-22", "last_modified": ""},
+    ]
+    activity = lambda j: j.get("last_modified") or j.get("posted_at", "")  # noqa: E731
+    weeks, skipped = trend_snapshot.bucket_by_week(jobs, pat, date_of=activity)
+    assert weeks["2024-W08"] == {"python": 1}  # re-dated by last_modified
+    assert weeks["2024-W04"] == {"rust": 1}  # fell back to posted_at
+    assert skipped == 0
+    # default extractor still buckets by posted_at (back-compat)
+    posted, _ = trend_snapshot.bucket_by_week(jobs, pat)
+    assert set(posted) == {"2024-W03", "2024-W04"}
+
+
 def test_bucket_by_week_groups_by_posted_week_and_counts_skipped() -> None:
     pat, _ = ingest.build_patterns(["python", "rust"], [])
     jobs = [

@@ -211,6 +211,7 @@ def record(**kw: object) -> dict[str, Any]:
         "remote": None,
         "url": "",
         "posted_at": "",
+        "last_modified": "",
         "description": "",
     }
     base.update(kw)
@@ -259,7 +260,8 @@ def from_greenhouse(c: dict[str, str]) -> Iterable[dict[str, Any]]:
             title=j.get("title", ""),
             location=(j.get("location") or {}).get("name", ""),
             url=j.get("absolute_url", ""),
-            posted_at=j.get("updated_at", "") or "",
+            posted_at=j.get("first_published") or j.get("updated_at", "") or "",
+            last_modified=j.get("updated_at", "") or "",
             description=html_to_text(j.get("content", "")),
         )
 
