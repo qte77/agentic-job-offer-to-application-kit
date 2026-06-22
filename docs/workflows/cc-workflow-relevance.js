@@ -1,5 +1,5 @@
 // Stage-2 relevance pass: screen ingested job descriptions (JDs) against the candidate's
-// evidence library + the five target lanes, and shortlist with per-lane fit scores.
+// evidence library + the target lanes, and shortlist with per-lane fit scores.
 //
 // EXECUTION MODEL: a Claude Code Workflow-tool script (not node/make). Ingest + chunk first
 // (see CONTRIBUTING.md §Commands), read the batch count from
@@ -22,7 +22,7 @@
 export const meta = {
   name: 'relevance',
   description:
-    'LLM relevance pass: screen ingested JDs against the candidate evidence library + 5 lanes, shortlist with per-lane fit scores. Replaces a crude keyword filter that over-matched.',
+    'LLM relevance pass: screen ingested JDs against the candidate evidence library + the target lanes, shortlist with per-lane fit scores. Replaces a crude keyword filter that over-matched.',
   phases: [
     { title: 'Screen', detail: 'one agent per batch reads ~40 JDs and judges lane fit, dropping non-fits' },
   ],
@@ -78,7 +78,7 @@ function gatePrompt(path) {
   const brief = LIBRARY_INLINE
     ? `CANDIDATE BRIEF (provided inline):\n${JSON.stringify(LIBRARY_INLINE)}`
     : `CANDIDATE: read the evidence library at ${LIBRARY_PATH} with the Read tool — use its headline, positioningSummary, per-lane *Angle paragraphs, skillClusters, and gapNarrative as the candidate's genuine OFFERS and honest MISSING per lane.`
-  return `You are screening job descriptions for ONE candidate against five target lanes (${LANES.join(', ')}). Read the JSON file at ${path} with the Read tool — it is an array of ~40 job descriptions, each {id, title, company, location, url, description, ...}.
+  return `You are screening job descriptions for ONE candidate against the target lanes (${LANES.join(', ')}). Read the JSON file at ${path} with the Read tool — it is an array of ~40 job descriptions, each {id, title, company, location, url, description, ...}.
 
 ${brief}
 
