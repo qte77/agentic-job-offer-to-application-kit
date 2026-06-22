@@ -246,13 +246,37 @@ td.empty-state {
 @media (min-width: 720px) {
   .tailor-pack { grid-template-columns: 1fr 1fr; }
 }
+/* Pane head: the section title on the left, a Copy-raw-markdown button on the right. */
+.tailor-doc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
 .tailor-doc h4 {
-  margin: 0 0 0.4rem;
+  margin: 0; /* spacing now lives on .tailor-doc-head */
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
+/* Small, unobtrusive copy button; highlights on hover/focus and while showing "Copied". */
+.tailor-copy {
+  flex: none;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.tailor-copy:hover { border-color: var(--primary); color: var(--primary); }
+.tailor-copy:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tailor-copy.is-copied { border-color: var(--data-positive); color: var(--data-positive); }
 .tailor-pre,
 .tailor-md {
   margin: 0;
