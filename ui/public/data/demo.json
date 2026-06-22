@@ -1,5 +1,5 @@
 {
-  "_synthetic": "DEMO DATA ONLY — synthetic, fictional companies/roles, no real job postings and no PII. Mirrors the shortlist + trend shapes the pipeline produces. See ui/README.md.",
+  "_synthetic": "DEMO DATA ONLY — synthetic, fictional companies/roles, no real job postings and no PII. Mirrors the shortlist + trend shapes the pipeline produces, including the tailor-pack cv/cover_letter (real packs stay local in results/offers/<slug>/, gated on #52). See ui/README.md.",
   "generated": "2026-06-17",
   "lanes": [
     { "key": "cxo", "label": "(fractional) CxO" },
@@ -17,7 +17,9 @@
       "best_lane": "founding",
       "score": 5,
       "verdict": "shortlist",
-      "rationale": "0->1 product surface, ships end-to-end solo; breadth maps directly to the founding lane."
+      "rationale": "0->1 product surface, ships end-to-end solo; breadth maps directly to the founding lane.",
+      "cv": "# Alexis Doe — Founding Engineer\n\n## Summary\nGeneralist builder who ships 0->1 products end-to-end, from data ingestion to UI. Comfortable owning the whole surface area solo and setting the early engineering culture.\n\n## Selected experience\n- Shipped an agentic job-application pipeline (ingest -> score -> tailor) as a single maintainer, including CLI, workflows, and a static dashboard.\n- Took three side products from empty repo to deployed in under two weeks each.\n- Set up CI, release automation, and docs conventions that later scaled to outside contributors.\n\n## Skills\nPython, TypeScript, LLM/agent workflows, GitHub Actions, pydantic, vanilla web, rapid prototyping.",
+      "cover_letter": "Dear Acme AI team,\n\nFounding Engineer is the role I optimize for: a 0->1 surface where one person ships the whole thing and the early decisions compound. Your posting reads like the work I already do for fun.\n\nMy recent agentic kit spans ingestion, LLM scoring, application tailoring, and a published dashboard, built and maintained solo. That breadth is exactly what an unshaped product needs before it specializes.\n\nI would love to be employee-early at Acme AI and help set the bar.\n\nBest,\nAlexis Doe"
     },
     {
       "id": "ashby:acme-ai:101",
@@ -27,7 +29,9 @@
       "best_lane": "engineering",
       "score": 4,
       "verdict": "shortlist",
-      "rationale": "Direct fit on agentic LLM workflows; gap is production-at-scale ops."
+      "rationale": "Direct fit on agentic LLM workflows; gap is production-at-scale ops.",
+      "cv": "# Alexis Doe — AI / Agentic Systems Engineer\n\n## Summary\nBuilds reliable LLM agent workflows: retrieval, structured outputs, evaluation, and human-in-the-loop gating. Bias toward shipping measurable pipelines, not demos.\n\n## Selected experience\n- Designed a multi-stage agent pipeline (relevance -> tailoring) with JSON-schema-validated tool outputs and deterministic orchestration.\n- Added regression-pinned evals so prompt changes are caught before merge.\n- Wired structured pydantic models end-to-end for safe, typed agent I/O.\n\n## Skills\nLLM agents, RAG, structured outputs, eval harnesses, Python, pydantic, prompt design.",
+      "cover_letter": "Dear Acme AI team,\n\nAgentic systems are where I spend most of my energy, specifically making them dependable enough to trust in production rather than impressive in a demo.\n\nI have built schema-validated, multi-stage agent workflows with evals that gate every change, and threaded structured models through the whole path. The gap I would grow into is production-at-scale ops, and Acme is the right place to do that.\n\nThanks for considering me.\n\nBest,\nAlexis Doe"
     },
     {
       "id": "greenhouse:byteworks:204",
@@ -37,7 +41,9 @@
       "best_lane": "engineering",
       "score": 4,
       "verdict": "shortlist",
-      "rationale": "Typed, tested backend systems; strong evidence on contract-first design."
+      "rationale": "Typed, tested backend systems; strong evidence on contract-first design.",
+      "cv": "# Alexis Doe — Staff Backend Engineer\n\n## Summary\nTyped, tested backend systems with contract-first interfaces. Treats schemas and tests as the design, not an afterthought.\n\n## Selected experience\n- Built a backend layer importable without the network, with pydantic models as the single source of truth for config and I/O.\n- Drove a contract-first split (lib / CLI / workflows / ui) with one-way imports enforced by an ADR.\n- Kept a green quality gate (lint, types, complexity, tests) across every change.\n\n## Skills\nPython, pydantic, API/contract design, pytest/TDD, type checking, complexity budgets.",
+      "cover_letter": "Dear ByteWorks team,\n\nStaff Backend Engineer fits how I already work: design the contracts first, pin them with tests, and keep the layering honest.\n\nMy recent work is a four-layer architecture with one-way imports and pydantic models as the typed boundary. Pure logic stays importable without the network, and a single quality gate guards every merge. Contract-first design is the through-line.\n\nI would welcome the chance to bring that rigor to ByteWorks.\n\nBest,\nAlexis Doe"
     },
     {
       "id": "lever:helix:512",
@@ -47,7 +53,9 @@
       "best_lane": "architect",
       "score": 4,
       "verdict": "shortlist",
-      "rationale": "ADR/MADR culture and contract-driven design align; gap is enterprise cross-team scale."
+      "rationale": "ADR/MADR culture and contract-driven design align; gap is enterprise cross-team scale.",
+      "cv": "# Alexis Doe — Systems Architect\n\n## Summary\nDesigns systems around explicit decisions and contracts. Documents the why (ADR/MADR) so teams can move without re-litigating.\n\n## Selected experience\n- Authored ADRs capturing backend/CLI/UI separation and source-tier policy, each with context and consequences.\n- Defined data contracts (pydantic + workflow schemas) reused across layers as the single source of truth.\n- Kept the architecture coherent under change by validating new code against documented patterns.\n\n## Skills\nArchitecture, ADR/MADR, contract-driven design, pydantic, system decomposition, docs-as-decisions.",
+      "cover_letter": "Dear Helix Labs team,\n\nPrincipal Systems Architect maps to how I think: make the decisions explicit, write them down, and let the contracts carry the weight.\n\nI have shipped an ADR-driven architecture with reusable data contracts across every layer; the honest gap is enterprise cross-team scale, which is precisely the stretch I am looking for. Helix's contract-driven culture is a strong match.\n\nI would be glad to talk.\n\nBest,\nAlexis Doe"
     },
     {
       "id": "ashby:nimbus:330",
@@ -57,7 +65,9 @@
       "best_lane": "cloud",
       "score": 3,
       "verdict": "maybe",
-      "rationale": "Reusable CI actions and containerization match; thin on provider infra at scale."
+      "rationale": "Reusable CI actions and containerization match; thin on provider infra at scale.",
+      "cv": "# Alexis Doe — Platform / DevOps Engineer\n\n## Summary\nAutomates the path from commit to deploy: reusable CI, containerized builds, and reproducible environments.\n\n## Selected experience\n- Authored SHA-pinned, least-privilege GitHub Actions workflows and reusable CI building blocks.\n- Containerized builds and standardized dev environments for reproducibility.\n- Automated releases (versioning, changelog, tagging) end-to-end.\n\n## Skills\nGitHub Actions, CI/CD, containers, release automation, bash, reproducible builds.",
+      "cover_letter": "Dear Nimbus Cloud team,\n\nI enjoy making delivery boring: reusable CI, pinned actions, and reproducible builds so shipping is a non-event.\n\nMy CI and release automation are the strongest part of my recent work; where I would ramp is provider infrastructure at scale, which Nimbus would let me deepen. I am applying knowing that is the growth edge.\n\nThanks for considering me.\n\nBest,\nAlexis Doe"
     },
     {
       "id": "workable:orbit:077",
@@ -67,7 +77,9 @@
       "best_lane": "cxo",
       "score": 3,
       "verdict": "maybe",
-      "rationale": "Breadth reframes as systems-level leadership; no evidence of leading teams."
+      "rationale": "Breadth reframes as systems-level leadership; no evidence of leading teams.",
+      "cv": "# Alexis Doe — Fractional CTO (candidate)\n\n## Summary\nBroad technical generalist who can set early engineering direction: architecture, tooling, and shipping cadence for small teams.\n\n## Selected experience\n- Owned end-to-end technical decisions (architecture, CI, release, docs) as a solo maintainer.\n- Established conventions and quality gates an incoming team could adopt on day one.\n- Translated product goals into staged, shippable technical plans.\n\n## Skills\nTechnical leadership, architecture, tooling/CI, planning, hands-on full-stack.",
+      "cover_letter": "Dear Orbit Robotics team,\n\nA fractional CTO engagement is an interesting fit for my breadth: I can set the architecture, stand up the tooling, and define the shipping cadence, then hand a clean foundation to the team.\n\nI will be direct about the gap: my leadership evidence is solo ownership rather than leading people yet. If Orbit wants a hands-on technical anchor for an early team, I would be a strong contributor.\n\nBest,\nAlexis Doe"
     },
     {
       "id": "recruitee:quanta:418",
@@ -77,7 +89,9 @@
       "best_lane": "cloud",
       "score": 3,
       "verdict": "maybe",
-      "rationale": "ML delivery pipelines fit; observability / production ops are light."
+      "rationale": "ML delivery pipelines fit; observability / production ops are light.",
+      "cv": "# Alexis Doe — MLOps Engineer\n\n## Summary\nBuilds the delivery pipelines around models: data prep, batching, reproducible runs, and artifact publishing.\n\n## Selected experience\n- Built batched data pipelines (ingest -> chunk -> persist) with manifest-tracked runs.\n- Published aggregate, PII-free artifacts to a dedicated data branch consumed at runtime.\n- Automated snapshot generation and publishing via make targets.\n\n## Skills\nData pipelines, batching, artifact publishing, Python, GitHub Actions, reproducibility.",
+      "cover_letter": "Dear Quanta Systems team,\n\nMLOps is the seam I like working: the pipelines and plumbing that get models and their outputs reliably from data to consumer.\n\nI have built batched, manifest-tracked pipelines and an automated publish path to a runtime-consumed data branch. My lighter area is production observability and ops, which is the part of the role I would most want to grow.\n\nThanks for the consideration.\n\nBest,\nAlexis Doe"
     },
     {
       "id": "greenhouse:vela:255",
@@ -87,7 +101,9 @@
       "best_lane": "engineering",
       "score": 2,
       "verdict": "maybe",
-      "rationale": "Domain (health) is adjacent; role leans team-scale ownership over IC depth."
+      "rationale": "Domain (health) is adjacent; role leans team-scale ownership over IC depth.",
+      "cv": "# Alexis Doe — Senior Software Engineer\n\n## Summary\nPragmatic IC who ships typed, tested features end-to-end and keeps systems coherent under change.\n\n## Selected experience\n- Delivered features across backend, CLI, and a static UI in a single coherent codebase.\n- Maintained strong test discipline (TDD, value-add tests) and a clean quality gate.\n- Handled adjacent domains by leaning on contracts and documentation.\n\n## Skills\nPython, TypeScript, testing/TDD, vanilla web, pydantic, cross-domain delivery.",
+      "cover_letter": "Dear Vela Health team,\n\nSenior Software Engineer is squarely in my lane: ship typed, tested features and keep the system honest as it grows.\n\nHealth is an adjacent domain for me rather than a background, and the role leans toward team-scale ownership, so I would be ramping on both. If you value an IC who works contract-first and documents decisions, I would contribute quickly.\n\nBest,\nAlexis Doe"
     }
   ],
   "trends": [

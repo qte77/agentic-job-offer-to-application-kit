@@ -202,6 +202,52 @@ td.empty-state {
   padding: 2rem 1rem;
 }
 
+/* ── Expandable offer rows — click/Enter/Space reveals the tailored CV + cover letter ── */
+.offer-row { cursor: pointer; }
+.offer-row:hover td { background: var(--surface); }
+.offer-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+/* Caret affordance in the first cell, flipped when the row is expanded. */
+.offer-row > td:first-child { padding-left: 1.5rem; position: relative; }
+.offer-row > td:first-child::before {
+  content: "\25B8"; /* ▸ */
+  position: absolute;
+  left: 0.7rem;
+  color: var(--text-muted);
+}
+.offer-row[aria-expanded="true"] > td:first-child::before { content: "\25BE"; color: var(--primary); } /* ▾ */
+
+.offer-detail[hidden] { display: none; }
+.offer-detail > td { background: var(--bg); }
+.tailor-pack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 720px) {
+  .tailor-pack { grid-template-columns: 1fr 1fr; }
+}
+.tailor-doc h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.tailor-pre {
+  margin: 0;
+  padding: 0.75rem;
+  max-height: 22rem;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* Lane badge — outlined pill in the accent. */
 .lane {
   display: inline-block;
