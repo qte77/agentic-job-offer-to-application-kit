@@ -5,11 +5,6 @@
 /library/
 /input/
 
-# Deploy-only: gh-pages.yaml injects the PII-free trends into the published site at deploy time so
-# the live dashboard loads them SAME-ORIGIN. Never committed into the ui/ source — real trends live
-# on the `data` branch, never in ui/.
-/ui/public/data/trends.ndjson
-
 # Real config at the repo root is git-ignored; the directory is kept via .gitkeep.
 # Covers seed.json + future PII-bearing portfolio.md / work-history.md / cv + cover-letter samples.
 # Exception: the shipped, ToS-vetted config/default-seed.json IS tracked (the ingest fallback).

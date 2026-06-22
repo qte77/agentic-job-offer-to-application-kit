@@ -41,10 +41,10 @@ uv run ajoa-kit trend-snapshot   # results/jobs-raw.json -> results/trends.ndjso
 make trends-data                 # push results/trends.ndjson -> the `data` branch
 ```
 
-`make preview` runs `make trends-local` first, bundling the real trends into
-`ui/public/data/trends.ndjson` (same-origin, git-ignored) so the **local** dashboard shows real data
-too — offline-first: it prefers a local `results/trends.ndjson` or `data`-branch ref and only fetches
-as a last resort. `?base=<raw-url>` still forces a specific cross-origin source.
+`make preview` serves a **throwaway copy** of `ui/` with the real trends injected into it (mirroring
+the deploy) — so the **local** dashboard shows real data same-origin while the source `ui/` stays
+**data-free**. Offline-first: it prefers a local `results/trends.ndjson` or `data`-branch ref and only
+fetches as a last resort. `?base=<raw-url>` still forces a specific cross-origin source.
 
 `?base=` takes a **raw base URL** — e.g. `https://raw.githubusercontent.com/<owner>/<repo>/<branch>`,
 to which `/results/trends.ndjson` is appended. To point the dashboard at a different branch or fork,
