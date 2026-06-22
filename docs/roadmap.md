@@ -30,6 +30,13 @@
   `aggregators` key (#94, ToS-tiered in ADR-0002; jobicy/himalayas/remotive stay `_deferred`,
   keyed Adzuna/Reed/Jooble are #109 outlook); +11 re-probed OK-tier company boards (#96) and +21
   FR/UK/IT/US company boards for geographic breadth in `config/default-seed.json`.
+- Dashboard UX + reliability: trends bundled **same-origin** into the published site at deploy (Pages
+  re-deploys on `data`-branch pushes — no fragile cross-origin fetch); expandable shortlist rows that
+  reveal the tailored CV + cover letter (demo `cv`/`cover_letter` in `demo.json`); a market-trends
+  time-frame picker (All…1w); header Repo/Issues links; `make preview` serves a throwaway copy that
+  keeps real data out of the source `ui/`.
+- AI issue-triage CI (`.github/workflows/issue-triage.yaml`): `qte77/gha-issue-triage` (SHA-pinned,
+  GitHub Models, zero-secret) auto-labels newly opened issues.
 
 ## Next
 
@@ -41,7 +48,9 @@
 - Per-adapter error/edge handling + error-branch test coverage (#53).
 - `pseudonymize-text` (#52, belt-and-suspenders) for the live dashboard data feed. #71 Vite not
   adopted — the dashboard stays no-build.
-- Full L1 org-settings apply: branch protection, broader SHA allowlist (#54).
+- Full L1 org-settings apply (#54): attempted 2026-06 — secret-scan + workflow-perms applied; the
+  signed-tag (03) and reviewer (06) rulesets were reverted (they block the solo `--admin` /
+  unsigned-release flow). Selected-actions SHA allowlist already in place.
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
 - Broaden ingest reach: more JSON aggregators as their robots/ToS clear (jobicy/himalayas/remotive
   — #94 deferred follow-ups). Outlook (#109): slug-discovery from public board directories, and

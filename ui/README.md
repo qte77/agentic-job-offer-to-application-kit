@@ -66,9 +66,9 @@ set the branch segment in that URL (there is no separate `?branch=` switch — t
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Shell markup: header + theme toggle, two view tabs (Shortlist table / Market-trends charts) |
+| `index.html` | Shell markup: header (theme toggle + Repo/Issues links), two view tabs (Shortlist table / Market-trends charts) + a trends time-frame picker |
 | `src/style.css` | EyeRest tokens (light/dark/auto via `data-theme`) + components + tabs |
-| `src/app.js` | Shortlist render + filter, tab switching, Chart.js line + stacked bars (rebuilt on `themechange`) |
+| `src/app.js` | Shortlist render + filter + expandable rows (tailored CV + cover letter), tab switching, Chart.js line + stacked bars with a time-frame window, same-origin trends loading (rebuilt on `themechange`) |
 | `src/theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
 | `public/data/demo.json` | Synthetic demo data — shortlist (Tab A) + fallback trends as `{week,counts}[]` records (Tab B) |
 | *(real trends)* | Not in `ui/` — fetched at runtime from the repo's `data` branch (`results/trends.ndjson`); refresh via `make trends-data` |
