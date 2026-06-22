@@ -365,7 +365,7 @@ async function init() {
   // docs. A dynamic import keeps a missing/broken vendor file from breaking the whole dashboard:
   // renderMarkdown stays null and tailorDoc() falls back to an esc()'d <pre>.
   try {
-    const { marked } = await import("../public/vendor/marked.esm.js");
+    const { marked } = await import("../public/vendor/marked.esm.min.js");
     renderMarkdown = (md) => sanitizeHtml(marked.parse(String(md ?? "")));
   } catch {
     renderMarkdown = null;
