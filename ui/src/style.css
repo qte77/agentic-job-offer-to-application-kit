@@ -28,6 +28,9 @@
   --text-muted: #686040;
   --border: #c8c4b0;
   --primary: #7a6010;
+  /* GitHub Invertocat logo — brand-mandated black/white (not a palette color): GitHub's
+     guidelines forbid recoloring its logo, so this is the only header icon NOT on currentColor. */
+  --gh-logo: #181717;
   /* Zero-blue data arc — drives score chips + chart lines + lane badges. */
   --data-positive: #4a6818;
   --data-caution: #787010;
@@ -45,6 +48,7 @@
     --text-muted: #a89878;
     --border: #383428;
     --primary: #c8a858;
+    --gh-logo: #ffffff; /* GitHub Invertocat — white on dark */
     --data-positive: #8aa860;
     --data-caution: #c8b868;
     --data-negative: #c08060;
@@ -61,6 +65,7 @@
   --text-muted: #a89878;
   --border: #383428;
   --primary: #c8a858;
+  --gh-logo: #ffffff; /* GitHub Invertocat — white on dark */
   --data-positive: #8aa860;
   --data-caution: #c8b868;
   --data-negative: #c08060;
@@ -430,6 +435,9 @@ footer a:hover { text-decoration: underline; }
   transition: border-color 0.15s ease;
 }
 .header-link svg { width: 1em; height: 1em; flex: none; }
+/* GitHub Invertocat keeps its brand color (black on light, white on dark) — never recolored to
+   the theme's text/accent, per GitHub's logo guidelines. --gh-logo is set per theme above. */
+.gh-mark { fill: var(--gh-logo); }
 .header-link:hover { border-color: var(--primary); }
 .header-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
