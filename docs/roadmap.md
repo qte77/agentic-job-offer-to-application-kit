@@ -29,7 +29,8 @@
 - Broad/recall ingest lane: arbeitnow + The Muse JSON-aggregator adapters under the loaded
   `aggregators` key (#94, ToS-tiered in ADR-0002; jobicy/himalayas/remotive stay `_deferred`,
   keyed Adzuna/Reed/Jooble are #109 outlook); +11 re-probed OK-tier company boards (#96) and +21
-  FR/UK/IT/US company boards for geographic breadth in `config/default-seed.json`.
+  FR/UK/IT/US company boards for geographic breadth, plus +6 AI/eng boards (Zoox, Cerebras, xAI,
+  Perplexity, Scale AI, Runway — reachability-probed 2026-06-22) in `config/default-seed.json`.
 - Dashboard UX + reliability: trends bundled **same-origin** into the published site at deploy (Pages
   re-deploys on `data`-branch pushes — no fragile cross-origin fetch); expandable shortlist rows that
   reveal the tailored CV + cover letter (demo `cv`/`cover_letter` in `demo.json`); a market-trends
