@@ -2,8 +2,11 @@
 name: Deploy Pages
 
 # Publishes the static ui/ dashboard to the `gh-pages` branch (Pages source =
-# that branch). It ships synthetic demo data only (no PII), so it clears the
-# ADR-0001 gate; wiring the live `data` branch stays gated on #52.
+# that branch). Ships the synthetic shortlist (no PII) plus a SAME-ORIGIN copy of
+# the PII-free aggregate trends ({week,counts}) pulled from the `data` branch at
+# deploy time, so the live charts render real data without a fragile cross-origin
+# runtime fetch (raw.githubusercontent is rate-limited / blocked on some networks).
+# The live *shortlist* stays gated on #52 (PII); aggregate trends are not.
 #
 # Why a branch push instead of actions/upload-pages-artifact + deploy-pages:
 # the repo enforces `sha_pinning_required`, and upload-pages-artifact internally
@@ -45,6 +48,16 @@ jobs:
           set -euo pipefail
           site="$(mktemp -d)"
           cp -r ui/. "$site/"
+          # Bundle the latest PII-free aggregate trends ({week,counts}) from the `data` branch so the
+          # dashboard loads them SAME-ORIGIN — no cross-origin runtime fetch to raw.githubusercontent
+          # (rate-limited / blocked by some networks & extensions -> silent synthetic fallback).
+          if git fetch --depth=1 origin data 2>/dev/null \
+            && git show origin/data:results/trends.ndjson > "$site/public/data/trends.ndjson" 2>/dev/null; then
+            echo "bundled $(wc -l < "$site/public/data/trends.ndjson") trend records from the data branch"
+          else
+            rm -f "$site/public/data/trends.ndjson"
+            echo "no data-branch trends; dashboard falls back to runtime fetch / synthetic"
+          fi
           # Stamp the real deploy date into the published copy (no-build; the committed
           # #gen-date value is only the local-preview default).
           sed -i -E "s#(<span id=\"gen-date\">)[^<]*#\1$(date -u +%F)#" "$site/index.html"

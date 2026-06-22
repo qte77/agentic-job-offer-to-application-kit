@@ -137,13 +137,11 @@ function pivot(records) {
   return { labels, latest, keys };
 }
 
-// Load the real aggregate trends from the `data` branch at `${DATA_BASE_URL}/results/trends.ndjson`
-// (one {week,counts} JSON record per line, written by `ajoa-kit trend-snapshot` and pushed to the
-// data branch via `make trends-data`). Returns null on any miss (absent / non-200 / bad line /
-// offline) so the caller falls back to the synthetic set.
-async function loadRealTrends() {
+// Fetch one trends source (NDJSON of {week,counts}). Returns the parsed records, or null on any miss
+// (absent / non-200 / bad line / network error) so the caller can try the next source.
+async function fetchTrends(url) {
   try {
-    const res = await fetch(`${DATA_BASE_URL}/results/trends.ndjson`);
+    const res = await fetch(url);
     if (!res.ok) return null;
     const records = (await res.text())
       .split("\n")
@@ -153,6 +151,24 @@ async function loadRealTrends() {
   } catch {
     return null;
   }
+}
+
+// Load the real aggregate trends, preferring a SAME-ORIGIN copy bundled into the Pages deploy by
+// gh-pages.yaml. That avoids the cross-origin request to raw.githubusercontent that some networks /
+// extensions block (a CORS failure that otherwise drops the dashboard silently to synthetic data).
+// Falls back to the `data` branch over raw.githubusercontent (freshest; the local-dev / fork path),
+// then to null so the caller uses the synthetic set. An explicit `?base=` is honored first.
+async function loadRealTrends() {
+  const sameOrigin = "public/data/trends.ndjson";
+  const dataBranch = `${DATA_BASE_URL}/results/trends.ndjson`;
+  const order = new URLSearchParams(location.search).has("base")
+    ? [dataBranch, sameOrigin]
+    : [sameOrigin, dataBranch];
+  for (const url of order) {
+    const records = await fetchTrends(url);
+    if (records) return records;
+  }
+  return null;
 }
 
 function renderLine(records) {
