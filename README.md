@@ -33,7 +33,7 @@ cloud/DevOps/platform · architect (configurable defaults — see the `LANES` ar
 `cc-workflow-evidence-library.js`). Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
 
 **[Live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** — the interactive
-dashboard (synthetic shortlist · **live** market trends, fetched at runtime from the `data` branch).
+dashboard (synthetic shortlist · **live** market trends, bundled same-origin from the `data` branch at deploy).
 
 <details>
 <summary>Screenshots — the dashboard (dark/light follows your GitHub theme)</summary>
@@ -98,9 +98,10 @@ the optional flags are `chunk --batch-size N` (default 40), `persist-offer --slu
 **Keyword trends (optional):** drop a `config/keywords.json` (`{"interest": [...], "title_roles": [...]}`)
 to override the default pre-filter vocabulary, then `ajoa-kit trend-snapshot` writes an aggregate,
 keyword-only per-ISO-week record to `results/trends.ndjson` (no JD/PII). `make trends-data` pushes
-that snapshot to the `data` branch, where the live dashboard fetches it at runtime — auto-targeting
-this deployment's own `data` branch, overridable with `?base=<raw-url>` (never bundled into `ui/`;
-see [ui/README.md](ui/README.md)).
+that snapshot to the `data` branch, which re-triggers the Pages deploy to bundle it **same-origin**
+into the published site (so the live charts load reliably — no cross-origin runtime fetch). Local dev
+and forks fall back to fetching the `data` branch directly, overridable with `?base=<raw-url>`; the
+real trends are never committed to the source `ui/` (see [ui/README.md](ui/README.md)).
 
 Build the evidence library once, upstream, via the Stage-1 Workflow
 (`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.

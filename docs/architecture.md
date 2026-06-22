@@ -69,7 +69,7 @@ agentic-job-offer-to-application-kit/
 ├── results/                    # generated outputs — git-ignored, dir kept via .gitkeep
 │                               #   evidence-library.json, jobs-raw.json, batches/, <lane>/shortlist.*, offers/<slug>/
 ├── pyproject.toml / uv.lock    # uv project; ruff + pyright + complexipy + pytest + scriv config
-└── .github/                    # codeql + dependabot + ci + lint-md-links + CODEOWNERS (SHA-pinned)
+└── .github/                    # codeql + dependabot + ci + lint-md-links + issue-triage + CODEOWNERS (SHA-pinned)
 ```
 
 ## Data layout
@@ -108,6 +108,11 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   no-build `ui/` dashboard (#11 PR-B, vendored Chart.js — synthetic Tab A + aggregate `{week,counts}`
   Tab B); the reusable `run-with-keywords` workflow (#79); baseline gates (ruff, pyright, complexipy,
   pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
+- **Built (dashboard UX + CI):** trends bundled **same-origin** at deploy (Pages re-deploys on
+  `data`-branch pushes — no cross-origin fetch); expandable shortlist rows → tailored CV + cover
+  letter; a market-trends time-frame picker; Repo/Issues header links; `make preview` serves a
+  throwaway copy keeping real data out of the source `ui/`; AI issue-triage CI (`issue-triage.yaml`,
+  SHA-pinned, GitHub Models, zero-secret).
 - **Designed:** locale-aware document conventions (#12); `pseudonymize-text` PII gate (#52,
   belt-and-suspenders for the live dashboard data feed). #71 Vite intentionally not adopted (no-build).
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks.
