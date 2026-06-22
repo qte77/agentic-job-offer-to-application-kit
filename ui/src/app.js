@@ -80,13 +80,22 @@ function scoreClass(score) {
   return score >= 4 ? "score-good" : score >= 3 ? "score-mid" : "score-bad";
 }
 
-// One tailor-pack pane (CV or cover letter): rendered+sanitized markdown when the vendored renderer
-// loaded, else an esc()'d <pre> fallback so a missing/broken vendor file still shows the raw text.
+// One tailor-pack pane (CV or cover letter): a head row (title + a Copy button that copies the RAW
+// markdown), then rendered+sanitized markdown when the vendored renderer loaded, else an esc()'d
+// <pre> fallback so a missing/broken vendor file still shows the raw text. The raw md rides in
+// data-md via esc() (escapes & < > " → no breakout of the double-quoted attr; newlines preserved);
+// copyTailor() reads btn.dataset.md, which the browser decodes back to the raw string.
 function tailorDoc(title, md) {
   const body = renderMarkdown
     ? `<div class="tailor-md">${renderMarkdown(md)}</div>`
     : `<pre class="tailor-pre">${esc(md ?? "")}</pre>`;
-  return `<section class="tailor-doc"><h4>${title}</h4>${body}</section>`;
+  return `<section class="tailor-doc">
+            <div class="tailor-doc-head">
+              <h4>${title}</h4>
+              <button type="button" class="tailor-copy" data-md="${esc(md ?? "")}" aria-label="Copy ${title} as Markdown" title="Copy raw Markdown">Copy</button>
+            </div>
+            ${body}
+          </section>`;
 }
 
 function renderShortlist(filter = "") {
@@ -143,7 +152,29 @@ function toggleOfferRow(row) {
   if (detail && detail.classList.contains("offer-detail")) detail.hidden = open;
 }
 
+// Copy a tailor pane's RAW markdown (from data-md) to the clipboard, with brief "Copied" feedback.
+// clipboard.writeText needs a secure context (https / localhost) — both the Pages deploy and the
+// local preview qualify; a blocked/denied clipboard just no-ops.
+function copyTailor(btn) {
+  if (!navigator.clipboard) return;
+  navigator.clipboard.writeText(btn.dataset.md ?? "").then(() => {
+    btn.textContent = "Copied";
+    btn.classList.add("is-copied");
+    setTimeout(() => {
+      btn.textContent = "Copy";
+      btn.classList.remove("is-copied");
+    }, 1200);
+  }, () => {});
+}
+
 function onShortlistInteract(e) {
+  // The Copy button lives in the detail row (not .offer-row), so it never toggles — handle it
+  // first and return regardless of event type (a keydown Enter/Space fires the button's native click).
+  const copyBtn = e.target.closest(".tailor-copy");
+  if (copyBtn) {
+    if (e.type === "click") copyTailor(copyBtn);
+    return;
+  }
   if (e.target.closest("a")) return; // let the role-title link open the offer
   const row = e.target.closest(".offer-row");
   if (!row) return;
