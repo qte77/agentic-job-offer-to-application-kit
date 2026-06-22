@@ -18,6 +18,10 @@
 - Repo hardening: coverage gate (#33), docs-only CI `paths-ignore` (#34), `CONTRIBUTING.md` (#35),
   qte77 badge set (#22), structured board catalog (#10), docs structural-integrity pass (#57), and the
   org reusable `lint-md-links` workflow.
+- Ingest test coverage (#53): per-adapter error/edge tests for every feed/ATS/aggregator adapter
+  (normalization, missing/null tolerance, Lever's non-list-payload guard) plus a `collect()`
+  warn-and-continue case — the adapters were already tolerant, so no hardening was needed — and
+  offline `get_json`/`get_bytes` network-helper tests (non-200 → `FetchError`, 200 → parse).
 - Keyword-trend pipeline: runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
   `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A); reusable
   `run-with-keywords` workflow (#79).
@@ -46,7 +50,6 @@
 
 ## Later — hardening & reach
 
-- Per-adapter error/edge handling + error-branch test coverage (#53).
 - `pseudonymize-text` (#52, belt-and-suspenders) for the live dashboard data feed. #71 Vite not
   adopted — the dashboard stays no-build.
 - Full L1 org-settings apply (#54): attempted 2026-06 — secret-scan + workflow-perms applied; the
