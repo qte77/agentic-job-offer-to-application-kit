@@ -16,6 +16,152 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.2.0] - 2026-06-22
+
+### Added
+
+- ui: the dashboard header now shows **Repo** and **Issues** links (inline octicons, pill-styled to
+  match the theme toggle) in a right-aligned cluster beside the brand — each opens the GitHub
+  repository / issue tracker in a new tab (`rel="noopener"`). Vendored/inline SVG only, no CDN.
+
+- tests: offline coverage for the ingest network helpers `get_json` / `get_bytes` (#53 follow-up) —
+  non-200 responses raise `FetchError` (status + polyfetch backend in the message, so a junk error
+  body never reaches `json.loads`), and 200 responses parse/return with the backend passed through;
+  `get_json` sends an `Accept: application/json` header while `get_bytes` does not. Exercised via a
+  fake `polyfetch_scrape` module, so they run under `pytest -m "not network"`.
+
+- ci: AI issue-triage workflow — on newly **opened** issues, runs `qte77/gha-issue-triage`
+  (SHA-pinned to v0.3.0) for duplicate detection, relevance/feasibility scoring, and auto-labeling.
+  Backend defaults to **GitHub Models** (`openai/gpt-4.1`) via the built-in token (zero-secret),
+  with least-privilege permissions (`contents: read`, `issues: write`, `models: read`).
+
+- build: `make preview` now bundles the real `data`-branch trends into `ui/public/data/trends.ndjson`
+  (same-origin, git-ignored) via a new `make trends-local` target, so the **local** dashboard shows
+  real market data too — not just the live site. Offline-first: prefers a local `results/trends.ndjson`
+  or an existing `data` / `origin/data` ref, and only `git fetch`es as a last resort.
+
+- seed: +6 OK-tier AI/eng company boards in `config/default-seed.json` — **Zoox** (lever),
+  **Cerebras** / **Perplexity** / **Runway** (ashby), **xAI** / **Scale AI** (greenhouse) —
+  reachability-probed (HTTP 200) and ToS-tiered OK on 2026-06-22 (ADR-0002). They reuse the existing
+  `greenhouse`/`ashby`/`lever` adapters (no new code) and add ~350–400 eng-relevant postings,
+  densifying the keyword-trend signal.
+
+- ui: shortlist rows are now expandable — click (or focus + Enter/Space) a row to reveal the
+  tailored **CV** and **cover letter** for that offer in a detail panel. Demo uses synthetic
+  `cv`/`cover_letter` strings (the canonical tailor-pack keys); real packs stay local
+  (`results/offers/<slug>/`, gated on #52). Rendered as plain `<pre>` (esc'd, no new deps); a
+  follow-up issue tracks an optional lightweight markdown renderer.
+
+- ui: each expanded shortlist row's **Tailored CV** and **Cover letter** pane now has a **Copy**
+  button (right-aligned next to the title) that copies the raw Markdown source to the clipboard,
+  with brief "Copied" feedback. The raw `cv`/`cover_letter` is carried in an esc'd `data-md`
+  attribute; the click never toggles the row.
+
+- ui: a **time-frame picker** (All / 5y / 2y / 1y / 6mo / 3mo / 1mo / 2w / 1w) on the market-trends
+  view, to the right of the heading. Selecting a range windows both charts to that trailing span
+  (filtered by ISO-week *date*, so the sparse early weeks aren't miscounted). Vanilla `<select>`,
+  no new dependencies.
+
+### Changed
+
+- docs: attribute the vendored `marked` (MIT) in `NOTICE` and the README License line (both
+  previously credited only Chart.js), and reorder the README status badges to the qte77 canon
+  (CodeQL · CodeFactor · CI · lint).
+
+- docs: commands are now tracked once in a canonical CONTRIBUTING.md "Commands" section (the Makefile
+  named as the source of truth) — covering the dev loop, the full pipeline, a CLI subcommand/flags
+  table, and an environment-variable table (`AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR` / `POLYFETCH_DIR` /
+  `PORT`, previously undocumented). README and quickstart now reference it instead of repeating
+  command spell-outs, and the workflow-script headers de-stale their prerequisite/persist steps
+  (the old `python -m ajoa_kit.persist_scored` / `python -m ajoa_kit.chunk` forms) to point at the
+  same reference. The relevance workflow's hardcoded lane keys now carry a comment noting the
+  canonical lane definitions live in the evidence-library workflow.
+
+- docs: synced the docs with this iteration's shipped features. Corrected the README's stale
+  "trends fetched at runtime / never bundled into `ui/`" wording (now: bundled **same-origin** at
+  deploy + the Pages deploy re-runs on `data`-branch pushes), and reflected the dashboard UX
+  (expandable CV/cover-letter rows, market-trends time-frame picker, Repo/Issues header links,
+  throwaway-copy `make preview`) and the issue-triage CI across `README.md`, `docs/architecture.md`,
+  `docs/roadmap.md`, and `ui/README.md`; noted #54's attempted-then-reverted rulesets in the roadmap.
+
+- Docs: documented the dashboard's runtime trends source switch — `?base=<raw-url>` takes a branch-
+  bearing raw base (no separate `?branch=`; the branch lives in the `?base=` value) — and added the
+  previously-undocumented CLI flags (`chunk --batch-size`, `persist-offer --slug`, `prefill-fields
+  --ats/--slug/--job-id`) to the README; added `trend-snapshot` to the ADR-0001 subcommand list.
+
+- ui: the header **Repo**/**Issues** links now match the agenthud dashboard — bordered chips on
+  the surface tone (4px corners, border highlights on hover) with the GitHub octocat icon, and
+  `rel="noopener noreferrer"`.
+
+- build: `make preview` now serves real trends from a **throwaway assembled copy** of `ui/` (mirroring
+  the gh-pages deploy) instead of writing them into the source tree — so the `ui/` code directory
+  never holds data. Drops the `make trends-local` target and the `ui/public/data/trends.ndjson`
+  gitignore entry; the `data` branch stays the single source of truth.
+
+- docs: README now follows the qte77 doc-structure canon — **What → How → Why → Refs** order (was
+  Why → What → How → Docs). The long How is trimmed to a minimal example that links to a new
+  `docs/quickstart.md` (full ingest → tailor workflow + keyword-trends and writing-style options);
+  build internals (the `LANES` array / evidence-library workflow) move out of What to
+  `docs/architecture.md`; `## Docs` → `## Refs`; the live-demo link folds into How. Screenshots are
+  self-hosted at `assets/images/` as two theme-aware `<details>` (shortlist with an expanded offer,
+  market trends at the 3-month default). Closes #126.
+
+- README: the dashboard's **market trends are now live** (real aggregate `{week,counts}` from the
+  `data` branch), so dropped the "synthetic demo data" framing — moved the live-demo link into the
+  **What** section and added a live-market-data screenshot pair (`docs/assets/dashboard-market-*.png`).
+
+- README: completed the keyword-trends flow in "How" with the `make trends-data` publish step (push
+  `results/trends.ndjson` to the `data` branch the live dashboard fetches at runtime), and dropped
+  the `▶` glyph from the live-demo link.
+
+- ci: the Pages deploy now also re-runs on **`data`-branch pushes** (matching `results/trends.ndjson`),
+  so `make trends-data` automatically refreshes the live dashboard's trends — no manual redeploy. It
+  always checks out the default branch's `ui/`, regardless of which branch triggered it.
+
+- ui: the shortlist now behaves as an accordion — expanding an offer row collapses any other open
+  row, so only one tailored CV / cover letter detail is shown at a time.
+
+- ui: the tailored **CV** and **cover letter** in an expanded shortlist row now render as
+  formatted Markdown (headings, bold, lists, paragraphs) instead of raw `<pre>` text, via a
+  vendored, version-pinned [marked](https://github.com/markedjs/marked) ESM build (no CDN).
+  marked does not sanitize, so its output passes through a tiny tag/attribute allowlist before
+  hitting the DOM — keeping the renderer safe for the future #52-gated, model-generated packs.
+  Falls back to the esc'd `<pre>` if the vendor import fails. Closes #138.
+
+- ui: the header theme toggle (System/Auto) now matches the Repo/Issues chips — bordered on the
+  surface tone, 4px corners, border-only hover — so the whole header action row is consistent. The
+  shared chip visuals are now a single rule (`.header-link, .theme-toggle`).
+
+- The live dashboard's real **market-trends** data now lives on a dedicated orphan **`data`** branch
+  (never in `ui/` or `main`) and is fetched at **runtime** from `raw.githubusercontent.com` —
+  mirroring `qte77/analyze-stock-kpi`. `ui/src/app.js` auto-derives the base from the GitHub Pages
+  origin (`<owner>.github.io/<repo>` → that repo's `data` branch), so any fork self-hosts its own
+  trends; `?base=` overrides for local, with the synthetic `demo.json` fallback on any miss. Replaces
+  the `make trends-ui` copy-into-`ui/public/data/` flow with `make trends-data` (push to the `data`
+  branch). (#128)
+
+- ui: the market-trends time-frame picker now defaults to **3mo** (was "All"), so the charts
+  open on the most recent quarter; other ranges (incl. All) remain one click away.
+
+### Fixed
+
+- ui: the GitHub octocat in the header **Repo**/**Issues** links is no longer tinted with the
+  theme text color (`currentColor`) — GitHub's logo guidelines forbid recoloring its mark. It now
+  renders in GitHub's permitted colors: **black on light themes, white on dark** (new `--gh-logo`
+  token), so it stays theme-legible without being recolored to the palette.
+
+- docs: the relevance workflow no longer hardcodes the lane count ("5 lanes" / "five target lanes")
+  in its `meta.description`, header, and agent prompt — they now say "the target lanes" (the prompt
+  still enumerates the actual lane keys), so the wording stays correct if the lane set changes.
+
+- ui: the live dashboard now renders the **real** market trends reliably. It previously depended on
+  a cross-origin runtime fetch to `raw.githubusercontent.com`, which some networks / browser
+  extensions block (`CORS request did not succeed`) — silently dropping the charts to the synthetic
+  fallback. `gh-pages.yaml` now bundles the PII-free aggregate trends (`{week,counts}`) from the
+  `data` branch into the published site at deploy time, and `app.js` loads them **same-origin**
+  first (the `data` branch / `?base=` remain fallbacks; synthetic is the last resort). The
+  bundled copy is deploy-only — gitignored, never committed into `ui/`.
+
 ## [0.1.0] - 2026-06-21
 
 ### Added
