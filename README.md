@@ -55,21 +55,11 @@ pre-filter → LLM relevance → tailor only the shortlist.
 
 Try the **[live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** (synthetic
 shortlist · live market trends, bundled same-origin from the `data` branch at deploy), or run it
-locally:
-
-```bash
-make install   # sync the dev env (uv)
-```
-
-Then screen the bundled synthetic example — no fetch needed:
-
-```text
-Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
-           args: { rootDir: "examples/alexis-doe", batchCount: 1 } })
-```
-
-See **[docs/quickstart.md](docs/quickstart.md)** for the full workflow against your own sources
-(ingest → chunk → relevance → tailor → ats-check) plus the keyword-trends and writing-style options.
+locally: **[docs/quickstart.md](docs/quickstart.md)** is the narrated walkthrough (author your
+sources, screen the bundled synthetic example with no fetch, then tailor — ingest → chunk → relevance
+→ tailor → ats-check — plus the keyword-trends and writing-style options), and
+**[CONTRIBUTING.md §Commands](CONTRIBUTING.md#commands)** is the command reference (run, dev, and
+release; the Makefile is the source of truth).
 
 **Constraints:** no automated submission, no scraping — public no-auth GET only, with a
 human-reviewed prefill pack (see [docs/research.md §Delivery](docs/research.md#delivery)); no PII in
@@ -90,7 +80,7 @@ tailor — using only public, no-auth data and keeping a human in the loop for s
 - [docs/research.md](docs/research.md) — fetching, ATS, and positioning research
 - Decisions (ADRs): [ADR-0001 layering](docs/decisions/0001-backend-cli-ui-separation.md) · [ADR-0002 source ToS tiers](docs/decisions/0002-source-tos-tiers.md)
 - [examples/alexis-doe/](examples/alexis-doe/) — synthetic end-to-end example
-- [CONTRIBUTING.md](CONTRIBUTING.md) — how to set up, test, and open a PR
+- [CONTRIBUTING.md](CONTRIBUTING.md) — command reference (run/dev/release), setup, testing, and PRs
 - [AGENTS.md](AGENTS.md) — operating rules for AI coding agents
 - [SECURITY.md](SECURITY.md) — vulnerability disclosure policy
 

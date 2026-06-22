@@ -2,7 +2,7 @@
 // (match -> tailored CV + cover letter -> gap report) grounded in the evidence library.
 //
 // EXECUTION MODEL: a Claude Code Workflow-tool script (not node/make). Run Stage-1 + Stage-2
-// first (evidence-library, ingest, chunk, relevance, then `python -m ajoa_kit.persist_scored <output.json>`
+// first (evidence-library, ingest, chunk, relevance, then persist — see CONTRIBUTING.md §Commands —
 // so results/<lane>/shortlist.json exists), pick one offer id from a shortlist, then run:
 //
 //   Workflow({ scriptPath: 'docs/workflows/cc-workflow-tailor-offer.js', args: {
@@ -15,7 +15,7 @@
 //                                // generate with `ajoa-kit prefill-fields ...`. Omit = generic fields.
 //   }})
 //
-// Persist the returned pack with: uv run ajoa-kit persist-offer <output.json>
+// Persist the returned pack with `ajoa-kit persist-offer` — see CONTRIBUTING.md §Commands
 // (writes results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md — human reviews + submits).
 //
 // SCOPE: pre-fill + human submit only, NO auto-apply (verified safe in research.md §Delivery, #8).
