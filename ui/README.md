@@ -44,6 +44,11 @@ make trends-data                 # push results/trends.ndjson -> the `data` bran
 fallback offline); for a local real-data preview, serve a data dir and open
 `http://localhost:8000/?base=<that-url>`.
 
+`?base=` takes a **raw base URL** — e.g. `https://raw.githubusercontent.com/<owner>/<repo>/<branch>`,
+to which `/results/trends.ndjson` is appended. To point the dashboard at a different branch or fork,
+set the branch segment in that URL (there is no separate `?branch=` switch — the branch lives in the
+`?base=` value).
+
 ## Design
 
 - **Brand:** EyeRest tokens from `qte77/qte77/brand/DESIGN.md` — warm amber,

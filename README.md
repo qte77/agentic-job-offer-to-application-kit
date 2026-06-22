@@ -90,13 +90,17 @@ uv run ajoa-kit ats-check results/offers/<slug>/cv.md # ATS parse-safety gate
 
 Each step is also a CLI subcommand — `uv run ajoa-kit {ingest,chunk,persist,persist-offer,ats-check,style,prefill-fields,probe,trend-snapshot}`
 (the `make` targets wrap the ingest/chunk/persist ones); `config/` and `results/` locations are
-env-overridable via `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR`.
+env-overridable via `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR`. Most take a positional path or no args;
+the optional flags are `chunk --batch-size N` (default 40), `persist-offer --slug <slug>`,
+`prefill-fields --ats <name> --slug <board> --job-id <id>` (Greenhouse schema lookup), and
+`style --json`.
 
 **Keyword trends (optional):** drop a `config/keywords.json` (`{"interest": [...], "title_roles": [...]}`)
 to override the default pre-filter vocabulary, then `ajoa-kit trend-snapshot` writes an aggregate,
 keyword-only per-ISO-week record to `results/trends.ndjson` (no JD/PII). `make trends-data` pushes
-that snapshot to the `data` branch, where the live dashboard fetches it at runtime (never bundled
-into `ui/`; see [ui/README.md](ui/README.md)).
+that snapshot to the `data` branch, where the live dashboard fetches it at runtime — auto-targeting
+this deployment's own `data` branch, overridable with `?base=<raw-url>` (never bundled into `ui/`;
+see [ui/README.md](ui/README.md)).
 
 Build the evidence library once, upstream, via the Stage-1 Workflow
 (`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
