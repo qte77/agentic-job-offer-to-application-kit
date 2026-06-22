@@ -62,9 +62,12 @@ function renderShortlist(filter = "") {
     return;
   }
 
+  // Each offer is a clickable row (role=button) that toggles a sibling detail row holding the
+  // tailored CV + cover letter. cv/cover_letter are the canonical tailor-pack keys (persist_offer.py
+  // ARTIFACTS); here they are synthetic demo strings — real packs stay local (results/offers/, #52).
   body.innerHTML = rows
     .map(
-      (it) => `<tr>
+      (it) => `<tr class="offer-row" role="button" tabindex="0" aria-expanded="false" title="Show tailored CV & cover letter">
         <td>${esc(it.company)}</td>
         <td>
           <div class="role-title"><a href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener">${esc(it.title)}</a></div>
@@ -73,9 +76,43 @@ function renderShortlist(filter = "") {
         <td><span class="lane">${esc(laneLabel[it.best_lane] || it.best_lane)}</span></td>
         <td class="num"><span class="score ${scoreClass(it.score)}">${esc(it.score)}</span></td>
         <td><span class="verdict ${it.verdict === "shortlist" ? "is-shortlist" : ""}">${esc(it.verdict)}</span></td>
+      </tr>
+      <tr class="offer-detail" hidden>
+        <td colspan="5">
+          <div class="tailor-pack">
+            <section class="tailor-doc">
+              <h4>Tailored CV</h4>
+              <pre class="tailor-pre">${esc(it.cv ?? "")}</pre>
+            </section>
+            <section class="tailor-doc">
+              <h4>Cover letter</h4>
+              <pre class="tailor-pre">${esc(it.cover_letter ?? "")}</pre>
+            </section>
+          </div>
+        </td>
       </tr>`,
     )
     .join("");
+}
+
+// Expand/collapse a shortlist row to reveal its tailored CV + cover letter (the detail row is the
+// main row's next sibling). Bound once via delegation in init() so it survives re-renders.
+function toggleOfferRow(row) {
+  const open = row.getAttribute("aria-expanded") === "true";
+  row.setAttribute("aria-expanded", String(!open));
+  const detail = row.nextElementSibling;
+  if (detail && detail.classList.contains("offer-detail")) detail.hidden = open;
+}
+
+function onShortlistInteract(e) {
+  if (e.target.closest("a")) return; // let the role-title link open the offer
+  const row = e.target.closest(".offer-row");
+  if (!row) return;
+  if (e.type === "keydown") {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault(); // Space would otherwise scroll
+  }
+  toggleOfferRow(row);
 }
 
 // ── Keyword trends (vendored Chart.js — no CDN) ──
@@ -252,6 +289,12 @@ async function init() {
   document
     .getElementById("filter")
     .addEventListener("input", (e) => renderShortlist(e.target.value));
+
+  // Delegated once on the tbody (survives renderShortlist re-renders): click / Enter / Space
+  // toggles a row's tailored CV + cover-letter detail.
+  const shortlistBody = document.getElementById("shortlist-body");
+  shortlistBody.addEventListener("click", onShortlistInteract);
+  shortlistBody.addEventListener("keydown", onShortlistInteract);
 
   initTabs();
 }
