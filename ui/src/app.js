@@ -60,10 +60,12 @@ function sanitizeHtml(html) {
       el.replaceWith(...el.childNodes); // unwrap anything off-list (scripts/img/tables) to plain text
       continue;
     }
-    for (const attr of [...el.attributes]) {
+    // getAttributeNames() is a static snapshot, so removing during iteration is safe (a live
+    // el.attributes would skip entries as it shrinks).
+    for (const name of el.getAttributeNames()) {
       const okHref =
-        el.tagName === "A" && attr.name === "href" && /^https?:\/\//i.test(attr.value);
-      if (!okHref) el.removeAttribute(attr.name); // strips on*=, style, javascript:/data: hrefs, …
+        el.tagName === "A" && name === "href" && /^https?:\/\//i.test(el.getAttribute(name) || "");
+      if (!okHref) el.removeAttribute(name); // strips on*=, style, javascript:/data: hrefs, …
     }
     if (el.tagName === "A") {
       el.setAttribute("target", "_blank");
