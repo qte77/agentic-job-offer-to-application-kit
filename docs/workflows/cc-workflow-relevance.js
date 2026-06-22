@@ -2,7 +2,7 @@
 // evidence library + the five target lanes, and shortlist with per-lane fit scores.
 //
 // EXECUTION MODEL: a Claude Code Workflow-tool script (not node/make). Ingest + chunk first
-// (`scripts/ingest.sh` then `python -m ajoa_kit.chunk`), read the batch count from
+// (see CONTRIBUTING.md §Commands), read the batch count from
 // results/batches/manifest.json, then run:
 //
 //   Workflow({ scriptPath: 'docs/workflows/cc-workflow-relevance.js', args: {
@@ -13,7 +13,7 @@
 //     //   results/evidence-library.json (the Stage-1 output) for the candidate brief
 //   }})
 //
-// Persist the returned shortlist with: uv run ajoa-kit persist <output.json>  (or: make persist FILE=…)
+// Persist the returned shortlist with `ajoa-kit persist` — see CONTRIBUTING.md §Commands.
 //
 // Hooks: agent(), parallel(), phase(), log(). agent(prompt,{schema}) returns the
 // schema-validated object. The Workflow script has no filesystem access, but its agents do
@@ -40,6 +40,8 @@ const count = cfg.limitBatches ? Math.min(cfg.limitBatches, batchCount) : batchC
 const LIBRARY_PATH = cfg.libraryPath || `${rootDir}/results/evidence-library.json`
 const LIBRARY_INLINE = cfg.library || null
 
+// Lane keys only; the canonical lane definitions (label/focus/gapHint) live in
+// cc-workflow-evidence-library.js (see docs/architecture.md §Position lanes).
 const LANES = ['cxo', 'founding', 'engineering', 'cloud', 'architect']
 
 function pad(n) {

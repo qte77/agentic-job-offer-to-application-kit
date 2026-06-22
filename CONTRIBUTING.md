@@ -1,10 +1,16 @@
 # Contributing
 
-This guide is for **human contributors**. To run the kit, see [README.md](README.md); for the
+This guide is for **human contributors**. The full command reference — run, dev, and release — is in
+[§Commands](#commands) below; for the project overview see [README.md](README.md); for the
 machine-facing rulebook — principles, constraints, quality gates, and the value-add-TDD rule — see
 [AGENTS.md](AGENTS.md).
 
-## Dev loop
+## Commands
+
+The **Makefile is the source of truth** for commands — `make help` lists every target. This section
+documents them; the rest of the docs link here instead of repeating commands.
+
+### Dev loop
 
 ```bash
 make install     # sync the dev environment (uv)
@@ -12,7 +18,54 @@ make check       # ruff + format-check + pyright + complexipy + offline pytest +
 make docs-lint   # markdownlint + lychee link check
 ```
 
-`make help` lists all targets.
+### Pipeline
+
+The full per-search run. The orchestration steps run via the Claude Code Workflow tool — see each
+script's header in [`docs/workflows/`](docs/workflows/) for the exact `args`:
+
+```bash
+POLYFETCH_DIR=../polyfetch-scrape make ingest         # -> results/jobs-raw.json
+make chunk                                            # -> results/batches/ + manifest.json
+# relevance (Workflow tool) — batchCount = results/batches/manifest.json .batch_count:
+#   Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js", args: { rootDir: ".", batchCount: <N> } })
+make persist FILE=<workflow-output.json>              # -> results/<lane>/shortlist.*
+# tailor one shortlisted offer (Workflow tool):
+#   Workflow({ scriptPath: "docs/workflows/cc-workflow-tailor-offer.js", args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
+uv run ajoa-kit persist-offer <workflow-output.json>  # -> results/offers/<slug>/*.md
+uv run ajoa-kit ats-check results/offers/<slug>/cv.md # ATS parse-safety gate
+```
+
+Build the evidence library once, upstream, via the Stage-1 Workflow
+(`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
+
+### CLI subcommands
+
+Every step is also a subcommand — `uv run ajoa-kit <cmd>` (the `make` targets wrap the
+ingest/chunk/persist ones). Most take a positional path or no args; the flags:
+
+| Subcommand | Flags / args |
+|---|---|
+| `ingest` | — (reads `config/seed.json`, else `config/default-seed.json`) |
+| `chunk` | `--batch-size N` (default 40) |
+| `persist` | `FILE` — the relevance workflow result |
+| `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` |
+| `ats-check` | `FILE` — a CV markdown file |
+| `style` | `--json` — emit the tailor `style` arg from `config/style.json` |
+| `prefill-fields` | `--ats <name> --slug <board> --job-id <id>` (Greenhouse schema lookup) |
+| `probe` | — (probe candidate slugs across ATS platforms) |
+| `trend-snapshot` | — (see [§Trends data branch](#trends-data-branch)) |
+
+Per-adapter endpoint URLs live in `src/ajoa_kit/ingest.py`; sources are ToS-tiered per
+[ADR-0002](docs/decisions/0002-source-tos-tiers.md).
+
+### Environment
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `AJOA_CONFIG_DIR` | `config` | where `seed.json` / `keywords.json` / `style.json` are read |
+| `AJOA_RESULTS_DIR` | `results` | where ingest/chunk/persist artifacts are written |
+| `POLYFETCH_DIR` | `../polyfetch-scrape` | the `polyfetch-scrape` checkout `make ingest` / `probe` borrow |
+| `PORT` | `8000` | port for `make preview` |
 
 ## Opening a PR
 
