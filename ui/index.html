@@ -122,6 +122,20 @@
       <section id="trends-section" role="tabpanel" aria-labelledby="tab-trends" tabindex="0" hidden>
         <div class="section-head">
           <h2 id="trends-h">Job-market keyword trends</h2>
+          <label class="range-picker">
+            <span class="sr-only">Time frame</span>
+            <select id="trends-range" aria-label="Time frame">
+              <option value="all">All</option>
+              <option value="260">5y</option>
+              <option value="104">2y</option>
+              <option value="52">1y</option>
+              <option value="26">6mo</option>
+              <option value="13">3mo</option>
+              <option value="4">1mo</option>
+              <option value="2">2w</option>
+              <option value="1">1w</option>
+            </select>
+          </label>
           <span class="count">aggregate keyword counts per ISO week · click legend to toggle</span>
         </div>
         <div class="chart-block">

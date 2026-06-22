@@ -25,6 +25,7 @@ let laneLabel = {};
 let lineChart = null;
 let barChart = null;
 let trendsRendered = false; // charts in a hidden tab panel size to 0 → render on first reveal
+let trendsRange = "all"; // selected time-frame window: trailing # of ISO weeks, or "all"
 
 const cssVar = (name) =>
   getComputedStyle(document.body).getPropertyValue(name).trim();
@@ -243,12 +244,35 @@ function renderBar(records) {
   });
 }
 
+// Monday (UTC) of an ISO week "YYYY-Www" — Jan 4 is always in ISO week 1. Lets the (sparse) series
+// be windowed by calendar time rather than record count.
+function isoWeekToDate(week) {
+  const [y, w] = week.split("-W").map(Number);
+  const jan4 = new Date(Date.UTC(y, 0, 4));
+  const mondayW1 = new Date(jan4);
+  mondayW1.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() + 6) % 7));
+  const d = new Date(mondayW1);
+  d.setUTCDate(mondayW1.getUTCDate() + (w - 1) * 7);
+  return d;
+}
+
+// Keep only the trailing window of the sorted series (value = # of ISO weeks back from the latest,
+// or "all"). Filters by date so sparse weeks aren't miscounted.
+function windowRecords(sorted, value) {
+  if (value === "all" || sorted.length === 0) return sorted;
+  const cutoff =
+    isoWeekToDate(sorted[sorted.length - 1].week).getTime() -
+    (Number(value) - 1) * 7 * 86400000;
+  return sorted.filter((r) => isoWeekToDate(r.week).getTime() >= cutoff);
+}
+
 function renderTrends() {
   if (!data) return;
   // Sort once here (not in pivot) so the line/bar datasets, which map over this same array, stay
   // aligned with the labels. Real trends.ndjson is upsert-appended so it may not be in order;
   // ISO-week strings ("YYYY-Www", zero-padded) sort chronologically as plain strings.
-  const records = [...data.trends].sort((a, b) => a.week.localeCompare(b.week));
+  const sorted = [...data.trends].sort((a, b) => a.week.localeCompare(b.week));
+  const records = windowRecords(sorted, trendsRange);
   renderLine(records);
   renderBar(records);
   trendsRendered = true;
@@ -311,6 +335,13 @@ async function init() {
   const shortlistBody = document.getElementById("shortlist-body");
   shortlistBody.addEventListener("click", onShortlistInteract);
   shortlistBody.addEventListener("keydown", onShortlistInteract);
+
+  // Time-frame picker: re-window the trends charts. It lives inside the trends panel, so it's only
+  // reachable once that tab is open (canvases sized) — a direct renderTrends() is safe.
+  document.getElementById("trends-range").addEventListener("change", (e) => {
+    trendsRange = e.target.value;
+    if (data) renderTrends();
+  });
 
   initTabs();
 }
