@@ -248,7 +248,8 @@ td.empty-state {
   text-transform: uppercase;
   color: var(--text-muted);
 }
-.tailor-pre {
+.tailor-pre,
+.tailor-md {
   margin: 0;
   padding: 0.75rem;
   max-height: 22rem;
@@ -259,8 +260,37 @@ td.empty-state {
   color: var(--text);
   font-size: 0.8125rem;
   line-height: 1.5;
+}
+.tailor-pre {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* Rendered-markdown typography — scoped to .tailor-md so the .tailor-doc h4 title rule is untouched. */
+.tailor-md > :first-child { margin-top: 0; }
+.tailor-md > :last-child { margin-bottom: 0; }
+.tailor-md h1,
+.tailor-md h2,
+.tailor-md h3 {
+  margin: 0.6rem 0 0.3rem;
+  line-height: 1.25;
+  color: var(--text);
+  font-weight: 600;
+  text-transform: none; /* override the global uppercase/muted h2 — render as a document, not a UI label */
+  letter-spacing: normal;
+}
+.tailor-md h1 { font-size: 1.05rem; }
+.tailor-md h2 { font-size: 0.95rem; }
+.tailor-md h3 { font-size: 0.875rem; }
+.tailor-md p { margin: 0.4rem 0; }
+.tailor-md ul,
+.tailor-md ol { margin: 0.4rem 0; padding-left: 1.2rem; }
+.tailor-md li { margin: 0.15rem 0; }
+.tailor-md strong { font-weight: 600; }
+.tailor-md a { color: var(--primary); }
+.tailor-md code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95em;
 }
 
 /* Lane badge — outlined pill in the accent. */

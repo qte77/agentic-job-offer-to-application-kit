@@ -26,6 +26,9 @@ let lineChart = null;
 let barChart = null;
 let trendsRendered = false; // charts in a hidden tab panel size to 0 → render on first reveal
 let trendsRange = "all"; // selected time-frame window: trailing # of ISO weeks, or "all"
+// Tailored CV/cover-letter markdown renderer; set once in init() from the vendored marked ESM build.
+// Stays null if that import fails → renderShortlist falls back to an esc()'d <pre>.
+let renderMarkdown = null;
 
 const cssVar = (name) =>
   getComputedStyle(document.body).getPropertyValue(name).trim();
@@ -40,9 +43,50 @@ const esc = (s) =>
 // data-branch) feed is tampered with. esc() then handles quote-breakout.
 const safeUrl = (u) => (/^https?:\/\//i.test(String(u)) ? String(u) : "#");
 
+// marked does NOT sanitize its output (the upstream `sanitize` option was removed), and we assign
+// that output to innerHTML in the tailor pack — so run it through a tiny allowlist: keep only
+// formatting tags, drop every attribute except an http(s) href on <a>. The demo cv/cover_letter are
+// trusted synthetic strings, but this keeps the renderer safe-by-construction for the future
+// #52-gated, model-generated offer packs (results/offers/<slug>/*.md).
+const TAILOR_TAGS = new Set([
+  "H1", "H2", "H3", "H4", "H5", "H6", "P", "UL", "OL", "LI",
+  "STRONG", "EM", "B", "I", "CODE", "PRE", "BR", "A", "BLOCKQUOTE", "HR",
+]);
+function sanitizeHtml(html) {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = html;
+  for (const el of tpl.content.querySelectorAll("*")) {
+    if (!TAILOR_TAGS.has(el.tagName)) {
+      el.replaceWith(...el.childNodes); // unwrap anything off-list (scripts/img/tables) to plain text
+      continue;
+    }
+    // getAttributeNames() is a static snapshot, so removing during iteration is safe (a live
+    // el.attributes would skip entries as it shrinks).
+    for (const name of el.getAttributeNames()) {
+      const okHref =
+        el.tagName === "A" && name === "href" && /^https?:\/\//i.test(el.getAttribute(name) || "");
+      if (!okHref) el.removeAttribute(name); // strips on*=, style, javascript:/data: hrefs, …
+    }
+    if (el.tagName === "A") {
+      el.setAttribute("target", "_blank");
+      el.setAttribute("rel", "noopener");
+    }
+  }
+  return tpl.innerHTML;
+}
+
 // ── Shortlist table ──
 function scoreClass(score) {
   return score >= 4 ? "score-good" : score >= 3 ? "score-mid" : "score-bad";
+}
+
+// One tailor-pack pane (CV or cover letter): rendered+sanitized markdown when the vendored renderer
+// loaded, else an esc()'d <pre> fallback so a missing/broken vendor file still shows the raw text.
+function tailorDoc(title, md) {
+  const body = renderMarkdown
+    ? `<div class="tailor-md">${renderMarkdown(md)}</div>`
+    : `<pre class="tailor-pre">${esc(md ?? "")}</pre>`;
+  return `<section class="tailor-doc"><h4>${title}</h4>${body}</section>`;
 }
 
 function renderShortlist(filter = "") {
@@ -81,14 +125,8 @@ function renderShortlist(filter = "") {
       <tr class="offer-detail" hidden>
         <td colspan="5">
           <div class="tailor-pack">
-            <section class="tailor-doc">
-              <h4>Tailored CV</h4>
-              <pre class="tailor-pre">${esc(it.cv ?? "")}</pre>
-            </section>
-            <section class="tailor-doc">
-              <h4>Cover letter</h4>
-              <pre class="tailor-pre">${esc(it.cover_letter ?? "")}</pre>
-            </section>
+            ${tailorDoc("Tailored CV", it.cv)}
+            ${tailorDoc("Cover letter", it.cover_letter)}
           </div>
         </td>
       </tr>`,
@@ -324,6 +362,16 @@ async function init() {
   const realTrends = await loadRealTrends();
   if (realTrends) data.trends = realTrends;
   laneLabel = Object.fromEntries(data.lanes.map((l) => [l.key, l.label]));
+
+  // Load the vendored markdown renderer (marked — no CDN) so the tailor packs read as formatted
+  // docs. A dynamic import keeps a missing/broken vendor file from breaking the whole dashboard:
+  // renderMarkdown stays null and tailorDoc() falls back to an esc()'d <pre>.
+  try {
+    const { marked } = await import("../public/vendor/marked.esm.min.js");
+    renderMarkdown = (md) => sanitizeHtml(marked.parse(String(md ?? "")));
+  } catch {
+    renderMarkdown = null;
+  }
 
   renderShortlist();
   document
