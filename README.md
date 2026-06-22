@@ -10,12 +10,6 @@
 [![CodeQL](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml)
 [![Lint MD and Links](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/lint-md-links.yml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/lint-md-links.yml)
 
-## Why
-
-Job search is noisy: hundreds of postings, each needing a tailored CV and cover letter with an
-honest framing of gaps. This kit aligns one portfolio to many offers — screen for fit, then
-tailor — using only public, no-auth data and keeping a human in the loop for submission.
-
 ## What
 
 A **generic** pipeline (a small Python engine + LLM/agent phases). **Claude Code** is the
@@ -28,106 +22,69 @@ agent-agnostically so any coding agent can drive them.
 3. **Tailor** (per offer) — match → CV + cover letter + gap report, with an `ats-check` parse-safety
    pass, writing-style/tone matching, and a human-review prefill pack (see docs/research.md §Delivery).
 
-Five configurable **position lanes**: CxO/fractional · founding engineer · senior IC engineering ·
-cloud/DevOps/platform · architect (configurable defaults — see the `LANES` array in
-`cc-workflow-evidence-library.js`). Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
-
-**[Live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** — the interactive
-dashboard (synthetic shortlist · **live** market trends, bundled same-origin from the `data` branch at deploy).
+Five configurable **position lanes** (CxO/fractional · founding engineer · senior IC engineering ·
+cloud/DevOps/platform · architect) — see
+[docs/architecture.md §Position lanes](docs/architecture.md#position-lanes). Cost model: cheap
+pre-filter → LLM relevance → tailor only the shortlist.
 
 <details>
-<summary>Screenshots — the dashboard (dark/light follows your GitHub theme)</summary>
+<summary>Screenshot — shortlist (first offer expanded to its tailored CV + cover letter)</summary>
 
 <br />
 
-<strong>Tailored shortlist</strong>
-
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dashboard-offers-dark.png" />
-  <img alt="ajoa-kit dashboard — tailored shortlist tab" src="docs/assets/dashboard-offers-light.png" />
+  <source media="(prefers-color-scheme: dark)" srcset="assets/images/dashboard-shortlist-dark.png" />
+  <img alt="ajoa-kit dashboard — shortlist with the first offer expanded to its tailored CV and cover letter" src="assets/images/dashboard-shortlist-light.png" />
 </picture>
 
-<strong>Market keyword trends</strong>
+</details>
+
+<details>
+<summary>Screenshot — market keyword trends (default 3-month window)</summary>
+
+<br />
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dashboard-trends-dark.png" />
-  <img alt="ajoa-kit dashboard — market keyword trends tab" src="docs/assets/dashboard-trends-light.png" />
-</picture>
-
-<strong>Live market data — real aggregate keyword trends (from the data branch)</strong>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dashboard-market-dark.png" />
-  <img alt="ajoa-kit dashboard — live market keyword trends from the data branch" src="docs/assets/dashboard-market-light.png" />
+  <source media="(prefers-color-scheme: dark)" srcset="assets/images/dashboard-market-dark.png" />
+  <img alt="ajoa-kit dashboard — job-market keyword trends over the default 3-month window" src="assets/images/dashboard-market-light.png" />
 </picture>
 
 </details>
 
 ## How
 
-Dev loop: `make help` · `make check` (lint + types + complexity + tests) · `make docs-lint`.
-
-### Run your own search
+Try the **[live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** (synthetic
+shortlist · live market trends, bundled same-origin from the `data` branch at deploy), or run it
+locally:
 
 ```bash
-make install                                          # sync the dev env (uv)
-# the kit ships a tracked default source list (config/default-seed.json) — runs out of the box.
-# to use your own, create config/seed.json (git-ignored); it overrides the default, e.g.:
-#   {"feeds": [], "ats": [{"ats": "greenhouse", "slug": "acme", "company": "Acme", "lane": "engineering"}],
-#    "aggregators": [{"name": "arbeitnow"}, {"name": "themuse"}]}   # broad no-auth aggregators (ToS-tiered in ADR-0002)
-POLYFETCH_DIR=../polyfetch-scrape make ingest         # -> results/jobs-raw.json
-make chunk                                            # -> results/batches/ + manifest.json
-# relevance — Claude Code Workflow tool; batchCount = results/batches/manifest.json .batch_count:
-#   Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
-#              args: { rootDir: ".", batchCount: <N> } })
-make persist FILE=<workflow-output.json>              # -> results/<lane>/shortlist.*
-# tailor one shortlisted offer — Claude Code Workflow tool:
-#   Workflow({ scriptPath: "docs/workflows/cc-workflow-tailor-offer.js",
-#              args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
-uv run ajoa-kit persist-offer <workflow-output.json>  # -> results/offers/<slug>/*.md
-uv run ajoa-kit ats-check results/offers/<slug>/cv.md # ATS parse-safety gate
+make install   # sync the dev env (uv)
 ```
 
-Each step is also a CLI subcommand — `uv run ajoa-kit {ingest,chunk,persist,persist-offer,ats-check,style,prefill-fields,probe,trend-snapshot}`
-(the `make` targets wrap the ingest/chunk/persist ones); `config/` and `results/` locations are
-env-overridable via `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR`. Most take a positional path or no args;
-the optional flags are `chunk --batch-size N` (default 40), `persist-offer --slug <slug>`,
-`prefill-fields --ats <name> --slug <board> --job-id <id>` (Greenhouse schema lookup), and
-`style --json`.
-
-**Keyword trends (optional):** drop a `config/keywords.json` (`{"interest": [...], "title_roles": [...]}`)
-to override the default pre-filter vocabulary, then `ajoa-kit trend-snapshot` writes an aggregate,
-keyword-only per-ISO-week record to `results/trends.ndjson` (no JD/PII). `make trends-data` pushes
-that snapshot to the `data` branch, which re-triggers the Pages deploy to bundle it **same-origin**
-into the published site (so the live charts load reliably — no cross-origin runtime fetch). Local dev
-and forks fall back to fetching the `data` branch directly, overridable with `?base=<raw-url>`; the
-real trends are never committed to the source `ui/` (see [ui/README.md](ui/README.md)).
-
-Build the evidence library once, upstream, via the Stage-1 Workflow
-(`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
-
-**Writing style (optional):** drop a git-ignored `config/style.json` with a `tone` string and/or
-paths to your own CV / cover-letter samples; `ajoa-kit style --json` emits the resolved directives
-to pass as the tailor workflow's `style` arg (a sample wins over the tone, which wins over a neutral
-default). Style shapes voice, not content — the evidence library still supplies the facts.
-
-### Try the example (no fetch)
-
-The synthetic [`examples/alexis-doe/`](examples/alexis-doe/) workspace ships a pre-built evidence
-library + batches, so run the relevance screen straight against it — no `make ingest`/`make chunk`:
+Then screen the bundled synthetic example — no fetch needed:
 
 ```text
 Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
            args: { rootDir: "examples/alexis-doe", batchCount: 1 } })
 ```
 
+See **[docs/quickstart.md](docs/quickstart.md)** for the full workflow against your own sources
+(ingest → chunk → relevance → tailor → ats-check) plus the keyword-trends and writing-style options.
+
 **Constraints:** no automated submission, no scraping — public no-auth GET only, with a
 human-reviewed prefill pack (see [docs/research.md §Delivery](docs/research.md#delivery)); no PII in
 the repo (see [docs/architecture.md §Data layout](docs/architecture.md#data-layout)).
 
-## Docs
+## Why
+
+Job search is noisy: hundreds of postings, each needing a tailored CV and cover letter with an
+honest framing of gaps. This kit aligns one portfolio to many offers — screen for fit, then
+tailor — using only public, no-auth data and keeping a human in the loop for submission.
+
+## Refs
 
 - [docs/architecture.md](docs/architecture.md) — pipeline, components, execution model
+- [docs/quickstart.md](docs/quickstart.md) — full run workflow + optional features
 - [docs/roadmap.md](docs/roadmap.md) — what's built, what's next, what's deferred
 - [docs/userstory.md](docs/userstory.md) — user stories with acceptance criteria
 - [docs/research.md](docs/research.md) — fetching, ATS, and positioning research
