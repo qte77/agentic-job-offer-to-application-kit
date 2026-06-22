@@ -32,17 +32,19 @@ uv run python -m http.server 8000 --directory ui   # or: make preview
 # open http://localhost:8000/
 ```
 
-**Real trends** live on the repo's `data` branch (never in `ui/`), fetched at runtime. Refresh them
-by generating locally and pushing to that branch:
+**Real trends** live on the repo's `data` branch (never in `ui/`). `gh-pages.yaml` bundles them into
+the published site at deploy time so the live charts load them **same-origin** (no fragile
+cross-origin runtime fetch). Refresh them by generating locally and pushing to that branch:
 
 ```bash
 uv run ajoa-kit trend-snapshot   # results/jobs-raw.json -> results/trends.ndjson (by posted week)
 make trends-data                 # push results/trends.ndjson -> the `data` branch
 ```
 
-`make preview` with no `?base=` fetches the deployed `data` branch (or the synthetic `demo.json`
-fallback offline); for a local real-data preview, serve a data dir and open
-`http://localhost:8000/?base=<that-url>`.
+`make preview` runs `make trends-local` first, bundling the real trends into
+`ui/public/data/trends.ndjson` (same-origin, git-ignored) so the **local** dashboard shows real data
+too — offline-first: it prefers a local `results/trends.ndjson` or `data`-branch ref and only fetches
+as a last resort. `?base=<raw-url>` still forces a specific cross-origin source.
 
 `?base=` takes a **raw base URL** — e.g. `https://raw.githubusercontent.com/<owner>/<repo>/<branch>`,
 to which `/results/trends.ndjson` is appended. To point the dashboard at a different branch or fork,

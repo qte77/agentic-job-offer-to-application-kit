@@ -3,7 +3,7 @@ SHELL := bash
 .SILENT:
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
-.PHONY: help install lint format preview trends-data check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
+.PHONY: help install lint format trends-local preview trends-data check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
 
 help: ## List available targets
 	awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-11s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -17,7 +17,25 @@ lint: ## Ruff lint
 format: ## Ruff format (write)
 	uv run ruff format .
 
-preview: ## Serve the ui/ dashboard locally (PORT defaults to 8000)
+trends-local: ## Bundle real trends into ui/ for a local preview (same-origin, gitignored, offline-first)
+	# Lets `make preview` show REAL trends locally even when the browser can't reach
+	# raw.githubusercontent. Prefers LOCAL sources (no network): a freshly-generated
+	# results/trends.ndjson, then an already-present `data` / `origin/data` ref; only fetches as a
+	# last resort. Non-fatal: with nothing available the dashboard uses its synthetic fallback.
+	dst="ui/public/data/trends.ndjson"
+	if [ -f results/trends.ndjson ]; then
+		cp results/trends.ndjson "$$dst"
+		echo "local preview: using local results/trends.ndjson ($$(wc -l < "$$dst") records)"
+	elif git show data:results/trends.ndjson > "$$dst" 2>/dev/null \
+		|| git show origin/data:results/trends.ndjson > "$$dst" 2>/dev/null \
+		|| { git fetch -q origin data 2>/dev/null && git show origin/data:results/trends.ndjson > "$$dst" 2>/dev/null; }; then
+		echo "local preview: bundled trends from the data branch ($$(wc -l < "$$dst") records)"
+	else
+		rm -f "$$dst"
+		echo "local preview: no real trends available -> synthetic fallback"
+	fi
+
+preview: trends-local ## Serve the ui/ dashboard locally with real trends bundled (PORT defaults to 8000)
 	uv run python -m http.server "$${PORT:-8000}" --directory ui
 
 trends-data: ## Push results/trends.ndjson to the `data` branch (real trends for the live dashboard)
