@@ -143,13 +143,28 @@ function renderShortlist(filter = "") {
     .join("");
 }
 
+// Collapse a single offer row (clear aria-expanded + hide its detail sibling).
+function collapseOfferRow(row) {
+  row.setAttribute("aria-expanded", "false");
+  const detail = row.nextElementSibling;
+  if (detail && detail.classList.contains("offer-detail")) detail.hidden = true;
+}
+
 // Expand/collapse a shortlist row to reveal its tailored CV + cover letter (the detail row is the
 // main row's next sibling). Bound once via delegation in init() so it survives re-renders.
+// Accordion: opening a row collapses any other open one, so only one detail shows at a time.
 function toggleOfferRow(row) {
   const open = row.getAttribute("aria-expanded") === "true";
-  row.setAttribute("aria-expanded", String(!open));
+  if (open) {
+    collapseOfferRow(row);
+    return;
+  }
+  document
+    .querySelectorAll('.offer-row[aria-expanded="true"]')
+    .forEach(collapseOfferRow);
+  row.setAttribute("aria-expanded", "true");
   const detail = row.nextElementSibling;
-  if (detail && detail.classList.contains("offer-detail")) detail.hidden = open;
+  if (detail && detail.classList.contains("offer-detail")) detail.hidden = false;
 }
 
 // Copy a tailor pane's RAW markdown (from data-md) to the clipboard, with brief "Copied" feedback.
