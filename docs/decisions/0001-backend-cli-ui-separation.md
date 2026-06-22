@@ -52,7 +52,7 @@ a future `settings.py`, the structured sources catalog (#10).
 
 An `argparse` dispatcher (`main()`) routing the CLI subcommands
 (`ingest` / `chunk` / `persist` / `persist-offer` / `ats-check` / `style` /
-`prefill-fields` / `probe`; see `__main__.py` for the live set) to the
+`prefill-fields` / `probe` / `trend-snapshot`; see `__main__.py` for the live set) to the
 matching Layer 1 module — each
 delegates to the library with explicit args, and `AppSettings` supplies
 the env-overridable paths. (Subcommand dispatch uses `argparse`, not
