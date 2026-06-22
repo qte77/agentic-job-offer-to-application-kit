@@ -1,0 +1,26 @@
+---
+name: Issue Triage
+
+# AI-powered triage (duplicate detection, relevance/feasibility, auto-labeling) on newly
+# opened issues. Backend defaults to GitHub Models (openai/gpt-4.1) via the built-in token —
+# zero-secret; `models: read` is required for that token to reach the Models API.
+on:
+  issues:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  triage:
+    name: AI issue triage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      models: read
+    steps:
+      - name: Triage issue
+        uses: qte77/gha-issue-triage@4a07dd23bdd6bafc625bce6430f0aa5990fc327d  # v0.3.0
+        with:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
