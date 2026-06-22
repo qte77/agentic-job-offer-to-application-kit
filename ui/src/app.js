@@ -25,7 +25,7 @@ let laneLabel = {};
 let lineChart = null;
 let barChart = null;
 let trendsRendered = false; // charts in a hidden tab panel size to 0 → render on first reveal
-let trendsRange = "all"; // selected time-frame window: trailing # of ISO weeks, or "all"
+let trendsRange = "13"; // default time-frame window: 3mo (13 ISO weeks); "all" or a trailing-week count
 // Tailored CV/cover-letter markdown renderer; set once in init() from the vendored marked ESM build.
 // Stays null if that import fails → renderShortlist falls back to an esc()'d <pre>.
 let renderMarkdown = null;
