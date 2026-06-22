@@ -314,6 +314,32 @@ footer a:hover { text-decoration: underline; }
   visibility: hidden;
 }
 
+/* ── Header action cluster — theme toggle + Repo/Issues links, right-aligned ── */
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+/* Repo/Issues links — same pill shape as .theme-toggle (kept as its own rule per
+   AHA: extract a shared base only at the third pill, not the second). */
+.header-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 0.8125rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.header-link svg { width: 1em; height: 1em; }
+.header-link:hover { color: var(--primary); border-color: var(--primary); }
+.header-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
 /* Screen-reader-only: visually hidden but exposed to assistive tech (the theme
    live region #theme-status announces the selected mode on change). */
 .sr-only {
