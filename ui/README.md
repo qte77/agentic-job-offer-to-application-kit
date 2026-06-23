@@ -59,8 +59,8 @@ set the branch segment in that URL (there is no separate `?branch=` switch — t
   `qte77/qte77.github.io` toggle) — applied as `data-theme` on `<html>`, persisted to
   `localStorage`, with an inline `<head>` script preventing a flash of the wrong theme.
   The chart re-reads the tokens on each flip (via a `themechange` event).
-- **Fonts:** Inter (400/700) vendored as TTF under `public/vendor/fonts/` (SIL OFL 1.1)
-  with system fallbacks — offline-first, no CDN. Same fonts as the `paperverse` UI.
+- **Fonts:** Inter (400/700) vendored as WOFF2 (with a TTF fallback) under `public/vendor/fonts/`
+  (SIL OFL 1.1) with system fallbacks — offline-first, no CDN. Same fonts as the `paperverse` UI.
 
 ## Files
 
