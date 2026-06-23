@@ -1,18 +1,23 @@
-/* Inter (vendored TTF, OFL 1.1) — same fonts as the paperverse UI. Offline-first,
-   no CDN; system-ui paints first, then Inter swaps in (font-display: swap). */
+/* Inter (vendored WOFF2 with a TTF fallback, OFL 1.1) — same fonts as the paperverse UI.
+   Offline-first, no CDN; system-ui paints first, then Inter swaps in (font-display: swap).
+   Modern browsers take the WOFF2 (~64% smaller); the TTF is only for legacy fallback. */
 @font-face {
   font-family: "Inter";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("../public/vendor/fonts/Inter-Regular.ttf") format("truetype");
+  src:
+    url("../public/vendor/fonts/Inter-Regular.woff2") format("woff2"),
+    url("../public/vendor/fonts/Inter-Regular.ttf") format("truetype");
 }
 @font-face {
   font-family: "Inter";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("../public/vendor/fonts/Inter-Bold.ttf") format("truetype");
+  src:
+    url("../public/vendor/fonts/Inter-Bold.woff2") format("woff2"),
+    url("../public/vendor/fonts/Inter-Bold.ttf") format("truetype");
 }
 
 /* EyeRest theme tokens — qte77 brand DESIGN.md (zero-blue, warm amber).
