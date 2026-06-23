@@ -92,7 +92,7 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 | Boundary | Policy |
 |---|---|
 | ATS/feed fetch (per source) | wrap-continue (one source down ≠ run fails) |
-| JD parse (per record) | wrap-continue (skip malformed) — hardening tracked in issues |
+| JD parse (per record) | wrap-continue (skip malformed) — typing planned in [ADR-0003](decisions/0003-data-contract-enforcement.md) |
 | config load (seed) | fail-loud (missing/invalid config stops the run) |
 | evidence-library load (relevance) | fail-loud (clear "run Stage 1 first") |
 
