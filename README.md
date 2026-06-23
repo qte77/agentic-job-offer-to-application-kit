@@ -78,7 +78,7 @@ tailor — using only public, no-auth data and keeping a human in the loop for s
 - [docs/roadmap.md](docs/roadmap.md) — what's built, what's next, what's deferred
 - [docs/userstory.md](docs/userstory.md) — user stories with acceptance criteria
 - [docs/research.md](docs/research.md) — fetching, ATS, and positioning research
-- Decisions (ADRs): [ADR-0001 layering](docs/decisions/0001-backend-cli-ui-separation.md) · [ADR-0002 source ToS tiers](docs/decisions/0002-source-tos-tiers.md)
+- Decisions (ADRs): [ADR-0001 layering](docs/decisions/0001-backend-cli-ui-separation.md) · [ADR-0002 source ToS tiers](docs/decisions/0002-source-tos-tiers.md) · [ADR-0003 data contracts](docs/decisions/0003-data-contract-enforcement.md)
 - [examples/alexis-doe/](examples/alexis-doe/) — synthetic end-to-end example
 - [CONTRIBUTING.md](CONTRIBUTING.md) — command reference (run/dev/release), setup, testing, and PRs
 - [AGENTS.md](AGENTS.md) — operating rules for AI coding agents

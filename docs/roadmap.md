@@ -8,7 +8,8 @@
   paths (no hardcoded `ROOT`); the subcommand set is in `src/ajoa_kit/__main__.py` (ADR-0001 L1/L2).
 - Baseline gates: ruff, pyright, complexipy, a value-add `pytest` suite, CodeQL + Dependabot + CI
   (SHA-pinned), and markdownlint + lychee (local `make docs-lint` + a `lint-md-links` CI workflow).
-- Release tooling: scriv changelog fragments under `changelog.d/`.
+- Release tooling: scriv changelog fragments under `changelog.d/`; bump-my-version → tag-release →
+  publish-release pipeline (v0.2.0 cut; SHA-pinned, unsigned tags).
 - Governance, docs, and a synthetic worked example (`examples/alexis-doe/`).
 - Stage 3 tailoring (`cc-workflow-tailor-offer.js` + `persist_offer`): per-offer pack — match → CV +
   cover letter + gap report + human-review prefill pack + optional JD must-have coverage report (#55)
@@ -42,6 +43,13 @@
   keeps real data out of the source `ui/`.
 - AI issue-triage CI (`.github/workflows/issue-triage.yaml`): `qte77/gha-issue-triage` (SHA-pinned,
   GitHub Models, zero-secret) auto-labels newly opened issues.
+- Data-contract ADR (ADR-0003, #158): maps the typed vs untyped layer boundaries and sets the
+  pydantic + JSON-Schema direction with a prioritized hardening backlog (decision only, no code).
+- UI theming converged on the qte77 brand (#112/#117): EyeRest tokens, `qte77-theme` storage key,
+  system/light/dark cycle, `.sr-only` clip-path; Inter now served as WOFF2 (TTF fallback).
+- Governance safe-subset settled (#54, closed): selected-actions allowlist + full SHA-pinning
+  enforced and the branch ruleset reverted to permit the solo `--admin` / unsigned-release flow;
+  strict signed-tag (03) and required-review (06) rulesets intentionally excluded.
 
 ## Next
 
@@ -52,9 +60,9 @@
 
 - `pseudonymize-text` (#52, belt-and-suspenders) for the live dashboard data feed. #71 Vite not
   adopted — the dashboard stays no-build.
-- Full L1 org-settings apply (#54): attempted 2026-06 — secret-scan + workflow-perms applied; the
-  signed-tag (03) and reviewer (06) rulesets were reverted (they block the solo `--admin` /
-  unsigned-release flow). Selected-actions SHA allowlist already in place.
+- Data-contract typing (per ADR-0003): a `JobRecord` model + parse-on-read at the JD / relevance /
+  tailor boundaries, config-entry models, and a single `config/lanes.json` lane source (backlog
+  ranked in the ADR).
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
 - Broaden ingest reach: more JSON aggregators as their robots/ToS clear (jobicy/himalayas/remotive
   — #94 deferred follow-ups). Outlook (#109): slug-discovery from public board directories, and
