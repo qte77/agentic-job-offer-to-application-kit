@@ -2,6 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- Defense-in-depth (#52): everything is self-hosted (no CDN), so lock origins to 'self'.
+         connect-src also allows raw.githubusercontent.com for the runtime `data`-branch trends
+         fetch (the same-origin bundled copy is tried first). Delivered via <meta> because the
+         gh-pages static host sets no response headers. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none'; object-src 'none'"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ajoa-kit — shortlist & trends (demo)</title>
     <meta
@@ -9,16 +17,7 @@
       content="Demo dashboard shell for agentic-job-offer-to-application-kit: tailored shortlist + job-market keyword trends. Synthetic data only."
     />
     <link rel="icon" href="public/favicon.svg" type="image/svg+xml" />
-    <script>
-      // Anti-flash: apply a saved explicit theme before first paint (auto = no attr).
-      (function () {
-        try {
-          var t = localStorage.getItem("qte77-theme");
-          if (t === "light" || t === "dark")
-            document.documentElement.setAttribute("data-theme", t);
-        } catch (e) {}
-      })();
-    </script>
+    <script src="src/pre-theme.js"></script>
     <link rel="stylesheet" href="src/style.css" />
     <script src="public/vendor/chart.umd.min.js" defer></script>
     <script src="src/theme.js" defer></script>
