@@ -1,0 +1,93 @@
+---
+name: Ingest Daily
+
+# Daily incremental ingest (#164): re-pull JDs, dedup-merge into the running corpus (kept as a
+# private artifact across runs — no JD/PII content on any branch), refresh the keyword-trends
+# series, and push the aggregate (keyword-only) trends to the `data` branch. Runs against the live
+# network by design — distinct from the offline `make check` PR gate — so it is NOT exercised by PR
+# CI. Validate changes via `workflow_dispatch` and read the run logs.
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 06:00 UTC daily (after overnight board refreshes)
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ingest-daily
+  cancel-in-progress: false   # never interrupt a mid-run corpus write
+
+jobs:
+  ingest:
+    name: incremental ingest
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write   # `make trends-data` force-pushes results/trends.ndjson to the `data` branch
+      actions: read     # `gh run download` fetches the prior run's corpus artifact
+    env:
+      AJOA_CONFIG_DIR: ${{ github.workspace }}/config
+      AJOA_RESULTS_DIR: ${{ github.workspace }}/results
+      PYTHONPATH: ${{ github.workspace }}/src
+    steps:
+      - name: Checkout (main repo; credentials kept for the data-branch push)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      # polyfetch-scrape is public; borrow its env (httpx/curl_cffi/patchright fetch stack) rather
+      # than vendoring it (architecture constraint). Must live inside the workspace — checkout
+      # cannot write to a sibling `../` path.
+      - name: Checkout polyfetch-scrape (public fetch stack)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          repository: qte77/polyfetch-scrape
+          path: polyfetch-scrape
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: polyfetch-scrape/uv.lock
+
+      - name: Install the headless browser (tier-3 fallback)
+        working-directory: polyfetch-scrape
+        run: uv run patchright install --with-deps chromium
+
+      # v4 artifacts are run-scoped, so pull the corpus from the most recent successful run.
+      # First ever run finds none and proceeds with an empty prior corpus.
+      - name: Restore the prior corpus
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p results
+          run_id="$(gh run list --workflow ingest-daily.yaml --status success \
+            --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" --name corpus --dir results || echo "no corpus artifact on last run"
+          else
+            echo "first run — starting from an empty corpus"
+          fi
+
+      # Borrow polyfetch's env (run from its dir); add ajoa-kit's own deps with --with; reach
+      # ajoa_kit itself via PYTHONPATH. Paths are absolute (AJOA_*_DIR) since the cwd is polyfetch's.
+      - name: Ingest — incremental merge into results/corpus.json
+        working-directory: polyfetch-scrape
+        run: uv run --with pydantic --with pydantic-settings python -m ajoa_kit ingest --merge
+
+      - name: Keyword-trend snapshot (buckets by first_seen)
+        working-directory: polyfetch-scrape
+        run: uv run --with pydantic --with pydantic-settings python -m ajoa_kit trend-snapshot
+
+      - name: Push aggregate trends to the data branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          make trends-data
+
+      - name: Upload the corpus (private cross-run store)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.4.3
+        with:
+          name: corpus
+          path: results/corpus.json
+          retention-days: 30
+          if-no-files-found: error
