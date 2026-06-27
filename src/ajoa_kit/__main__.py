@@ -96,9 +96,15 @@ def main() -> None:
     )
     sub = parser.add_subparsers(dest="cmd", metavar="SUBCOMMAND", required=True)
 
-    sub.add_parser(
+    ingest_p = sub.add_parser(
         "ingest", help="Fetch JDs into results/jobs-raw.json (needs polyfetch env)."
-    ).set_defaults(func=_ingest)
+    )
+    ingest_p.add_argument(
+        "--merge",
+        action="store_true",
+        help="Also fold the pull into results/corpus.json (incremental dedup-merge, #164).",
+    )
+    ingest_p.set_defaults(func=_ingest)
 
     chunk_p = sub.add_parser("chunk", help="Split jobs-raw.json into results/batches/.")
     chunk_p.add_argument(
