@@ -50,11 +50,19 @@
 - Governance safe-subset settled (#54, closed): selected-actions allowlist + full SHA-pinning
   enforced and the branch ruleset reverted to permit the solo `--admin` / unsigned-release flow;
   strict signed-tag (03) and required-review (06) rulesets intentionally excluded.
+- Offline e2e pipeline smoke test (#165): pins the deterministic `chunk → persist_scored →
+  persist_offer → ats_check` chain with canned synthetic Workflow outputs (the LLM relevance/tailor
+  steps can't run in CI), guarding the cross-stage seams under `make check`.
 
 ## Next
 
 - Locale-aware document conventions (#12).
 - Prefill-pack reach beyond Greenhouse (#56).
+- Daily incremental ingest (#164): scheduled GHA cron building a deduped corpus via a 4-state
+  `merge_corpus()` (new / changed / unchanged / delisted via `last_seen`). Decisions resolved
+  (2026-06-27): private GHA **artifact** corpus store, track `last_seen`, bucket trends by
+  `first_seen`, and run polyfetch in CI by checking out the public `polyfetch-scrape` repo + caching
+  (not a package dep — preserves the never-installed/importable-offline design). Sequenced after #165.
 
 ## Later — hardening & reach
 
