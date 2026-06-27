@@ -20,11 +20,13 @@ from __future__ import annotations
 import html
 import json
 import re
+from datetime import date
 from typing import TYPE_CHECKING
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from defusedxml.ElementTree import fromstring as xml_fromstring
 
+from ajoa_kit.corpus import merge_corpus
 from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
@@ -591,8 +593,37 @@ def build_summary(deduped: list[dict[str, Any]], state: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main() -> None:
-    """Ingest all configured sources into results/jobs-raw.json (+ summary)."""
+def _update_corpus(deduped: list[dict[str, Any]], results_dir: Path, today: str) -> None:
+    """Fold the fresh deduped pull into ``results/corpus.json`` (the running #164 corpus).
+
+    Reads the prior corpus (empty on the first run), runs the four-state
+    :func:`ajoa_kit.corpus.merge_corpus`, and writes it back. ``jobs-raw.json`` is left untouched —
+    it stays today's active pull for the relevance screen; the corpus is the growing history
+    (first_seen / last_seen / delisted) that the trends snapshot and the daily cron read.
+
+    Args:
+        deduped: Today's freshly-ingested, deduped JD records.
+        results_dir: The results root (``AppSettings().results_dir``).
+        today: ISO date stamp (``YYYY-MM-DD``) for this pull.
+    """
+    path = results_dir / "corpus.json"
+    prior = json.loads(path.read_text()) if path.exists() else []
+    merged = merge_corpus(prior, deduped, today)
+    path.write_text(json.dumps(merged, indent=2, ensure_ascii=False))
+    print(f"corpus: {len(merged)} records -> {path} (prior {len(prior)})")
+
+
+def main(*, merge: bool = False, today: str | None = None) -> None:
+    """Ingest all configured sources into results/jobs-raw.json (+ summary).
+
+    With ``merge=True`` (the daily-ingest path, #164) the deduped pull is also folded into
+    ``results/corpus.json`` via the four-state merge, stamped ``today`` (defaults to the current
+    date). ``jobs-raw.json`` is written the same way regardless of ``merge``.
+
+    Args:
+        merge: When True, additionally maintain the incremental ``results/corpus.json``.
+        today: ISO date stamp for the merge; defaults to ``date.today()`` when omitted.
+    """
     settings = AppSettings()
     results = settings.results_dir
     results.mkdir(parents=True, exist_ok=True)
@@ -610,6 +641,8 @@ def main() -> None:
     deduped = dedupe(state["jobs"])
     (results / "jobs-raw.json").write_text(json.dumps(deduped, indent=2, ensure_ascii=False))
     (results / "jobs-raw.summary.md").write_text(build_summary(deduped, state))
+    if merge:
+        _update_corpus(deduped, results, today or date.today().isoformat())
 
     total_filtered = sum(state["filtered"].values())
     print(f"wrote {len(deduped)} JDs -> results/jobs-raw.json (dropped {total_filtered})")
