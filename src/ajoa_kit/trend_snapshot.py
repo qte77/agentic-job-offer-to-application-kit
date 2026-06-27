@@ -1,9 +1,10 @@
 """Keyword-only job-market trend snapshot (#11 PR-A).
 
-Derives an aggregate, per-ISO-week keyword-frequency record from the ingested corpus
-(``results/jobs-raw.json``) and upserts it into ``results/trends.ndjson``. Each JD is bucketed by
-the ISO week it was actually **posted** (its ``posted_at``), so a single scrape backfills a real
-multi-week timeline rather than stamping the whole corpus with the run date. The output is
+Derives an aggregate, per-ISO-week keyword-frequency record from the ingested corpus and upserts
+it into ``results/trends.ndjson``. It prefers the #164 incremental ``results/corpus.json`` bucketed
+by each JD's ``first_seen`` (the field we control and always populate), and otherwise falls back to
+``results/jobs-raw.json`` with the less-reliable ``posted_at``. So one scrape backfills a real
+multi-week timeline rather than stamping everything with the run date. The output is
 **keyword-only by construction** — ``{week, counts}`` where ``counts`` is ``{keyword: int}``;
 no JD text, company, title, URL, or per-posting row is ever written. That keeps the data
 publishable without tripping the ADR-0001 PII gate (`pseudonymize-text` stays belt-and-suspenders).
@@ -118,6 +119,11 @@ def _posted_at(job: dict) -> str:
     return job.get("posted_at", "")
 
 
+def _first_seen(job: dict) -> str:
+    """``date_of`` for the #164 incremental corpus — bucket by when the JD first appeared."""
+    return job.get("first_seen", "")
+
+
 def bucket_by_week(
     jobs: list[dict],
     pattern: re.Pattern[str],
@@ -164,19 +170,30 @@ def upsert_week(path: Path, week: str, counts: dict[str, int]) -> None:
 
 
 def main() -> None:
-    """Backfill per-ISO-week keyword frequencies (by JD posted_at) into results/trends.ndjson."""
+    """Backfill per-ISO-week keyword frequencies into results/trends.ndjson.
+
+    Prefers the #164 incremental ``results/corpus.json`` bucketed by each JD's ``first_seen`` (the
+    field we control and always populate); falls back to ``results/jobs-raw.json`` bucketed by the
+    less-reliable ``posted_at`` when no corpus exists yet.
+    """
     settings = AppSettings()
     results = settings.results_dir
-    jobs = json.loads((results / "jobs-raw.json").read_text())
+    corpus_path = results / "corpus.json"
+    if corpus_path.is_file():
+        jobs = json.loads(corpus_path.read_text())
+        date_of, dated_by = _first_seen, "first_seen"
+    else:
+        jobs = json.loads((results / "jobs-raw.json").read_text())
+        date_of, dated_by = _posted_at, "posted_at"
     interest, title_roles = load_keywords(settings.config_dir)
     pat_interest, _ = build_patterns(interest, title_roles)
-    weeks, skipped = bucket_by_week(jobs, pat_interest)
+    weeks, skipped = bucket_by_week(jobs, pat_interest, date_of=date_of)
     path = results / "trends.ndjson"
     for week, counts in weeks.items():
         upsert_week(path, week, counts)
     print(
         f"backfilled {len(weeks)} ISO weeks -> {path} "
-        f"(skipped {skipped} JDs with no parseable posted_at)"
+        f"(by {dated_by}; skipped {skipped} JDs with no parseable date)"
     )
 
 
