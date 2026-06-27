@@ -53,16 +53,20 @@
 - Offline e2e pipeline smoke test (#165): pins the deterministic `chunk → persist_scored →
   persist_offer → ats_check` chain with canned synthetic Workflow outputs (the LLM relevance/tailor
   steps can't run in CI), guarding the cross-stage seams under `make check`.
+- Daily incremental ingest (#164): scheduled cron (`.github/workflows/ingest-daily.yaml`, 06:00 UTC +
+  `workflow_dispatch`) that dedup-merges each pull into a running `results/corpus.json` via the
+  4-state `merge_corpus()` (new/changed/unchanged/delisted; first_seen/last_seen/content_hash; CLI
+  `ajoa-kit ingest --merge`), buckets trends by `first_seen`, and pushes the aggregate keyword-only
+  trends to the `data` branch — corpus kept as a private cross-run artifact (no PII on any branch),
+  polyfetch borrowed via a public-repo checkout. Dispatch-verified end-to-end (4248 JDs; trends
+  preserved). The daily offer summary is split to #175.
 
 ## Next
 
 - Locale-aware document conventions (#12).
 - Prefill-pack reach beyond Greenhouse (#56).
-- Daily incremental ingest (#164): scheduled GHA cron building a deduped corpus via a 4-state
-  `merge_corpus()` (new / changed / unchanged / delisted via `last_seen`). Decisions resolved
-  (2026-06-27): private GHA **artifact** corpus store, track `last_seen`, bucket trends by
-  `first_seen`, and run polyfetch in CI by checking out the public `polyfetch-scrape` repo + caching
-  (not a package dep — preserves the never-installed/importable-offline design). Sequenced after #165.
+- Daily offer summary / digest (#175): a "what changed today" report (new/changed/delisted counts +
+  new offers) over the corpus — rides on `merge_corpus`; artifact-only (PII boundary).
 
 ## Later — hardening & reach
 
