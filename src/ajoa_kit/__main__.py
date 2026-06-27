@@ -23,11 +23,11 @@ import argparse
 from pathlib import Path
 
 
-def _ingest(_args: argparse.Namespace) -> None:
-    """Run the ingest step."""
+def _ingest(args: argparse.Namespace) -> None:
+    """Run the ingest step (optionally folding into the incremental corpus)."""
     from ajoa_kit.ingest import main as run
 
-    run()
+    run(merge=args.merge)
 
 
 def _chunk(args: argparse.Namespace) -> None:

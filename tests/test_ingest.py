@@ -60,3 +60,29 @@ def test_collect_warn_and_continues_on_failing_source() -> None:
     assert state["counts"]["good"] == 1  # the healthy source still collected
     assert "bad" not in state["counts"]  # the failing source contributes no counts entry
     assert len(state["jobs"]) == 1
+
+
+def test_update_corpus_first_run_seeds_with_first_seen(tmp_path: Path) -> None:
+    jobs = [ingest.record(id="a", ats="rss", source="s", title="Engineer", description="build")]
+    ingest._update_corpus(jobs, tmp_path, "2026-06-01")
+    corpus = json.loads((tmp_path / "corpus.json").read_text())
+    assert len(corpus) == 1
+    assert corpus[0]["first_seen"] == "2026-06-01"
+    assert corpus[0]["last_seen"] == "2026-06-01"
+    assert "content_hash" in corpus[0]
+
+
+def test_update_corpus_second_run_keeps_delisted_and_updates_changed(tmp_path: Path) -> None:
+    # First pull: a + b. Second pull: a's description changed, b is gone (delisted).
+    a0 = ingest.record(id="a", ats="rss", source="s", title="Engineer", description="v1")
+    b0 = ingest.record(id="b", ats="rss", source="s", title="SRE", description="ops")
+    ingest._update_corpus([a0, b0], tmp_path, "2026-06-01")
+    a1 = ingest.record(id="a", ats="rss", source="s", title="Engineer", description="v2")
+    ingest._update_corpus([a1], tmp_path, "2026-06-27")
+
+    corpus = {r["id"]: r for r in json.loads((tmp_path / "corpus.json").read_text())}
+    assert set(corpus) == {"a", "b"}  # delisted record retained
+    assert corpus["a"]["description"] == "v2"  # changed record adopted fresh content
+    assert corpus["a"]["first_seen"] == "2026-06-01"  # preserved across the change
+    assert corpus["a"]["last_seen"] == "2026-06-27"  # advanced
+    assert corpus["b"]["last_seen"] == "2026-06-01"  # delisted -> last_seen frozen
