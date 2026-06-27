@@ -29,6 +29,10 @@ let trendsRange = "13"; // default time-frame window: 3mo (13 ISO weeks); "all" 
 // Tailored CV/cover-letter markdown renderer; set once in init() from the vendored marked ESM build.
 // Stays null if that import fails → renderShortlist falls back to an esc()'d <pre>.
 let renderMarkdown = null;
+// Raw tailor markdown, index-aligned with the rendered shortlist rows ({cv, cover_letter}). Kept in
+// JS rather than inlined per Copy button so multi-KB packs don't bloat the DOM (#52); copyTailor()
+// indexes into it by the button's data-offer.
+let tailorPacks = [];
 
 const cssVar = (name) =>
   getComputedStyle(document.body).getPropertyValue(name).trim();
@@ -69,7 +73,9 @@ function sanitizeHtml(html) {
     }
     if (el.tagName === "A") {
       el.setAttribute("target", "_blank");
-      el.setAttribute("rel", "noopener");
+      // noreferrer (not just noopener): don't leak the dashboard URL via Referer on
+      // model-supplied links in the future #52-gated offer packs.
+      el.setAttribute("rel", "noopener noreferrer");
     }
   }
   return tpl.innerHTML;
@@ -80,19 +86,19 @@ function scoreClass(score) {
   return score >= 4 ? "score-good" : score >= 3 ? "score-mid" : "score-bad";
 }
 
-// One tailor-pack pane (CV or cover letter): a head row (title + a Copy button that copies the RAW
-// markdown), then rendered+sanitized markdown when the vendored renderer loaded, else an esc()'d
-// <pre> fallback so a missing/broken vendor file still shows the raw text. The raw md rides in
-// data-md via esc() (escapes & < > " → no breakout of the double-quoted attr; newlines preserved);
-// copyTailor() reads btn.dataset.md, which the browser decodes back to the raw string.
-function tailorDoc(title, md) {
+// One tailor-pack pane (CV or cover letter): a head row (title + a Copy button), then
+// rendered+sanitized markdown when the vendored renderer loaded, else an esc()'d <pre> fallback so a
+// missing/broken vendor file still shows the raw text. The Copy button no longer inlines the raw
+// markdown in a data-md attribute (real packs run to tens of KB × every row → DOM bloat); it carries
+// the (offer index, field) instead, and copyTailor() looks the raw string up in `tailorPacks` (#52).
+function tailorDoc(title, md, idx, field) {
   const body = renderMarkdown
     ? `<div class="tailor-md">${renderMarkdown(md)}</div>`
     : `<pre class="tailor-pre">${esc(md ?? "")}</pre>`;
   return `<section class="tailor-doc">
             <div class="tailor-doc-head">
               <h4>${title}</h4>
-              <button type="button" class="tailor-copy" data-md="${esc(md ?? "")}" aria-label="Copy ${title} as Markdown" title="Copy raw Markdown">Copy</button>
+              <button type="button" class="tailor-copy" data-offer="${idx}" data-field="${field}" aria-label="Copy ${title} as Markdown" title="Copy raw Markdown">Copy</button>
             </div>
             ${body}
           </section>`;
@@ -109,6 +115,9 @@ function renderShortlist(filter = "") {
     })
     .sort((a, b) => b.score - a.score);
 
+  // Lazy copy source, rebuilt each render so the indices stay aligned with the rows below.
+  tailorPacks = rows.map((it) => ({ cv: it.cv, cover_letter: it.cover_letter }));
+
   document.getElementById("shortlist-count").textContent = String(rows.length);
 
   if (rows.length === 0) {
@@ -121,10 +130,10 @@ function renderShortlist(filter = "") {
   // ARTIFACTS); here they are synthetic demo strings — real packs stay local (results/offers/, #52).
   body.innerHTML = rows
     .map(
-      (it) => `<tr class="offer-row" role="button" tabindex="0" aria-expanded="false" title="Show tailored CV & cover letter">
+      (it, idx) => `<tr class="offer-row" role="button" tabindex="0" aria-expanded="false" title="Show tailored CV & cover letter">
         <td>${esc(it.company)}</td>
         <td>
-          <div class="role-title"><a href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener">${esc(it.title)}</a></div>
+          <div class="role-title"><a href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener noreferrer">${esc(it.title)}</a></div>
           <div class="rationale">${esc(it.rationale)}</div>
         </td>
         <td><span class="lane">${esc(laneLabel[it.best_lane] || it.best_lane)}</span></td>
@@ -134,8 +143,8 @@ function renderShortlist(filter = "") {
       <tr class="offer-detail" hidden>
         <td colspan="5">
           <div class="tailor-pack">
-            ${tailorDoc("Tailored CV", it.cv)}
-            ${tailorDoc("Cover letter", it.cover_letter)}
+            ${tailorDoc("Tailored CV", it.cv, idx, "cv")}
+            ${tailorDoc("Cover letter", it.cover_letter, idx, "cover_letter")}
           </div>
         </td>
       </tr>`,
@@ -167,12 +176,15 @@ function toggleOfferRow(row) {
   if (detail && detail.classList.contains("offer-detail")) detail.hidden = false;
 }
 
-// Copy a tailor pane's RAW markdown (from data-md) to the clipboard, with brief "Copied" feedback.
+// Copy a tailor pane's RAW markdown to the clipboard, with brief "Copied" feedback. The source is
+// looked up in tailorPacks by the button's data-offer/data-field (not inlined in the DOM, #52).
 // clipboard.writeText needs a secure context (https / localhost) — both the Pages deploy and the
 // local preview qualify; a blocked/denied clipboard just no-ops.
 function copyTailor(btn) {
   if (!navigator.clipboard) return;
-  navigator.clipboard.writeText(btn.dataset.md ?? "").then(() => {
+  const pack = tailorPacks[Number(btn.dataset.offer)];
+  const md = (pack && pack[btn.dataset.field]) ?? "";
+  navigator.clipboard.writeText(md).then(() => {
     btn.textContent = "Copied";
     btn.classList.add("is-copied");
     setTimeout(() => {
@@ -414,6 +426,8 @@ async function init() {
   // renderMarkdown stays null and tailorDoc() falls back to an esc()'d <pre>.
   try {
     const { marked } = await import("../public/vendor/marked.esm.min.js");
+    // SECURITY BOUNDARY (#52): sanitizeHtml() is the one sanctioned markdown→HTML path. Any new
+    // rendered field must route through renderMarkdown — never assign marked.parse() to innerHTML raw.
     renderMarkdown = (md) => sanitizeHtml(marked.parse(String(md ?? "")));
   } catch {
     renderMarkdown = null;
