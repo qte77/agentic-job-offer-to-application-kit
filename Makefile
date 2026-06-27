@@ -1,21 +1,76 @@
-SHELL := bash
+# Makefile — agentic-job-offer-to-application-kit
+# `make help` lists every target; CONTRIBUTING.md §Commands is the prose reference.
+#
+# Recipes run under the default /bin/sh (POSIX — no `SHELL := bash`); `-e -u` keep
+# the .ONESHELL recipes failing fast on the first error / unset variable.
+
 .ONESHELL:
 .SILENT:
-.SHELLFLAGS := -eu -o pipefail -c
+.SHELLFLAGS := -eu -c
 .DEFAULT_GOAL := help
-.PHONY: help install lint format preview trends-data check check_types check_complexity docs-lint ingest chunk persist probe changelog_new changelog_preview changelog_release
+
+.PHONY: \
+	help \
+	install-uv install \
+	check lint format check_types check_complexity docs-lint \
+	ingest chunk persist probe \
+	preview trends-data \
+	changelog_new changelog_preview changelog_release
+
+# MARK: Help
 
 help: ## List available targets
-	awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-11s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-19s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-install: ## Sync the dev environment (uv)
+# MARK: Setup
+
+install-uv: ## Install the uv toolchain (prerequisite for `make install`)
+	curl -LsSf https://astral.sh/uv/install.sh | sh
+
+install: ## Sync the dev environment (uv) — needs uv (see `make install-uv`)
 	uv sync
+
+# MARK: Quality gates
+
+check: ## Lint + types + complexity + format-check + offline tests + coverage (CI parity)
+	uv run ruff check .
+	uv run ruff format --check .
+	uv run pyright src/ajoa_kit
+	uv run complexipy src/ajoa_kit --max-complexity-allowed 10
+	uv run pytest -m "not network" --cov=ajoa_kit --cov-report=term-missing
 
 lint: ## Ruff lint
 	uv run ruff check .
 
 format: ## Ruff format (write)
 	uv run ruff format .
+
+check_types: ## Pyright type check
+	uv run pyright src/ajoa_kit
+
+check_complexity: ## Complexipy cognitive-complexity gate (max 10)
+	uv run complexipy src/ajoa_kit --max-complexity-allowed 10
+
+docs-lint: ## Markdown lint + link check (local)
+	markdownlint-cli2 "*.md" "docs/**/*.md" "examples/**/*.md"
+	lychee --config lychee.toml --no-progress README.md CHANGELOG.md AGENTS.md CONTRIBUTING.md docs examples
+
+# MARK: Pipeline
+
+ingest: ## Ingest JDs into results/jobs-raw.json (set POLYFETCH_DIR)
+	scripts/ingest.sh
+
+chunk: ## Batch the ingested corpus into results/batches/
+	uv run ajoa-kit chunk
+
+persist: ## Persist a relevance result: make persist FILE=<output.json>
+	test -n "$(FILE)" || { echo "usage: make persist FILE=<workflow-output.json>"; exit 2; }
+	uv run ajoa-kit persist "$(FILE)"
+
+probe: ## Probe candidate slugs across ATS platforms (set POLYFETCH_DIR)
+	uv run ajoa-kit probe
+
+# MARK: Dashboard
 
 preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui/ stays data-free)
 	# Mirror the gh-pages deploy: copy ui/ into a temp dir and inject the PII-free trends THERE, so
@@ -50,35 +105,7 @@ trends-data: ## Push results/trends.ndjson to the `data` branch (real trends for
 	git push -f origin "$$commit:refs/heads/data"
 	echo "pushed results/trends.ndjson -> data branch ($$commit)"
 
-check: ## Lint + types + complexity + format-check + offline tests + coverage (CI parity)
-	uv run ruff check .
-	uv run ruff format --check .
-	uv run pyright src/ajoa_kit
-	uv run complexipy src/ajoa_kit --max-complexity-allowed 10
-	uv run pytest -m "not network" --cov=ajoa_kit --cov-report=term-missing
-
-check_types: ## Pyright type check
-	uv run pyright src/ajoa_kit
-
-check_complexity: ## Complexipy cognitive-complexity gate (max 10)
-	uv run complexipy src/ajoa_kit --max-complexity-allowed 10
-
-docs-lint: ## Markdown lint + link check (local)
-	markdownlint-cli2 "*.md" "docs/**/*.md" "examples/**/*.md"
-	lychee --config lychee.toml --no-progress README.md CHANGELOG.md AGENTS.md CONTRIBUTING.md docs examples
-
-ingest: ## Ingest JDs into results/jobs-raw.json (set POLYFETCH_DIR)
-	scripts/ingest.sh
-
-chunk: ## Batch the ingested corpus into results/batches/
-	uv run ajoa-kit chunk
-
-persist: ## Persist a relevance result: make persist FILE=<output.json>
-	test -n "$(FILE)" || { echo "usage: make persist FILE=<workflow-output.json>"; exit 2; }
-	uv run ajoa-kit persist "$(FILE)"
-
-probe: ## Probe candidate slugs across ATS platforms (set POLYFETCH_DIR)
-	uv run ajoa-kit probe
+# MARK: Changelog & release
 
 changelog_new: ## Create + stage a new changelog fragment (scriv)
 	uv run scriv create --add

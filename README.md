@@ -55,11 +55,34 @@ pre-filter → LLM relevance → tailor only the shortlist.
 
 Try the **[live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** (synthetic
 shortlist · live market trends, bundled same-origin from the `data` branch at deploy), or run it
-locally: **[docs/quickstart.md](docs/quickstart.md)** is the narrated walkthrough (author your
-sources, screen the bundled synthetic example with no fetch, then tailor — ingest → chunk → relevance
-→ tailor → ats-check — plus the keyword-trends and writing-style options), and
-**[CONTRIBUTING.md §Commands](CONTRIBUTING.md#commands)** is the command reference (run, dev, and
-release; the Makefile is the source of truth).
+locally. **Prerequisite:** [uv](https://docs.astral.sh/uv/) (it provisions Python ≥ 3.11):
+
+```bash
+git clone https://github.com/qte77/agentic-job-offer-to-application-kit
+cd agentic-job-offer-to-application-kit
+make install-uv   # install uv (skip if already installed)
+make install      # sync the dev environment (uv)
+make preview      # serve the dashboard at http://localhost:8000
+```
+
+Two ways to actually use it once installed:
+
+- **Try the bundled example (no fetch, no data of your own).** Screen the synthetic
+  [`examples/alexis-doe/`](examples/alexis-doe/) corpus straight to a scored shortlist plus a tailored
+  CV and cover letter — it ships a pre-built evidence library, so no `make ingest` / `make chunk`:
+
+  ```text
+  Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
+             args: { rootDir: "examples/alexis-doe", batchCount: 1 } })
+  ```
+
+- **Run your own search.** Author your sources in `config/seed.json` and build your evidence library,
+  then run the pipeline against real, public, no-auth JDs: ingest → chunk → relevance → tailor →
+  ats-check.
+
+**[docs/quickstart.md](docs/quickstart.md)** narrates both end-to-end (plus the keyword-trends and
+writing-style options), and **[CONTRIBUTING.md §Commands](CONTRIBUTING.md#commands)** is the command
+reference (run, dev, and release; the Makefile is the source of truth).
 
 **Constraints:** no automated submission, no scraping — public no-auth GET only, with a
 human-reviewed prefill pack (see [docs/research.md §Delivery](docs/research.md#delivery)); no PII in
