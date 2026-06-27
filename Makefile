@@ -14,7 +14,7 @@
 	install-uv install \
 	check lint format check_types check_complexity docs-lint \
 	ingest chunk persist probe \
-	preview trends-data \
+	preview trends-data ui-check \
 	changelog_new changelog_preview changelog_release
 
 # MARK: Help
@@ -92,6 +92,9 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 	fi
 	echo "serving $$site -> http://localhost:$${PORT:-8000}/"
 	uv run python -m http.server "$${PORT:-8000}" --directory "$$site"
+
+ui-check: ## Headless-browser smoke for the dashboard (CSP/render/console); borrows POLYFETCH_DIR's patchright
+	uv run --directory "$${POLYFETCH_DIR:-../polyfetch-scrape}" python "$(CURDIR)/scripts/ui_check.py"
 
 trends-data: ## Push results/trends.ndjson to the `data` branch (real trends for the live dashboard)
 	test -f results/trends.ndjson || { echo "no results/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"; exit 2; }
