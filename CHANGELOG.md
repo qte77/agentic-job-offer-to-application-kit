@@ -16,6 +16,112 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.3.0] - 2026-06-27
+
+### Added
+
+- README and quickstart now spell out how to install and start the kit — prerequisite (uv),
+  `git clone` → `make install` → `make preview`, plus two concrete usage paths (the bundled
+  `examples/alexis-doe/` example with no fetch, and running your own search).
+- `make install-uv` to bootstrap the uv toolchain.
+
+- Offline end-to-end smoke test (`tests/test_e2e_pipeline.py`) pinning the deterministic
+  pipeline chain — `chunk` → `persist_scored` → `persist_offer` → `ats_check` — with canned
+  synthetic Workflow outputs standing in for the non-deterministic LLM steps. Runs under
+  `make check` (offline), guarding the cross-stage seams the per-module tests don't. (#165)
+
+- Content-Security-Policy on the dashboard (#52, completes the UI-hardening set):
+  `default-src 'self'; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none';
+  object-src 'none'` via a `<meta>` tag. Everything is already self-hosted (no CDN), and
+  `connect-src` allows the runtime `data`-branch trends fetch. The inline anti-flash theme script
+  moved to `ui/src/pre-theme.js` so no inline-script allowance is needed. Verified in headless
+  chromium: no CSP violations, full render (shortlist, Chart.js, Inter fonts).
+
+- `make ui-check` + `scripts/ui_check.py` (#172): a headless-browser smoke test for the dashboard.
+  It serves `ui/` and loads it in headless Chromium — borrowed from the sibling `polyfetch-scrape`
+  venv's patchright (no local browser install) — failing on any console error, page error, or render
+  failure (empty shortlist / unsized charts / no fonts), and exercising `connect-src` via the
+  cross-origin trends fetch. The local gate for `ui/` changes (CI has no browser).
+
+- `ajoa_kit.corpus.merge_corpus()` (#164, foundation): a pure-stdlib four-state merge that folds a
+  fresh ingest pull into a running corpus keyed by JD `id` — `new` / `changed` (content_hash of
+  title+location+description differs) / `unchanged` (refresh `last_seen`) / `delisted` (kept with
+  `last_seen` frozen). Stamps `first_seen`/`last_seen`/`content_hash`; `today` is injected for
+  determinism. The basis for the upcoming `--merge` CLI flag and the daily scheduled ingest.
+
+- `ajoa-kit ingest --merge` (#164): folds the fresh deduped pull into a running
+  `results/corpus.json` via the four-state `merge_corpus` (new/changed/unchanged/delisted,
+  stamping first_seen/last_seen/content_hash). `jobs-raw.json` is unchanged — it stays today's
+  active pull for the relevance screen; the corpus is the growing history the trends snapshot and
+  the daily cron read. Default `ingest` (no flag) behaves exactly as before.
+
+- Daily incremental-ingest workflow (`.github/workflows/ingest-daily.yaml`, #164): a scheduled
+  (06:00 UTC) + `workflow_dispatch` cron that checks out the public `polyfetch-scrape` fetch stack,
+  restores the prior corpus artifact, runs `ajoa-kit ingest --merge` + `trend-snapshot`, pushes the
+  aggregate keyword-only trends to the `data` branch, and re-uploads the corpus as a private
+  cross-run artifact (no JD/PII content on any branch). Least-privilege permissions; all `uses:`
+  SHA-pinned. Runs against the live network by design, so it is validated via `workflow_dispatch`,
+  not PR CI.
+
+- docs: ADR-0003 (data-contract enforcement) — maps the typed vs untyped data boundaries across the
+  four layers and sets the direction: pydantic models on the Python boundaries (validated on read),
+  inline JSON Schema for the sandboxed JS workflows, and JSON Schema as the cross-language contract
+  for shared data (e.g. a single `config/lanes.json`); explicitly rejects a JS/TS validation library
+  (can't run in the Workflow sandbox). Ships a prioritized backlog of boundaries to harden. Research
+  only, no code (closes #158).
+
+### Changed
+
+- Makefile restructured: runs under the default POSIX `/bin/sh` (no `SHELL := bash`), grouped into
+  `# MARK:` sections, with a single multi-line `.PHONY` declaration.
+
+- Roadmap: record the offline e2e smoke test (#165) under Shipped, and add daily incremental
+  ingest (#164) under Next with its resolved design decisions (artifact corpus store, `last_seen`
+  tracking, bucket by `first_seen`, workflow-checkout + cache for polyfetch in CI).
+
+- Dashboard UI hardening (#52, partial): outbound offer/role links now carry
+  `rel="noopener noreferrer"` (don't leak the dashboard URL via `Referer`); the Copy button reads
+  the raw tailor markdown from in-memory `tailorPacks` instead of inlining it in a `data-md`
+  attribute (multi-KB packs no longer bloat the DOM); and the markdown sanitizer boundary is made
+  explicit at the renderer. The optional Content-Security-Policy item is deferred — it needs an
+  in-browser spike before shipping.
+
+- `trend-snapshot` now prefers the #164 incremental `results/corpus.json` bucketed by each JD's
+  `first_seen` (the field we control and always populate), falling back to `results/jobs-raw.json`
+  bucketed by the less-reliable `posted_at` when no corpus exists yet. Re-pulled-but-old offers no
+  longer inflate the current ISO week.
+
+- Daily ingest workflow now restores the `data` branch's existing `trends.ndjson` before
+  `trend-snapshot`, so the per-week upsert **accumulates** (keeps already-published weeks and
+  adds/updates the corpus's `first_seen` weeks) instead of replacing the series — the live
+  dashboard's trend history is no longer reset on the first scheduled run.
+
+- Daily ingest workflow: bump `actions/upload-artifact` to v7.0.1 (Node 24) — silences the Node-20
+  runner-deprecation warning surfaced by the first dispatch run.
+- Roadmap: record #164 (daily incremental ingest) under Shipped and add the split-out daily offer
+  summary (#175) under Next.
+
+- `corpus.merge_corpus()` now returns records sorted by `id`, so `results/corpus.json` is
+  deterministic across runs (stable cross-run diffs / reproducible artifact). "Delisted" is keyed on
+  `last_seen`, not position, so nothing downstream depends on order.
+
+- docs: sync the docs after the 0.2.0 work — add ADR-0003 to the README "Refs" ADR index and
+  reference it from the architecture boundary-failure policy; refresh the roadmap (ADR-0003 #158, UI
+  theming + Inter WOFF2 #112/#117, and the #54 governance safe-subset moved to Shipped; the
+  data-contract typing backlog noted under "Later"; the bump → tag → publish release pipeline / v0.2.0
+  recorded in the release-tooling line).
+
+- ui: the Inter font is now served as WOFF2 (~64% smaller than the previous TTF — 68KB → 24KB per
+  weight) with the TTF kept only as a legacy `@font-face` fallback. Generated from the vendored TTF
+  via `fonttools`; still offline-first, no CDN. (#112)
+
+### Fixed
+
+- `ajoa-kit ingest --merge` (#164): the `--merge` flag was read by the dispatcher but never
+  registered on the `ingest` subparser, so the CLI rejected it ("unrecognized arguments") and a
+  plain `ingest` raised `AttributeError`. Registered the argument and added CLI-wiring regression
+  tests (the unit tests had bypassed argparse).
+
 ## [0.2.0] - 2026-06-22
 
 ### Added
