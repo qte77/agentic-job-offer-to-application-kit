@@ -18,6 +18,10 @@ from hypothesis import strategies as st
 from ajoa_kit import ingest, trend_snapshot
 
 
+def _read_ndjson(path: Path) -> list[dict]:
+    return [json.loads(ln) for ln in path.read_text().splitlines() if ln.strip()]
+
+
 def test_extract_counts_document_frequency_and_multiword() -> None:
     pat, _ = ingest.build_patterns(["python", "site reliability", "kubernetes"], ["python"])
     jobs = [
@@ -138,3 +142,45 @@ def test_bucket_by_week_groups_by_posted_week_and_counts_skipped() -> None:
     assert weeks["2024-W03"] == {"python": 2}  # document frequency within the week
     assert weeks["2024-W04"] == {"rust": 1}
     assert skipped == 1  # the undated JD cannot be placed in time
+
+
+def test_main_buckets_corpus_by_first_seen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    results = tmp_path / "results"
+    results.mkdir()
+    monkeypatch.setenv("AJOA_RESULTS_DIR", str(results))
+    monkeypatch.setattr(trend_snapshot, "load_keywords", lambda _cfg: (["python"], ["python"]))
+    # corpus.json present -> bucket by first_seen. posted_at is a different YEAR, so the bucketed
+    # week proves which field main() used.
+    (results / "corpus.json").write_text(
+        json.dumps(
+            [
+                {
+                    "id": "a",
+                    "title": "Python Dev",
+                    "description": "python",
+                    "first_seen": "2026-06-01",
+                    "posted_at": "2024-01-15",
+                }
+            ]
+        )
+    )
+    trend_snapshot.main()
+    lines = _read_ndjson(results / "trends.ndjson")
+    assert len(lines) == 1
+    assert lines[0]["week"].startswith("2026-W")  # first_seen, not posted_at's 2024
+    assert lines[0]["counts"]["python"] == 1
+
+
+def test_main_falls_back_to_jobs_raw_posted_at_without_corpus(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    results = tmp_path / "results"
+    results.mkdir()
+    monkeypatch.setenv("AJOA_RESULTS_DIR", str(results))
+    monkeypatch.setattr(trend_snapshot, "load_keywords", lambda _cfg: (["python"], ["python"]))
+    # no corpus.json -> read jobs-raw.json, bucket by posted_at (back-compat).
+    job = {"id": "a", "title": "Python Dev", "description": "python", "posted_at": "2024-01-15"}
+    (results / "jobs-raw.json").write_text(json.dumps([job]))
+    trend_snapshot.main()
+    lines = _read_ndjson(results / "trends.ndjson")
+    assert lines[0]["week"] == "2024-W03"  # posted_at week
