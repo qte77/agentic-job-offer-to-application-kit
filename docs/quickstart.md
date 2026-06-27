@@ -4,9 +4,24 @@ The full run workflow and optional features. For the one-line overview see the
 [README](../README.md#how); for the pipeline internals see [architecture.md](architecture.md); for
 the exact commands (dev, run, and release) see [CONTRIBUTING.md §Commands](../CONTRIBUTING.md#commands).
 
+## Install
+
+Prerequisite: [uv](https://docs.astral.sh/uv/) (it provisions Python ≥ 3.11). Then:
+
+```bash
+git clone https://github.com/qte77/agentic-job-offer-to-application-kit
+cd agentic-job-offer-to-application-kit
+make install-uv   # install uv (skip if already installed)
+make install      # sync the dev environment (uv)
+make preview      # serve the dashboard at http://localhost:8000
+```
+
+`make help` lists every target; [CONTRIBUTING.md §Commands](../CONTRIBUTING.md#commands) documents
+them in full.
+
 ## Run your own search
 
-Install, then run the pipeline (ingest → chunk → relevance → persist → tailor → persist-offer →
+Run the pipeline (ingest → chunk → relevance → persist → tailor → persist-offer →
 ats-check) with the commands in [CONTRIBUTING.md §Commands](../CONTRIBUTING.md#commands) — the
 Makefile is the source of truth, and the CLI flags plus the `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR` /
 `POLYFETCH_DIR` overrides are tabulated there. What you author first is the **source list**:
