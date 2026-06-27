@@ -74,6 +74,20 @@ jobs:
         working-directory: polyfetch-scrape
         run: uv run --with pydantic --with pydantic-settings python -m ajoa_kit ingest --merge
 
+      # Seed the snapshot with the data branch's existing trends so trend-snapshot's per-week upsert
+      # ACCUMULATES (keeps already-published weeks, adds/updates the corpus's first_seen weeks)
+      # rather than replacing the series. Atomic via a tmp file: only overwrite on a clean read.
+      - name: Restore existing trends from the data branch
+        run: |
+          git fetch --depth=1 origin data 2>/dev/null || true
+          if git show origin/data:results/trends.ndjson > results/trends.ndjson.tmp 2>/dev/null; then
+            mv results/trends.ndjson.tmp results/trends.ndjson
+            echo "restored $(wc -l < results/trends.ndjson) existing trend weeks"
+          else
+            rm -f results/trends.ndjson.tmp
+            echo "no existing trends on the data branch yet — starting fresh"
+          fi
+
       - name: Keyword-trend snapshot (buckets by first_seen)
         working-directory: polyfetch-scrape
         run: uv run --with pydantic --with pydantic-settings python -m ajoa_kit trend-snapshot
