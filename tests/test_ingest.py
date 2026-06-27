@@ -8,10 +8,12 @@ Adapter parsing / pre-filter is covered elsewhere.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
+from ajoa_kit import __main__ as cli
 from ajoa_kit import ingest
 
 
@@ -86,3 +88,22 @@ def test_update_corpus_second_run_keeps_delisted_and_updates_changed(tmp_path: P
     assert corpus["a"]["first_seen"] == "2026-06-01"  # preserved across the change
     assert corpus["a"]["last_seen"] == "2026-06-27"  # advanced
     assert corpus["b"]["last_seen"] == "2026-06-01"  # delisted -> last_seen frozen
+
+
+def _capture_ingest(monkeypatch: pytest.MonkeyPatch, argv: list[str]) -> dict:
+    """Run the CLI with argv and return the kwargs the ingest step was dispatched with."""
+    called: dict[str, object] = {}
+    monkeypatch.setattr(sys, "argv", argv)
+    monkeypatch.setattr("ajoa_kit.ingest.main", lambda **kw: called.update(kw))
+    cli.main()
+    return called
+
+
+def test_cli_ingest_merge_flag_dispatches_merge_true(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Regression: --merge must be REGISTERED on the ingest subparser, not just read in the
+    # dispatcher — otherwise argparse rejects it ("unrecognized arguments").
+    assert _capture_ingest(monkeypatch, ["ajoa-kit", "ingest", "--merge"]) == {"merge": True}
+
+
+def test_cli_ingest_without_flag_defaults_merge_false(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert _capture_ingest(monkeypatch, ["ajoa-kit", "ingest"]) == {"merge": False}
