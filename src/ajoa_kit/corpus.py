@@ -41,8 +41,9 @@ def merge_corpus(prior: list[dict], fresh: list[dict], today: str) -> list[dict]
         today: ISO date stamp (``YYYY-MM-DD``) for this pull.
 
     Returns:
-        The merged corpus — every id ever seen — fresh records first (in pull order), then the
-        surviving delisted records (in prior order).
+        The merged corpus — every id ever seen (fresh + surviving delisted) — sorted by ``id`` so
+        the on-disk artifact is deterministic across runs (stable cross-run diffs). "Delisted" is
+        identified by ``last_seen``, not position, so ordering carries no meaning downstream.
     """
     prior_by_id = {r["id"]: r for r in prior}
     fresh_ids = {r["id"] for r in fresh}
@@ -67,4 +68,4 @@ def merge_corpus(prior: list[dict], fresh: list[dict], today: str) -> list[dict]
 
     # delisted — prior ids absent from today's pull: keep as-is, last_seen frozen.
     merged.extend(rec for rec in prior if rec["id"] not in fresh_ids)
-    return merged
+    return sorted(merged, key=lambda r: r["id"])

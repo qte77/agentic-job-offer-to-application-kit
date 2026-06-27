@@ -55,6 +55,14 @@ def test_changed_record_adopts_content_keeps_first_seen_advances_last_seen() -> 
     assert rec["last_seen"] == "2026-06-27"
 
 
+def test_merge_corpus_output_is_sorted_by_id() -> None:
+    # ids arrive out of order (prior delisted "b"; fresh "c","a") -> the merged corpus must be
+    # id-sorted so the artifact is deterministic across runs (stable cross-run diffs).
+    prior = corpus.merge_corpus(prior=[], fresh=[_jd("b")], today="2026-06-01")
+    merged = corpus.merge_corpus(prior=prior, fresh=[_jd("c"), _jd("a")], today="2026-06-27")
+    assert [r["id"] for r in merged] == ["a", "b", "c"]
+
+
 def test_delisted_record_kept_with_frozen_last_seen() -> None:
     prior = corpus.merge_corpus(prior=[], fresh=[_jd("a"), _jd("b")], today="2026-06-01")
     # "b" is absent from today's pull → delisted.
