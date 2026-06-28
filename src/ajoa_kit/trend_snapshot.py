@@ -1,12 +1,13 @@
 """Keyword-only job-market trend snapshot (#11 PR-A).
 
-Derives an aggregate, per-ISO-week keyword-frequency record from the ingested corpus and upserts
-it into ``results/trends.ndjson``. It prefers the #164 incremental ``results/corpus.json`` bucketed
-by each JD's ``first_seen`` (the field we control and always populate), and otherwise falls back to
-``results/jobs-raw.json`` with the less-reliable ``posted_at``. So one scrape backfills a real
-multi-week timeline rather than stamping everything with the run date. The output is
-**keyword-only by construction** — ``{week, counts}`` where ``counts`` is ``{keyword: int}``;
-no JD text, company, title, URL, or per-posting row is ever written. That keeps the data
+Derives aggregate keyword-frequency records from the ingested corpus into two series.
+``results/trends-daily.ndjson`` holds ``{date, counts}``; ``results/trends.ndjson`` holds
+``{week, counts}``, **rolled up from the daily buckets** so the two can't disagree. It prefers the
+#164 incremental ``results/corpus.json`` bucketed by each JD's ``first_seen`` (the field we control
+and always populate), else falls back to ``results/jobs-raw.json`` with the less-reliable
+``posted_at``. So one scrape backfills a real timeline rather than stamping everything with the
+run date. ``counts`` is ``{keyword: int}`` — no JD text, company, title, URL, or per-posting row
+is ever written. That keeps the data
 publishable without tripping the ADR-0001 PII gate (`pseudonymize-text` stays belt-and-suspenders).
 
 Backfill is **survivorship-biased**: live boards only expose currently-open postings, so recent
@@ -195,6 +196,8 @@ def weekly_from_daily(day_counts: dict[str, dict[str, int]]) -> dict[str, dict[s
     """
     weeks: dict[str, dict[str, int]] = {}
     for date_str, counts in day_counts.items():
+        # Defensive: day keys from parse_day are always valid ISO dates, so parse_week never returns
+        # None here in practice — this guards only a stray non-date key from a future caller.
         week = parse_week(date_str)
         if week is None:
             continue
@@ -212,8 +215,9 @@ def bucket_by_week(
     """Group JDs by ISO week — derived from :func:`bucket_by_day` so weekly == sum of daily.
 
     ``weekly_from_daily(bucket_by_day(...))``: one bucketing pass, and the two published series can
-    never disagree. ``date_of`` picks the date field (default ``posted_at``); pass e.g.
-    ``lambda j: j.get("last_modified") or j.get("posted_at", "")`` for activity-dating. Returns
+    never disagree. ``date_of`` picks the date field (default ``posted_at``); e.g.
+    ``lambda j: j.get("last_modified") or j.get("posted_at", "")`` for activity-dating — a
+    deliberate, test-exercised seam (``main()`` passes ``first_seen`` / ``posted_at``). Returns
     ``({week: {keyword: document-frequency}}, skipped)``.
     """
     days, skipped = bucket_by_day(jobs, pattern, date_of)
