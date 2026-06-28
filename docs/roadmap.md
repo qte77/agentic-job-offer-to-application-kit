@@ -59,14 +59,16 @@
   `ajoa-kit ingest --merge`), buckets trends by `first_seen`, and pushes the aggregate keyword-only
   trends to the `data` branch — corpus kept as a private cross-run artifact (no PII on any branch),
   polyfetch borrowed via a public-repo checkout. Dispatch-verified end-to-end (4248 JDs; trends
-  preserved). The daily offer summary is split to #175.
+  preserved).
+- Daily offer digest (#175): a local-only "what changed today" report over the corpus
+  (`corpus.summarize_changes` + `render_daily_summary` → `results/daily-summary.md`), emitted from
+  `ingest --merge`. It names companies/titles, so it stays local-only (git-ignored `results/`, never a
+  CI artifact or branch); the daily cron still publishes only the aggregate keyword trends.
 
 ## Next
 
 - Locale-aware document conventions (#12).
 - Prefill-pack reach beyond Greenhouse (#56).
-- Daily offer summary / digest (#175): a "what changed today" report (new/changed/delisted counts +
-  new offers) over the corpus — rides on `merge_corpus`; artifact-only (PII boundary).
 
 ## Later — hardening & reach
 

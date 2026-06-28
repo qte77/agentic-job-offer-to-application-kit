@@ -53,3 +53,7 @@ Accept: `.github/workflows/ingest-daily.yaml` runs `ajoa-kit ingest --merge` on 
 each pull into a running `results/corpus.json` (a 4-state dedup-merge stamping `first_seen` /
 `last_seen`) and publishing only aggregate, keyword-only trends (`{week, counts}`, no PII) to the
 `data` branch for the dashboard. No manual re-run; no JD content leaves the private corpus artifact. See #164.
+
+Running `ingest --merge` also writes a local "what changed today" digest to `results/daily-summary.md`
+(new/changed/unchanged/delisted counts + new offers). Because it names companies/titles it stays
+**local-only** — never uploaded by CI or pushed to a branch (#175).

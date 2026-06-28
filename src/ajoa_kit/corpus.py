@@ -69,3 +69,88 @@ def merge_corpus(prior: list[dict], fresh: list[dict], today: str) -> list[dict]
     # delisted — prior ids absent from today's pull: keep as-is, last_seen frozen.
     merged.extend(rec for rec in prior if rec["id"] not in fresh_ids)
     return sorted(merged, key=lambda r: r["id"])
+
+
+# How many new offers to enumerate in the rendered digest before truncating — the first incremental
+# run stamps the whole backfill as "new" (thousands), which would otherwise dump an unreadable file.
+_NEW_OFFERS_CAP = 50
+
+
+def summarize_changes(prior: list[dict], merged: list[dict], today: str) -> dict:
+    """Derive the daily "what changed today" digest from a :func:`merge_corpus` result (#175).
+
+    Classifies every record in ``merged`` into the four merge states using the same signals
+    ``merge_corpus`` stamps — ``last_seen`` / ``first_seen`` / ``content_hash`` — comparing against
+    ``prior`` (the pre-merge corpus) to tell *changed* from *unchanged*:
+
+      - **delisted** — ``last_seen != today`` (absent from today's pull, frozen).
+      - **new** — ``first_seen == today``.
+      - **changed** — seen today, ``content_hash`` differs from the prior record.
+      - **unchanged** — seen today, same content.
+
+    Args:
+        prior: The corpus *before* today's merge (empty on the first run).
+        merged: The :func:`merge_corpus` output for today's pull.
+        today: ISO date stamp (``YYYY-MM-DD``) for this pull.
+
+    Returns:
+        ``{date, new, changed, unchanged, delisted, active, new_offers}`` where ``active`` is the
+        count seen today (``new + changed + unchanged``) and ``new_offers`` lists ``{company, title,
+        url}`` for each new record. Pure — no I/O; the caller persists/renders it.
+    """
+    prior_hash = {r["id"]: r.get("content_hash") for r in prior}
+    counts = {"new": 0, "changed": 0, "unchanged": 0, "delisted": 0}
+    new_offers: list[dict] = []
+    for rec in merged:
+        if rec.get("last_seen") != today:
+            counts["delisted"] += 1
+        elif rec.get("first_seen") == today:
+            counts["new"] += 1
+            new_offers.append({k: rec.get(k, "") for k in ("company", "title", "url")})
+        elif rec.get("content_hash") != prior_hash.get(rec["id"]):
+            counts["changed"] += 1
+        else:
+            counts["unchanged"] += 1
+    return {
+        "date": today,
+        **counts,
+        "active": counts["new"] + counts["changed"] + counts["unchanged"],
+        "new_offers": new_offers,
+    }
+
+
+def render_daily_summary(summary: dict) -> str:
+    """Render :func:`summarize_changes` output as a human-readable markdown digest (#175).
+
+    Counts block + the list of new offers (``company`` — ``title`` (``url``)); the list is truncated
+    at :data:`_NEW_OFFERS_CAP` with an "…and N more" line so a backfill run stays readable.
+
+    **Local/artifact-only by construction:** the digest names companies/titles/URLs (actual offer
+    data, not aggregate), so the caller writes it under the git-ignored ``results/`` and never to a
+    branch — the daily CI run publishes only the aggregate keyword trends.
+    """
+    lines = [
+        f"# Daily offer digest — {summary['date']}",
+        "",
+        f"- **New:** {summary['new']}",
+        f"- **Changed:** {summary['changed']}",
+        f"- **Unchanged:** {summary['unchanged']}",
+        f"- **Delisted:** {summary['delisted']}",
+        f"- **Active (seen today):** {summary['active']}",
+        "",
+        f"## New offers ({summary['new']})",
+        "",
+    ]
+    offers = summary["new_offers"]
+    if not offers:
+        lines.append("No new offers today.")
+        return "\n".join(lines) + "\n"
+    for o in offers[:_NEW_OFFERS_CAP]:
+        company = o.get("company") or "—"
+        title = o.get("title") or "—"
+        url = o.get("url") or ""
+        lines.append(f"- **{company}** — {title}" + (f" ({url})" if url else ""))
+    extra = len(offers) - _NEW_OFFERS_CAP
+    if extra > 0:
+        lines.append(f"- …and {extra} more")
+    return "\n".join(lines) + "\n"
