@@ -83,8 +83,9 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)). Your
   `config/seed.json` overrides it when present; absent it,
   ingest falls back to the default.
-- `results/` — everything generated (`jobs-raw.json`, `corpus.json`, `trends.ndjson`, `<lane>/shortlist.*`,
-  `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`).
+- `results/` — everything generated (`jobs-raw.json`, `corpus.json`, `daily-summary.md`,
+  `trends.ndjson`, `<lane>/shortlist.*`, `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`). The
+  `daily-summary.md` digest (#175) names companies/titles → **local-only**, never a CI artifact or branch.
 - `library/`, `input/` — additional generated/working directories; git-ignored.
 - `examples/alexis-doe/` — a committed, self-contained example mirroring `config/` + `results/`.
 
