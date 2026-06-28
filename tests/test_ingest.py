@@ -89,6 +89,12 @@ def test_update_corpus_second_run_keeps_delisted_and_updates_changed(tmp_path: P
     assert corpus["a"]["last_seen"] == "2026-06-27"  # advanced
     assert corpus["b"]["last_seen"] == "2026-06-01"  # delisted -> last_seen frozen
 
+    # Local-only digest (#175): emitted with corpus.json on --merge (a changed, b delisted).
+    digest = (tmp_path / "daily-summary.md").read_text()
+    assert "**Changed:** 1" in digest
+    assert "**Delisted:** 1" in digest
+    assert "No new offers" in digest  # nothing new this run
+
 
 def _capture_ingest(monkeypatch: pytest.MonkeyPatch, argv: list[str]) -> dict:
     """Run the CLI with argv and return the kwargs the ingest step was dispatched with."""

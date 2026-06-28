@@ -26,7 +26,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from defusedxml.ElementTree import fromstring as xml_fromstring
 
-from ajoa_kit.corpus import merge_corpus
+from ajoa_kit.corpus import merge_corpus, render_daily_summary, summarize_changes
 from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
@@ -597,7 +597,9 @@ def _update_corpus(deduped: list[dict[str, Any]], results_dir: Path, today: str)
     """Fold the fresh deduped pull into ``results/corpus.json`` (the running #164 corpus).
 
     Reads the prior corpus (empty on the first run), runs the four-state
-    :func:`ajoa_kit.corpus.merge_corpus`, and writes it back. ``jobs-raw.json`` is left untouched —
+    :func:`ajoa_kit.corpus.merge_corpus`, writes it back, and emits a local-only
+    ``results/daily-summary.md`` "what changed today" digest (#175; never a CI artifact).
+    ``jobs-raw.json`` is left untouched —
     it stays today's active pull for the relevance screen; the corpus is the growing history
     (first_seen / last_seen / delisted) that the trends snapshot and the daily cron read.
 
@@ -611,6 +613,16 @@ def _update_corpus(deduped: list[dict[str, Any]], results_dir: Path, today: str)
     merged = merge_corpus(prior, deduped, today)
     path.write_text(json.dumps(merged, indent=2, ensure_ascii=False))
     print(f"corpus: {len(merged)} records -> {path} (prior {len(prior)})")
+    # Local-only "what changed today" digest (#175). It names companies/titles/URLs (actual offer
+    # data, not aggregate), so it is written under the git-ignored results/ and is NEVER uploaded by
+    # CI or pushed to a branch — the daily cron publishes only the aggregate keyword trends.
+    summary = summarize_changes(prior, merged, today)
+    summary_path = results_dir / "daily-summary.md"
+    summary_path.write_text(render_daily_summary(summary))
+    print(
+        f"digest: {summary['new']} new / {summary['changed']} changed / "
+        f"{summary['delisted']} delisted -> {summary_path}"
+    )
 
 
 def main(*, merge: bool = False, today: str | None = None) -> None:
