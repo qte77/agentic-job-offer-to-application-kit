@@ -78,9 +78,11 @@ jobs:
           # main's squash-merge commit, not this feature branch's commit.
           uv run bump-my-version bump --no-tag "$BUMP_TYPE"
           NEW_VERSION=$(uv run bump-my-version show current_version)
-          echo "prev_version=$PREV_VERSION" >> "$GITHUB_OUTPUT"
-          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          echo "bumped=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "prev_version=$PREV_VERSION"
+            echo "new_version=$NEW_VERSION"
+            echo "bumped=true"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Sync uv.lock to the new version
         if: steps.bump.outputs.bumped == 'true'
