@@ -16,6 +16,64 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.4.0] - 2026-06-28
+
+### Added
+
+- Daily offer digest (#175): `ajoa-kit ingest --merge` now also writes a local "what changed today"
+  report to `results/daily-summary.md` — new / changed / unchanged / delisted counts plus the list of
+  new offers — via the pure `corpus.summarize_changes()` + `corpus.render_daily_summary()`. It names
+  companies/titles, so it is **local-only**: git-ignored under `results/`, never uploaded by CI or
+  pushed to a branch (the daily cron keeps publishing only the aggregate keyword trends).
+
+- Daily keyword-trend series: `trend-snapshot` now also writes `results/trends-daily.ndjson`
+  (`{date, counts}`, the new `DayCounts` contract) and publishes it to the `data` branch alongside the
+  weekly trends — aggregate keyword-only, deduped per JD. Lays the data for a dashboard daily view
+  (tracked in #187) and monthly granularity (#188).
+
+- Typed L1 data contracts (`src/ajoa_kit/models.py`, ADR-0003) — starting with `ScoredItem` for the
+  relevance workflow result, the genuine JS→Python seam where the JSON-Schema guarantee is lost on the
+  file hop.
+
+### Changed
+
+- Documented the daily incremental-ingest surface (#164): `ajoa-kit ingest --merge` and the running
+  `results/corpus.json` now appear in the README, quickstart, CONTRIBUTING command reference, and the
+  architecture pipeline/data-layout; also surfaced the dashboard `?base=` and `make preview` `PORT`
+  switches, corrected the stale `trend-snapshot` source note (corpus-first), and added user story US6.
+- Deduplicated the dashboard's two Chart.js renderers behind a shared `renderChart` helper in
+  `ui/src/app.js` (line + bar) — single source for chart theming/construction, no behaviour change.
+
+- Architecture docs: clarified the system in `docs/architecture.md` — a **Data contracts** table
+  (current models + a typed/untyped boundary map, linking ADR-0003 for the future direction), a
+  **Patterns** section, and an explicit **Systems & data boundaries** section. Replaced the ASCII
+  pipeline with a Mermaid **data-flow** diagram and added a Mermaid **user-flow** diagram (the four
+  human-in-the-loop gates + the no-auto-submit boundary).
+
+- Weekly trends are now **rolled up from the daily buckets** (`weekly_from_daily(bucket_by_day(...))`)
+  instead of a separate weekly pass — one bucketing pass, and the weekly/daily series can't disagree
+  (weekly == exact sum of the dailies, since each JD sits in one `first_seen` day). `bucket_by_week`'s
+  signature and output are unchanged.
+
+- `ingest-daily`: bumped the private corpus artifact's `retention-days` from 30 to 90 — more headroom
+  before a cron lapse would expire the artifact and reset every JD's `first_seen`. A stopgap for corpus
+  durability; the fuller fix is tracked in #191.
+
+- `persist_scored` now **parse-on-reads** the relevance result: it fails loud on a non-result (no
+  `relevant` array), and drops + counts individually-malformed scored items before writing artifacts
+  (so a hand-edited / truncated / wrong file can't write junk). Un-laned items (empty `best_lane`) now
+  land in `unsorted/` and are flagged, instead of silently writing to the `results/` root.
+
+- Tailor workflow (`cc-workflow-tailor-offer.js`) now generates ATS-clean CVs **by construction** — the
+  CV prompt enforces all five `ats-check` parse-safety categories (single-column / no tables, no
+  images, no raw HTML or HTML comments, standard section headings), so `persist_offer`'s `cv-ats-check.md`
+  backstop should rarely fire (#75). Caveat: this tightens conformance to the heuristic, not measured
+  ATS-safety — grounding the rules against a real résumé parser is tracked in #199.
+
+### Fixed
+
+- An item with an empty `best_lane` no longer writes a shortlist to the `results/` root directory.
+
 ## [0.3.0] - 2026-06-27
 
 ### Added
