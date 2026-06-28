@@ -10,16 +10,29 @@ governed by [ADR-0002](decisions/0002-source-tos-tiers.md).
 
 ## Pipeline
 
-```text
-config/seed.json
-  → src/ajoa_kit/ingest.py   (ATS / feed / aggregator adapters → word-boundary pre-filter → dedupe)
-  → results/jobs-raw.json   (ingest --merge: also → results/corpus.json — the incremental #164 corpus)
-  → src/ajoa_kit/chunk.py    → results/batches/ + manifest.json
-  → docs/workflows/cc-workflow-relevance.js   (parallel LLM lane-screen)
-  → results/<lane>/shortlist.{json,md}
-  → cc-workflow-tailor-offer.js   (per-offer tailor pass)
-  → results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md (+ coverage-report.md when must_haves, #55)
+```mermaid
+flowchart TD
+  ext[("ATS / feed / aggregator APIs<br/>public no-auth GET")] -->|fetch| poly[("polyfetch-scrape<br/>httpx → curl_cffi → headless")]
+  seed["config/seed.json<br/>(+ default-seed.json)"] --> ingest["ingest.py<br/>adapters · pre-filter · dedupe"]
+  kw["config/keywords.json"] -. vocab .-> ingest
+  poly --> ingest
+  ingest --> raw["results/jobs-raw.json<br/>active pull"]
+  ingest -->|"--merge"| corpus["results/corpus.json<br/>incremental corpus #164"]
+  corpus --> digest["results/daily-summary.md<br/>local-only #175"]
+  raw --> chunk["chunk.py"] --> batches["results/batches/*.json"]
+  ev["results/evidence-library.json<br/>Stage 1"] --> rel["cc-workflow-relevance.js<br/>parallel LLM screen"]
+  batches --> rel --> short["results/LANE/shortlist (json + md)"]
+  short --> tailor["cc-workflow-tailor-offer.js<br/>per-offer tailor"]
+  ev --> tailor --> offers["results/offers/SLUG/*.md<br/>+ ats-check"]
+  corpus --> trends["trend-snapshot.py<br/>keyword-only, by first_seen"]
+  raw -. fallback .-> trends
+  trends --> ndjson["results/trends.ndjson<br/>week + counts"]
+  ndjson -->|aggregate only| dbranch["data branch"] --> ui["ui/ dashboard"]
 ```
+
+Everything under `results/` stays private (git-ignored locally; a private GHA artifact across runs);
+only the aggregate `week + counts` trends cross to the public `data` branch — see
+[Systems & data boundaries](#systems--data-boundaries).
 
 Run-once upstream: `cc-workflow-evidence-library.js` → `results/evidence-library.json`.
 
@@ -29,6 +42,25 @@ aggregate keyword-only `results/trends.ndjson` (per ISO week; counts of the conf
 
 **Two-stage trim (cost model):** cheap deterministic pre-filter → LLM relevance screen →
 expensive tailoring only on the shortlist.
+
+## User flow
+
+```mermaid
+flowchart TD
+  ev["Build evidence library<br/>(Stage 1 workflow)"] --> g1{"GATE 1<br/>review evidence-library.json"}
+  g1 --> cfg["Author config/seed.json<br/>(+ style / keywords)"]
+  cfg --> ing["ajoa-kit ingest (--merge)"] --> chu["ajoa-kit chunk"]
+  chu --> rel["relevance workflow (LLM screen)"]
+  rel --> g2{"GATE 2<br/>persist + review shortlist"}
+  g2 --> pick["pick an offer to tailor"] --> tai["tailor workflow (LLM)"]
+  tai --> g3{"GATE 3<br/>review CV / cover / gap / ats-check"}
+  g3 --> g4{"GATE 4<br/>fill prefill-pack by hand"}
+  g4 --> sub["manual submit on the ATS site"]
+  ing -. any time .-> tr["trend-snapshot → data branch → dashboard"]
+```
+
+The pipeline is **human-gated at four points** and ends in a manual submission — no automation crosses
+into actually applying (see [research.md §Delivery](research.md#delivery)).
 
 ## Three mechanics that define it
 
@@ -42,6 +74,73 @@ expensive tailoring only on the shortlist.
 3. **A web-access layer wraps polyfetch.** `src/ajoa_kit/ingest.py` fetches via `polyfetch-scrape`
    (httpx → curl_cffi → headless), invoked with `uv run --directory $POLYFETCH_DIR` — never vendored.
    Feed/API-first, no-auth, GET only; each record carries `fetched_backend` for tier monitoring.
+
+## Data contracts
+
+What crosses each boundary, and whether it is validated. Only `AppSettings` and `WeekCounts` are
+pydantic today; the L3 workflows validate `agent()` outputs with inline JSON Schema, but that guarantee
+is **lost when Python reads the result file back**. The future direction — pydantic parse-on-read at
+every cross-layer boundary — is [ADR-0003](decisions/0003-data-contract-enforcement.md) (designed, not
+built).
+
+| Contract | Defined at | Typed? | Producer → consumer | Artifact |
+|---|---|---|---|---|
+| JD record | `ingest.record()` | dict — untyped | adapters → corpus / chunk / trends | `results/jobs-raw.json` |
+| Corpus record | `corpus.merge_corpus` | dict + `first_seen` / `last_seen` / `content_hash` | ingest `--merge` → trends / next run | `results/corpus.json` |
+| Daily digest | `corpus.summarize_changes` + `render_daily_summary` | dict → markdown | ingest `--merge` → human | `results/daily-summary.md` (local-only) |
+| Trends week | `trend_snapshot.WeekCounts` | **pydantic** (write-side) | trend-snapshot → dashboard | `results/trends.ndjson` |
+| Batches + manifest | `chunk.main` | dict — untyped | chunk → relevance | `results/batches/*.json` |
+| Shortlist | relevance.js schema / `persist_scored` | JSON-Schema (JS) → dict (Py) | relevance → persist → dashboard | `results/LANE/shortlist.json` / `.md` |
+| Offer pack | tailor.js schema / `persist_offer` | JSON-Schema (JS) → dict (Py) | tailor → persist | `results/offers/SLUG/*.md` |
+| `must_haves` | tailor.js / `coverage.py` | JSON-Schema (JS) → dict (Py) | tailor → coverage | `coverage-report.md` |
+| Evidence library `LIB` | `cc-workflow-evidence-library.js` | JSON-Schema (JS) | Stage 1 → relevance / tailor | `results/evidence-library.json` |
+| App settings | `settings.AppSettings` | **pydantic-settings** | every entry point | — (env / cwd) |
+| seed / keywords / style | `ingest.load_sources` / `load_keywords`, `style.StyleBrief` | untyped / `@dataclass` | human → ingest / tailor | `config/*.json` |
+
+**Typed today:** `AppSettings`, `WeekCounts` (write). **JS-schema'd at the `agent()` boundary but
+untyped on Python re-read:** shortlist, offer pack, `must_haves`, evidence library. **Untyped:** the
+JD/corpus records (the highest-volume boundary), batches, and the config files. ADR-0003 ranks the
+hardening: `JobRecord` → `ScoredResult` (+ lane-membership check) → shared `must_haves` model →
+config-entry models → a single `config/lanes.json`.
+
+## Patterns
+
+- **Pure core, injected `today`** — `corpus.merge_corpus` / `summarize_changes` take the date as an
+  argument (the caller passes `date.today()`), so L1 is deterministic and testable; no `datetime.now()`.
+- **Lazy `polyfetch_scrape` import** — `ingest.get_json` / `get_bytes` import the fetch stack *inside*
+  the function, so the pure logic (and its tests) import offline.
+- **Warn-and-continue** — `ingest.collect` wraps each source pull; one bad source lands in `failures`
+  and never aborts the run.
+- **Dispatch tables** — `ingest.ATS` / `ingest.AGGREGATORS` map a source-type string to its adapter;
+  `load_sources` drives them from the seed.
+- **Config-overridable vocabulary** — `ingest.load_keywords` reads `config/keywords.json` or falls back
+  to module constants; `trend_snapshot` reuses it.
+- **Upsert-by-key** — `corpus.merge_corpus` (by JD `id`, four states) and `trend_snapshot.upsert_week`
+  (by ISO week) replace in place while preserving the rest.
+- **Record factory** — `ingest.record()` is the single fixed-shape dict every adapter emits
+  (`canonical_url` applied at construction).
+- **Run-scoped artifacts** — `results/` is git-ignored and handed between steps (and across CI runs) as
+  a private GHA artifact, never inlined into the orchestrator.
+- **Defensive `args` parse** — each L3 workflow script `JSON.parse`s `args` when the Workflow tool
+  passes it as a string.
+- **Pydantic for published / config contracts** — `WeekCounts` (keeps JD content out of the trends feed
+  by construction) and `AppSettings`.
+
+## Systems & data boundaries
+
+**External systems:** `polyfetch-scrape` (the fetch stack, borrowed via `uv run --directory`, never
+vendored); public no-auth ATS / feed / aggregator endpoints (read-only GET); GitHub Actions (CI + the
+daily `ingest-daily` cron); the orphan `data` branch; gh-pages (the dashboard).
+
+**Data / PII boundary** (paths in [Data layout](#data-layout)):
+
+- `config/` and `results/` are git-ignored — your inputs and every generated artifact stay off `main`.
+- The corpus crosses runs only as a **private GHA artifact**; the local-only `daily-summary.md` (#175)
+  names companies/titles and is never uploaded or pushed.
+- Only the aggregate, keyword-only `week + counts` trends reach the **`data` branch** — `make
+  trends-data` builds a one-file tree (just `trends.ndjson`), so nothing else can ride along.
+- **No automated submission** — the pipeline ends at a human-reviewed prefill pack; there is no
+  auto-submit path.
 
 ## Position lanes
 
