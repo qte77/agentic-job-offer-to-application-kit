@@ -13,7 +13,7 @@ git clone https://github.com/qte77/agentic-job-offer-to-application-kit
 cd agentic-job-offer-to-application-kit
 make install-uv   # install uv (skip if already installed)
 make install      # sync the dev environment (uv)
-make preview      # serve the dashboard at http://localhost:8000
+make preview      # serve the dashboard at http://localhost:8000 (override: PORT=9000 make preview)
 ```
 
 `make help` lists every target; [CONTRIBUTING.md §Commands](../CONTRIBUTING.md#commands) documents
@@ -37,6 +37,15 @@ own, create `config/seed.json` (git-ignored); it overrides the default, e.g.:
 Broad no-auth aggregators are ToS-tiered in [ADR-0002](decisions/0002-source-tos-tiers.md). Build the
 evidence library once, upstream, via the Stage-1 Workflow
 (`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
+
+## Incremental / daily ingest (optional)
+
+`ajoa-kit ingest --merge` additionally folds each pull into a running `results/corpus.json` — a
+4-state dedup-merge (new / changed / unchanged / delisted) that stamps `first_seen` / `last_seen` per
+JD, so the keyword trends bucket by when a role *first appeared* rather than the run date. The
+scheduled `.github/workflows/ingest-daily.yaml` (06:00 UTC + manual `workflow_dispatch`) runs this
+daily, keeping the corpus as a private cross-run artifact (no PII on any branch) and pushing only the
+aggregate keyword trends to the `data` branch. `--merge` leaves `results/jobs-raw.json` unchanged.
 
 ## Try the example (no fetch)
 

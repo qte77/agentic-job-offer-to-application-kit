@@ -13,7 +13,7 @@ governed by [ADR-0002](decisions/0002-source-tos-tiers.md).
 ```text
 config/seed.json
   → src/ajoa_kit/ingest.py   (ATS / feed / aggregator adapters → word-boundary pre-filter → dedupe)
-  → results/jobs-raw.json
+  → results/jobs-raw.json   (ingest --merge: also → results/corpus.json — the incremental #164 corpus)
   → src/ajoa_kit/chunk.py    → results/batches/ + manifest.json
   → docs/workflows/cc-workflow-relevance.js   (parallel LLM lane-screen)
   → results/<lane>/shortlist.{json,md}
@@ -23,7 +23,8 @@ config/seed.json
 
 Run-once upstream: `cc-workflow-evidence-library.js` → `results/evidence-library.json`.
 
-Side branch (any time after ingest): `ajoa-kit trend-snapshot` reads `results/jobs-raw.json` →
+Side branch (any time after ingest): `ajoa-kit trend-snapshot` reads `results/corpus.json` when present
+(bucketing by each JD's `first_seen`), else falls back to `results/jobs-raw.json` (`posted_at`) →
 aggregate keyword-only `results/trends.ndjson` (per ISO week; counts of the config-driven vocabulary).
 
 **Two-stage trim (cost model):** cheap deterministic pre-filter → LLM relevance screen →
@@ -59,7 +60,7 @@ agentic-job-offer-to-application-kit/
 │       ├── cc-workflow-evidence-library.js   # Stage 1 (built)
 │       ├── cc-workflow-relevance.js          # Stage 2 screen (built)
 │       └── cc-workflow-tailor-offer.js       # Stage 3 tailor (built)
-├── src/ajoa_kit/               # engine: ingest, chunk, persist_scored, persist_offer, ats_check,
+├── src/ajoa_kit/               # engine: ingest, corpus, chunk, persist_scored, persist_offer, ats_check,
 │                               #   style, prefill, slug_probe, settings, __main__ (CLI)
 ├── scripts/ingest.sh           # thin env shim -> ajoa-kit ingest (borrows polyfetch's uv env via POLYFETCH_DIR)
 ├── config/                     # your inputs — git-ignored except the tracked default-seed.json
@@ -67,9 +68,9 @@ agentic-job-offer-to-application-kit/
 ├── tests/                      # value-add suite (pre-filter, canonical_url, dedup, adapters)
 ├── examples/alexis-doe/        # self-contained example mirroring config/ + results/ (committed)
 ├── results/                    # generated outputs — git-ignored, dir kept via .gitkeep
-│                               #   evidence-library.json, jobs-raw.json, batches/, <lane>/shortlist.*, offers/<slug>/
+│                               #   evidence-library.json, jobs-raw.json, corpus.json, batches/, <lane>/shortlist.*, offers/<slug>/
 ├── pyproject.toml / uv.lock    # uv project; ruff + pyright + complexipy + pytest + scriv config
-└── .github/                    # codeql + dependabot + ci + lint-md-links + issue-triage + CODEOWNERS (SHA-pinned)
+└── .github/                    # codeql + dependabot + ci + lint-md-links + issue-triage + ingest-daily + CODEOWNERS (SHA-pinned)
 ```
 
 ## Data layout
@@ -82,7 +83,7 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)). Your
   `config/seed.json` overrides it when present; absent it,
   ingest falls back to the default.
-- `results/` — everything generated (`jobs-raw.json`, `trends.ndjson`, `<lane>/shortlist.*`,
+- `results/` — everything generated (`jobs-raw.json`, `corpus.json`, `trends.ndjson`, `<lane>/shortlist.*`,
   `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`).
 - `library/`, `input/` — additional generated/working directories; git-ignored.
 - `examples/alexis-doe/` — a committed, self-contained example mirroring `config/` + `results/`.

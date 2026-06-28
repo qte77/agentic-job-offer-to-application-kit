@@ -62,7 +62,7 @@ git clone https://github.com/qte77/agentic-job-offer-to-application-kit
 cd agentic-job-offer-to-application-kit
 make install-uv   # install uv (skip if already installed)
 make install      # sync the dev environment (uv)
-make preview      # serve the dashboard at http://localhost:8000
+make preview      # serve the dashboard at http://localhost:8000 (PORT=9000 make preview to change)
 ```
 
 Two ways to actually use it once installed:
@@ -78,7 +78,8 @@ Two ways to actually use it once installed:
 
 - **Run your own search.** Author your sources in `config/seed.json` and build your evidence library,
   then run the pipeline against real, public, no-auth JDs: ingest → chunk → relevance → tailor →
-  ats-check.
+  ats-check. For recurring runs, `ajoa-kit ingest --merge` folds each pull into a running
+  `results/corpus.json` (the scheduled `ingest-daily.yaml` cron) so keyword trends accrue over time.
 
 **[docs/quickstart.md](docs/quickstart.md)** narrates both end-to-end (plus the keyword-trends and
 writing-style options), and **[CONTRIBUTING.md §Commands](CONTRIBUTING.md#commands)** is the command

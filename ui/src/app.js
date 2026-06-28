@@ -268,75 +268,67 @@ async function loadRealTrends() {
   return null;
 }
 
-function renderLine(records) {
-  const canvas = document.getElementById("trends-line");
-  if (!canvas || typeof Chart === "undefined") return;
+// Shared Chart.js builder for the two trends charts: resolves the canvas, pivots the records, and
+// re-reads the theme tokens each call (so a theme flip repaints). `dataset(color)` supplies the
+// per-series style and `scales(grid, tick)` the axes; `interaction` is line-only. Destroys `prev` only
+// once it's safe to rebuild and returns the new Chart — or `prev` untouched when the canvas / Chart.js
+// isn't ready (a hidden panel sizes to 0), preserving the old guard-then-build order.
+function renderChart(canvasId, type, records, prev, { dataset, scales, interaction }) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof Chart === "undefined") return prev;
   const { labels, keys } = pivot(records);
   const pal = chartPalette();
   const grid = cssVar("--border");
   const tick = cssVar("--text-muted");
   const label = cssVar("--text");
 
-  if (lineChart) lineChart.destroy();
-  lineChart = new Chart(canvas, {
-    type: "line",
+  if (prev) prev.destroy();
+  return new Chart(canvas, {
+    type,
     data: {
       labels,
       datasets: keys.map((k, i) => ({
         label: k,
         data: records.map((r) => r.counts[k] || 0),
-        borderColor: pal[i % pal.length],
-        backgroundColor: pal[i % pal.length],
-        tension: 0.3,
-        pointRadius: 2,
-        borderWidth: 2,
+        ...dataset(pal[i % pal.length]),
       })),
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: { mode: "index", intersect: false },
-      scales: {
-        x: { grid: { color: grid }, ticks: { color: tick } },
-        y: { beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
-      },
+      ...(interaction ? { interaction } : {}),
+      scales: scales(grid, tick),
       plugins: { legend: { labels: { color: label } } },
     },
+  });
+}
+
+function renderLine(records) {
+  lineChart = renderChart("trends-line", "line", records, lineChart, {
+    dataset: (c) => ({
+      borderColor: c,
+      backgroundColor: c,
+      tension: 0.3,
+      pointRadius: 2,
+      borderWidth: 2,
+    }),
+    scales: (grid, tick) => ({
+      x: { grid: { color: grid }, ticks: { color: tick } },
+      y: { beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
+    }),
+    interaction: { mode: "index", intersect: false },
   });
 }
 
 // Vertical stacked bars: one column per ISO week, keywords piled. Each week is its own counts
 // (no running total across weeks).
 function renderBar(records) {
-  const canvas = document.getElementById("trends-bar");
-  if (!canvas || typeof Chart === "undefined") return;
-  const { labels, keys } = pivot(records);
-  const pal = chartPalette();
-  const grid = cssVar("--border");
-  const tick = cssVar("--text-muted");
-  const label = cssVar("--text");
-
-  if (barChart) barChart.destroy();
-  barChart = new Chart(canvas, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: keys.map((k, i) => ({
-        label: k,
-        data: records.map((r) => r.counts[k] || 0),
-        backgroundColor: pal[i % pal.length],
-        borderWidth: 0,
-      })),
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: { stacked: true, grid: { color: grid }, ticks: { color: tick } },
-        y: { stacked: true, beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
-      },
-      plugins: { legend: { labels: { color: label } } },
-    },
+  barChart = renderChart("trends-bar", "bar", records, barChart, {
+    dataset: (c) => ({ backgroundColor: c, borderWidth: 0 }),
+    scales: (grid, tick) => ({
+      x: { stacked: true, grid: { color: grid }, ticks: { color: tick } },
+      y: { stacked: true, beginAtZero: true, grid: { color: grid }, ticks: { color: tick } },
+    }),
   });
 }
 
