@@ -108,5 +108,7 @@ jobs:
         with:
           name: corpus
           path: results/corpus.json
-          retention-days: 30
+          # 90d (the artifact cap) buys headroom against a cron lapse resetting every first_seen — a
+          # stopgap for the corpus's durability; the fuller fix is tracked (see issue).
+          retention-days: 90
           if-no-files-found: error
