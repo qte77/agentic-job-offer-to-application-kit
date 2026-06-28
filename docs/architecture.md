@@ -27,7 +27,9 @@ flowchart TD
   corpus --> trends["trend-snapshot.py<br/>keyword-only, by first_seen"]
   raw -. fallback .-> trends
   trends --> ndjson["results/trends.ndjson<br/>week + counts"]
+  trends --> dndjson["results/trends-daily.ndjson<br/>date + counts"]
   ndjson -->|aggregate only| dbranch["data branch"] --> ui["ui/ dashboard"]
+  dndjson -->|aggregate only| dbranch
 ```
 
 Everything under `results/` stays private (git-ignored locally; a private GHA artifact across runs);
@@ -38,7 +40,9 @@ Run-once upstream: `cc-workflow-evidence-library.js` → `results/evidence-libra
 
 Side branch (any time after ingest): `ajoa-kit trend-snapshot` reads `results/corpus.json` when present
 (bucketing by each JD's `first_seen`), else falls back to `results/jobs-raw.json` (`posted_at`) →
-aggregate keyword-only `results/trends.ndjson` (per ISO week; counts of the config-driven vocabulary).
+aggregate keyword-only `results/trends.ndjson` (per ISO week) **and** `results/trends-daily.ndjson` (per
+day). Weekly is **rolled up from the daily buckets** (`weekly_from_daily`), so the two series can't
+disagree; counts are the config-driven vocabulary — no JD content.
 
 **Two-stage trim (cost model):** cheap deterministic pre-filter → LLM relevance screen →
 expensive tailoring only on the shortlist.
@@ -77,8 +81,8 @@ into actually applying (see [research.md §Delivery](research.md#delivery)).
 
 ## Data contracts
 
-What crosses each boundary, and whether it is validated. Only `AppSettings` and `WeekCounts` are
-pydantic today; the L3 workflows validate `agent()` outputs with inline JSON Schema, but that guarantee
+What crosses each boundary, and whether it is validated. Only `AppSettings` and the trends contracts
+(`WeekCounts` / `DayCounts`) are pydantic today; the L3 workflows validate `agent()` outputs with inline JSON Schema, but that guarantee
 is **lost when Python reads the result file back**. The future direction — pydantic parse-on-read at
 every cross-layer boundary — is [ADR-0003](decisions/0003-data-contract-enforcement.md) (designed, not
 built).
@@ -89,6 +93,7 @@ built).
 | Corpus record | `corpus.merge_corpus` | dict + `first_seen` / `last_seen` / `content_hash` | ingest `--merge` → trends / next run | `results/corpus.json` |
 | Daily digest | `corpus.summarize_changes` + `render_daily_summary` | dict → markdown | ingest `--merge` → human | `results/daily-summary.md` (local-only) |
 | Trends week | `trend_snapshot.WeekCounts` | **pydantic** (write-side) | trend-snapshot → dashboard | `results/trends.ndjson` |
+| Trends day | `trend_snapshot.DayCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#187) | `results/trends-daily.ndjson` |
 | Batches + manifest | `chunk.main` | dict — untyped | chunk → relevance | `results/batches/*.json` |
 | Shortlist | relevance.js schema / `persist_scored` | JSON-Schema (JS) → dict (Py) | relevance → persist → dashboard | `results/LANE/shortlist.json` / `.md` |
 | Offer pack | tailor.js schema / `persist_offer` | JSON-Schema (JS) → dict (Py) | tailor → persist | `results/offers/SLUG/*.md` |
