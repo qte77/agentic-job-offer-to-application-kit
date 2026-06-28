@@ -1,0 +1,45 @@
+---
+name: Lint Workflows
+
+# Validate the GitHub Actions workflow YAML — syntax, ${{ }} expressions, action refs, cron/glob, and
+# shellcheck over the `run:` scripts — on any change to them. PR CI otherwise never exercises the
+# workflows (they only run on their own schedule/dispatch triggers), so a shell/YAML typo could reach
+# `main` and silently break, e.g., the daily ingest cron. actionlint is fetched as a checksum-verified,
+# version-pinned release binary in a `run:` step (no third-party `uses:`), so the SHA-pin + selected-
+# actions-allowlist rules are satisfied with `actions/checkout` alone.
+on:
+  push:
+    paths:
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Run actionlint (pinned, checksum-verified release binary)
+        env:
+          ACTIONLINT_VERSION: '1.7.12'
+          ACTIONLINT_SHA256: '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8'
+        run: |
+          set -euo pipefail
+          tarball="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL -o "$tarball" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${tarball}"
+          echo "${ACTIONLINT_SHA256}  ${tarball}" | sha256sum -c -
+          tar -xzf "$tarball" actionlint
+          ./actionlint -color
