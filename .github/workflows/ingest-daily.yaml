@@ -80,13 +80,18 @@ jobs:
       - name: Restore existing trends from the data branch
         run: |
           git fetch --depth=1 origin data 2>/dev/null || true
-          if git show origin/data:results/trends.ndjson > results/trends.ndjson.tmp 2>/dev/null; then
-            mv results/trends.ndjson.tmp results/trends.ndjson
-            echo "restored $(wc -l < results/trends.ndjson) existing trend weeks"
-          else
-            rm -f results/trends.ndjson.tmp
-            echo "no existing trends on the data branch yet — starting fresh"
-          fi
+          # Restore both the weekly and daily aggregate series so trend-snapshot's per-bucket upsert
+          # ACCUMULATES (keeps already-published weeks/days, adds/updates this run's) rather than
+          # replacing. Atomic via a tmp file: only overwrite on a clean read.
+          for f in trends.ndjson trends-daily.ndjson; do
+            if git show "origin/data:results/$f" > "results/$f.tmp" 2>/dev/null; then
+              mv "results/$f.tmp" "results/$f"
+              echo "restored $(wc -l < "results/$f") lines -> results/$f"
+            else
+              rm -f "results/$f.tmp"
+              echo "no results/$f on the data branch yet — starting fresh"
+            fi
+          done
 
       - name: Keyword-trend snapshot (buckets by first_seen)
         working-directory: polyfetch-scrape
