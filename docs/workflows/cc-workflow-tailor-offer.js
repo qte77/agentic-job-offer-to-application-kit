@@ -19,9 +19,10 @@
 // (writes results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md — human reviews + submits).
 //
 // SCOPE: pre-fill + human submit only, NO auto-apply (verified safe in research.md §Delivery, #8).
-// The prefill pack is assembled for a human to review and submit; `persist_offer` auto-runs the
-// `ats-check` parse-safety pass (#9, #75) on the CV and writes `cv-ats-check.md` if it flags anything
-// (non-blocking review aid — `ajoa-kit ats-check <cv.md>` can still be run manually).
+// The prefill pack is assembled for a human to review and submit. The CV is generated ATS-clean by
+// construction (the Tailor prompt enforces ats-check's parse-safety rules, #75); `persist_offer` then
+// auto-runs the deterministic `ats-check` (#9) as a backstop, writing `cv-ats-check.md` if it still
+// flags anything (non-blocking — `ajoa-kit ats-check <cv.md>` can also be run manually).
 //
 // Hooks: agent(), parallel(), phase(), log(). agent(prompt,{schema}) returns the
 // schema-validated object. The script has no filesystem access, but its agents do (they Read
@@ -119,6 +120,8 @@ it is a gap }.`,
 
 phase('Tailor')
 const [cv, cover, gap] = await parallel([
+  // The CV prompt enforces ats_check.parse_safety_warnings' five categories up front, so the CV is
+  // ATS-clean by construction; persist_offer's cv-ats-check.md stays the deterministic backstop.
   () =>
     agent(
       `${SOURCES}
@@ -126,9 +129,12 @@ const [cv, cover, gap] = await parallel([
 MATCH ASSESSMENT (already produced):
 ${match.match}
 
-Draft a tailored, ATS-safe CV in markdown for THIS offer: clean single-column, standard headings,
-no tables/graphics. Reorder and select from masterCvBullets/perProject to lead with what this JD
-weighs most. Use only evidenced bullets.${styleLine('cv')} Return it as "cv".`,
+Draft a tailored, ATS-safe CV in markdown for THIS offer. PARSE-SAFETY (mirrors the deterministic
+ats-check so the CV passes by construction): single-column with NO tables; NO images/graphics; NO
+raw HTML tags and NO HTML comments (no hidden text / keyword-stuffing — dishonest and detectable);
+and use standard, recognizable section headings (Summary, Experience, Education, Skills, Projects).
+Reorder and select from masterCvBullets/perProject to lead with what this JD weighs most. Use only
+evidenced bullets.${styleLine('cv')} Return it as "cv".`,
       { schema: strField('cv', 'markdown tailored CV'), phase: 'Tailor', label: 'cv' },
     ),
   () =>
