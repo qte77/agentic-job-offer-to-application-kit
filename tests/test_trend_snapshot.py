@@ -169,6 +169,73 @@ def test_main_buckets_corpus_by_first_seen(tmp_path: Path, monkeypatch: pytest.M
     assert len(lines) == 1
     assert lines[0]["week"].startswith("2026-W")  # first_seen, not posted_at's 2024
     assert lines[0]["counts"]["python"] == 1
+    # the daily series is written alongside, bucketed by the same first_seen field
+    daily = _read_ndjson(results / "trends-daily.ndjson")
+    assert daily[0]["date"] == "2026-06-01"
+    assert daily[0]["counts"]["python"] == 1
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "2024-01-15T10:30:00+02:00",  # ISO-8601 with offset
+        "2024-01-15T10:30:00Z",  # ISO-8601 Zulu suffix
+        "2024-01-15",  # ISO date-only
+        "Mon, 15 Jan 2024 10:30:00 +0000",  # RFC-822
+        "1705276800",  # epoch seconds (2024-01-15 00:00 UTC)
+        "1705276800000",  # epoch milliseconds, same instant
+    ],
+)
+def test_parse_day_resolves_each_adapter_format(raw: str) -> None:
+    assert trend_snapshot.parse_day(raw) == "2024-01-15"
+
+
+@pytest.mark.parametrize("raw", ["", "   ", "not a date", "2024-13-99"])
+def test_parse_day_returns_none_when_unparseable(raw: str) -> None:
+    assert trend_snapshot.parse_day(raw) is None
+
+
+def test_bucket_by_day_groups_by_posted_day_and_counts_skipped() -> None:
+    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    jobs = [
+        {"title": "Python Dev", "description": "python", "posted_at": "2024-01-15"},
+        {"title": "More Python", "description": "python", "posted_at": "2024-01-15"},  # same day
+        {"title": "Rust Dev", "description": "rust", "posted_at": "2024-01-16"},
+        {"title": "Undated", "description": "python", "posted_at": ""},  # no date -> skipped
+    ]
+    days, skipped = trend_snapshot.bucket_by_day(jobs, pat)
+    assert days["2024-01-15"] == {"python": 2}  # document frequency within the day
+    assert days["2024-01-16"] == {"rust": 1}
+    assert skipped == 1
+
+
+def test_weekly_from_daily_sums_days_and_matches_bucket_by_week() -> None:
+    # Weekly is a roll-up of daily: two JDs first-seen on different days of one ISO week sum to that
+    # week's document frequency, and that must equal computing the week directly.
+    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    jobs = [
+        {"title": "Python", "description": "python", "posted_at": "2024-01-15"},  # Mon, W03
+        {"title": "Python2", "description": "python", "posted_at": "2024-01-17"},  # Wed, W03
+        {"title": "Rust", "description": "rust", "posted_at": "2024-01-22"},  # Mon, W04
+    ]
+    days, _ = trend_snapshot.bucket_by_day(jobs, pat)
+    weeks = trend_snapshot.weekly_from_daily(days)
+    assert weeks["2024-W03"] == {"python": 2}  # summed across the two days, deduped per JD
+    assert weeks["2024-W04"] == {"rust": 1}
+    direct, _ = trend_snapshot.bucket_by_week(jobs, pat)
+    assert weeks == direct  # roll-up equals direct weekly bucketing
+
+
+def test_upsert_day_appends_and_replaces_same_date(tmp_path: Path) -> None:
+    path = tmp_path / "trends-daily.ndjson"
+    trend_snapshot.upsert_day(path, "2026-06-27", {"python": 3})
+    trend_snapshot.upsert_day(path, "2026-06-28", {"python": 5})
+    trend_snapshot.upsert_day(path, "2026-06-27", {"python": 9})  # same date -> replace
+    records = _read_ndjson(path)
+    dates = [r["date"] for r in records]
+    assert dates.count("2026-06-27") == 1
+    assert "2026-06-28" in dates
+    assert next(r["counts"] for r in records if r["date"] == "2026-06-27") == {"python": 9}
 
 
 def test_main_falls_back_to_jobs_raw_posted_at_without_corpus(
