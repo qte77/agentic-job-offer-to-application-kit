@@ -25,6 +25,7 @@ script's header in [`docs/workflows/`](docs/workflows/) for the exact `args`:
 
 ```bash
 POLYFETCH_DIR=../polyfetch-scrape make ingest         # -> results/jobs-raw.json
+#   uv run ajoa-kit ingest --merge  also folds the pull into results/corpus.json (the daily-cron corpus)
 make chunk                                            # -> results/batches/ + manifest.json
 # relevance (Workflow tool) — batchCount = results/batches/manifest.json .batch_count:
 #   Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js", args: { rootDir: ".", batchCount: <N> } })
@@ -45,7 +46,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 
 | Subcommand | Flags / args |
 |---|---|
-| `ingest` | — (reads `config/seed.json`, else `config/default-seed.json`) |
+| `ingest` | `--merge` — also fold the pull into a running `results/corpus.json` (4-state dedup-merge) · reads `config/seed.json`, else `config/default-seed.json` |
 | `chunk` | `--batch-size N` (default 40) |
 | `persist` | `FILE` — the relevance workflow result |
 | `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` |
@@ -130,3 +131,6 @@ make trends-data                 # force-push results/trends.ndjson -> the `data
 
 The live dashboard picks it up on the next page load — no redeploy. CI can't generate this data
 itself: `trend-snapshot` needs the `polyfetch-scrape` stack, which isn't available in Actions.
+
+The dashboard auto-derives this URL from its own Pages origin (so a fork self-hosts); append
+`?base=<raw-githubusercontent-prefix>` to override it for local dev, a fork, or a custom domain.

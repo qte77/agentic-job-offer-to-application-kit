@@ -43,3 +43,13 @@ set — so they read like me rather than a template.
 
 Accept: the user adds CV + cover-letter samples to `config/` (git-ignored); the tailor stage matches
 that style, or a configured tone, while the evidence library supplies the facts. See #16.
+
+## US6 — Stay aware of the market passively
+
+As a candidate running an ongoing search, I want a scheduled daily ingest to track the job market over
+time without re-running anything by hand, so I can see how demand for my skills trends week over week.
+
+Accept: `.github/workflows/ingest-daily.yaml` runs `ajoa-kit ingest --merge` on a daily cron, folding
+each pull into a running `results/corpus.json` (a 4-state dedup-merge stamping `first_seen` /
+`last_seen`) and publishing only aggregate, keyword-only trends (`{week, counts}`, no PII) to the
+`data` branch for the dashboard. No manual re-run; no JD content leaves the private corpus artifact. See #164.
