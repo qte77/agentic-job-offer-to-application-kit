@@ -96,17 +96,19 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 ui-check: ## Headless-browser smoke for the dashboard (CSP/render/console); borrows POLYFETCH_DIR's patchright
 	uv run --directory "$${POLYFETCH_DIR:-../polyfetch-scrape}" python "$(CURDIR)/scripts/ui_check.py"
 
-trends-data: ## Push results/trends.ndjson to the `data` branch (real trends for the live dashboard)
+trends-data: ## Push results/trends{,-daily}.ndjson to the `data` branch (real trends for the live dashboard)
 	test -f results/trends.ndjson || { echo "no results/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"; exit 2; }
-	# One-file commit built in a throwaway index (never touches the working tree), force-pushed to the
-	# data branch; the live dashboard fetches it at runtime via raw.githubusercontent.com.
+	# Aggregate trend files committed in a throwaway index (never touches the working tree), force-pushed
+	# to the data branch; the dashboard fetches them at runtime via raw.githubusercontent.com. Only the
+	# keyword-only {week,counts}/{date,counts} files are added — no JD content can ride along.
 	export GIT_INDEX_FILE="$$(mktemp -u)"
 	git read-tree --empty
 	git add -f results/trends.ndjson
+	test -f results/trends-daily.ndjson && git add -f results/trends-daily.ndjson || true
 	tree="$$(git write-tree)"
-	commit="$$(git -c commit.gpgsign=false commit-tree "$$tree" -m "data: update trends.ndjson")"
+	commit="$$(git -c commit.gpgsign=false commit-tree "$$tree" -m "data: update trends")"
 	git push -f origin "$$commit:refs/heads/data"
-	echo "pushed results/trends.ndjson -> data branch ($$commit)"
+	echo "pushed trends.ndjson (+ trends-daily.ndjson if present) -> data branch ($$commit)"
 
 # MARK: Changelog & release
 

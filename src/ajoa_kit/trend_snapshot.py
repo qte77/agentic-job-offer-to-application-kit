@@ -49,6 +49,17 @@ class WeekCounts(BaseModel):
     counts: dict[str, int]
 
 
+class DayCounts(BaseModel):
+    """One ISO calendar day's aggregate keyword frequencies — the daily-granularity trends contract.
+
+    The typed shape written to ``results/trends-daily.ndjson``: ``{date, counts}`` (``YYYY-MM-DD``).
+    Same keyword-only, no-PII guarantee as :class:`WeekCounts`; weeks are summed from these days.
+    """
+
+    date: str
+    counts: dict[str, int]
+
+
 def extract_counts(jobs: list[dict], pattern: re.Pattern[str]) -> dict[str, int]:
     """Per-keyword document frequency across JDs (word-boundary, case-insensitive match).
 
@@ -114,6 +125,22 @@ def parse_week(posted_at: str) -> str | None:
     return None
 
 
+def parse_day(posted_at: str) -> str | None:
+    """Map a raw ``posted_at`` to its ISO calendar day ``YYYY-MM-DD``; None if empty/unparseable.
+
+    Same date-dialect handling as :func:`parse_week` (epoch / ISO-8601 / RFC-822), but keyed to the
+    day — the finest bucket. Weeks are rolled up from days (:func:`weekly_from_daily`).
+    """
+    s = (posted_at or "").strip()
+    if not s:
+        return None
+    for parse in _DATE_PARSERS:
+        dt = parse(s)
+        if dt is not None:
+            return dt.date().isoformat()
+    return None
+
+
 def _posted_at(job: dict) -> str:
     """Default ``date_of`` for :func:`bucket_by_week` — bucket by the JD's posted date."""
     return job.get("posted_at", "")
@@ -124,57 +151,113 @@ def _first_seen(job: dict) -> str:
     return job.get("first_seen", "")
 
 
+def _bucket(
+    jobs: list[dict],
+    pattern: re.Pattern[str],
+    key_of: Callable[[dict], str | None],
+) -> tuple[dict[str, dict[str, int]], int]:
+    """Group JDs by ``key_of(job)`` and count keywords per bucket; skip JDs whose key is None.
+
+    Shared core of :func:`bucket_by_day` / :func:`bucket_by_week`. Returns ``({bucket: {keyword:
+    document-frequency}}, skipped)`` where ``skipped`` counts JDs with an empty/unparseable date.
+    Reuses :func:`extract_counts` per bucket, so per-JD document-frequency semantics are uniform.
+    """
+    groups: dict[str, list[dict]] = {}
+    skipped = 0
+    for job in jobs:
+        key = key_of(job)
+        if key is None:
+            skipped += 1
+            continue
+        groups.setdefault(key, []).append(job)
+    return {k: extract_counts(group, pattern) for k, group in groups.items()}, skipped
+
+
+def bucket_by_day(
+    jobs: list[dict],
+    pattern: re.Pattern[str],
+    date_of: Callable[[dict], str] = _posted_at,
+) -> tuple[dict[str, dict[str, int]], int]:
+    """Group JDs by the ISO **day** (``YYYY-MM-DD``) of ``date_of`` and count keywords per day.
+
+    The finest-grained, deduped series: :func:`extract_counts` is per-JD document-frequency and,
+    bucketed by ``first_seen``, each JD lands in exactly one day — so no keyword is double-counted
+    across days. ``date_of`` defaults to ``posted_at``; the daily/weekly cron passes ``first_seen``.
+    """
+    return _bucket(jobs, pattern, lambda j: parse_day(date_of(j)))
+
+
+def weekly_from_daily(day_counts: dict[str, dict[str, int]]) -> dict[str, dict[str, int]]:
+    """Roll daily ``{date: counts}`` up into ``{week: counts}`` by summing each ISO week's days.
+
+    Exact because each JD sits in exactly one ``first_seen`` day (hence one week): summing the
+    per-day document-frequencies reproduces the weekly document-frequency with no double-counting.
+    """
+    weeks: dict[str, dict[str, int]] = {}
+    for date_str, counts in day_counts.items():
+        week = parse_week(date_str)
+        if week is None:
+            continue
+        bucket = weeks.setdefault(week, {})
+        for term, c in counts.items():
+            bucket[term] = bucket.get(term, 0) + c
+    return weeks
+
+
 def bucket_by_week(
     jobs: list[dict],
     pattern: re.Pattern[str],
     date_of: Callable[[dict], str] = _posted_at,
 ) -> tuple[dict[str, dict[str, int]], int]:
-    """Group JDs by the ISO week of a chosen date and count keywords per week.
+    """Group JDs by ISO week — derived from :func:`bucket_by_day` so weekly == sum of daily.
 
-    ``date_of`` picks which date to bucket on (default: ``posted_at``); pass e.g.
+    ``weekly_from_daily(bucket_by_day(...))``: one bucketing pass, and the two published series can
+    never disagree. ``date_of`` picks the date field (default ``posted_at``); pass e.g.
     ``lambda j: j.get("last_modified") or j.get("posted_at", "")`` for activity-dating. Returns
-    ``({week: {keyword: document-frequency}}, skipped)`` where ``skipped`` counts JDs whose date is
-    empty/unparseable (can't be placed in time). Reuses :func:`extract_counts` per week, so the
-    per-JD document-frequency semantics match the single-week path.
+    ``({week: {keyword: document-frequency}}, skipped)``.
     """
-    by_week: dict[str, list[dict]] = {}
-    skipped = 0
-    for job in jobs:
-        week = parse_week(date_of(job))
-        if week is None:
-            skipped += 1
-            continue
-        by_week.setdefault(week, []).append(job)
-    return {week: extract_counts(group, pattern) for week, group in by_week.items()}, skipped
+    days, skipped = bucket_by_day(jobs, pattern, date_of)
+    return weekly_from_daily(days), skipped
 
 
-def upsert_week(path: Path, week: str, counts: dict[str, int]) -> None:
-    """Append one ``{week, counts}`` NDJSON record, replacing any existing same-week line.
+def _upsert(path: Path, key_field: str, record: dict) -> None:
+    """Append one NDJSON ``record``, replacing any line with the same ``record[key_field]``.
 
-    Idempotent: re-running for the same ISO week overwrites that week's record.
+    Idempotent per key — re-running for the same week/day overwrites that record.
     """
-    record = json.dumps(
-        WeekCounts(week=week, counts=counts).model_dump(), ensure_ascii=False, sort_keys=True
-    )
+    line = json.dumps(record, ensure_ascii=False, sort_keys=True)
+    key = record[key_field]
     kept: list[str] = []
     if path.is_file():
         # Split on "\n" only — NOT str.splitlines(), which also breaks on Unicode line
         # separators (NEL \x85, LS, PS) that json.dumps leaves unescaped, corrupting a record.
         kept = [
-            line
-            for line in path.read_text().split("\n")
-            if line.strip() and json.loads(line).get("week") != week
+            ln
+            for ln in path.read_text().split("\n")
+            if ln.strip() and json.loads(ln).get(key_field) != key
         ]
-    kept.append(record)
+    kept.append(line)
     path.write_text("\n".join(kept) + "\n")
 
 
-def main() -> None:
-    """Backfill per-ISO-week keyword frequencies into results/trends.ndjson.
+def upsert_week(path: Path, week: str, counts: dict[str, int]) -> None:
+    """Append/replace one ``{week, counts}`` NDJSON record (idempotent per ISO week)."""
+    _upsert(path, "week", WeekCounts(week=week, counts=counts).model_dump())
 
-    Prefers the #164 incremental ``results/corpus.json`` bucketed by each JD's ``first_seen`` (the
-    field we control and always populate); falls back to ``results/jobs-raw.json`` bucketed by the
-    less-reliable ``posted_at`` when no corpus exists yet.
+
+def upsert_day(path: Path, date: str, counts: dict[str, int]) -> None:
+    """Append/replace one ``{date, counts}`` NDJSON record (idempotent per ISO day)."""
+    _upsert(path, "date", DayCounts(date=date, counts=counts).model_dump())
+
+
+def main() -> None:
+    """Backfill per-ISO-week and per-day keyword frequencies into results/trends{,-daily}.ndjson.
+
+    Buckets the corpus by day **once** (the deduped, finest-grained series) and rolls weeks up from
+    it (:func:`weekly_from_daily`), so the two series can't disagree. Prefers the #164 incremental
+    ``results/corpus.json`` bucketed by each JD's ``first_seen``; falls back to
+    ``results/jobs-raw.json`` by ``posted_at`` when no corpus exists yet. Both outputs are aggregate
+    keyword-only (no JD content) — publishable.
     """
     settings = AppSettings()
     results = settings.results_dir
@@ -187,12 +270,16 @@ def main() -> None:
         date_of, dated_by = _posted_at, "posted_at"
     interest, title_roles = load_keywords(settings.config_dir)
     pat_interest, _ = build_patterns(interest, title_roles)
-    weeks, skipped = bucket_by_week(jobs, pat_interest, date_of=date_of)
-    path = results / "trends.ndjson"
+    days, skipped = bucket_by_day(jobs, pat_interest, date_of=date_of)
+    weeks = weekly_from_daily(days)
+    weekly_path = results / "trends.ndjson"
+    daily_path = results / "trends-daily.ndjson"
     for week, counts in weeks.items():
-        upsert_week(path, week, counts)
+        upsert_week(weekly_path, week, counts)
+    for day, counts in days.items():
+        upsert_day(daily_path, day, counts)
     print(
-        f"backfilled {len(weeks)} ISO weeks -> {path} "
+        f"backfilled {len(weeks)} ISO weeks -> {weekly_path} and {len(days)} days -> {daily_path} "
         f"(by {dated_by}; skipped {skipped} JDs with no parseable date)"
     )
 

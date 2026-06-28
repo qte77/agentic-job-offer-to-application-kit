@@ -64,11 +64,17 @@
   (`corpus.summarize_changes` + `render_daily_summary` → `results/daily-summary.md`), emitted from
   `ingest --merge`. It names companies/titles, so it stays local-only (git-ignored `results/`, never a
   CI artifact or branch); the daily cron still publishes only the aggregate keyword trends.
+- Daily trend granularity — data layer (#187/#188): `trend-snapshot` now also writes
+  `results/trends-daily.ndjson` (`{date, counts}`), and **weekly is rolled up from the daily buckets**
+  (`weekly_from_daily`) so the two series can't disagree; both publish to the `data` branch (aggregate
+  keyword-only). The dashboard Week/Day toggle is deferred to #187 (the daily chart needs accrued
+  history first), monthly granularity to #188.
 
 ## Next
 
 - Locale-aware document conventions (#12).
 - Prefill-pack reach beyond Greenhouse (#56).
+- Daily granularity in the trends dashboard (#187); monthly trend granularity (#188).
 
 ## Later — hardening & reach
 
