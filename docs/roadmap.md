@@ -87,8 +87,8 @@
 - Broaden ingest reach: more JSON aggregators as their robots/ToS clear (jobicy/himalayas/remotive
   — #94 deferred follow-ups). Outlook (#109): slug-discovery from public board directories, and
   keyed aggregators (e.g. Jooble) — both outside the current no-auth/no-key model.
-- Trends file growth: `trends.ndjson` / `trends-daily.ndjson` grow linearly (~23 KB/yr weekly,
-  ~130 KB/yr daily) — fine for years; the O(n) per-run upsert and the dashboard's whole-file fetch both
-  stay cheap. Revisit only if the daily series reaches multi-MB or the dashboard fetch lags, and prefer
-  a small published "recent-window" file (e.g. last ~180 days) for the dashboard + a full archive over
-  monthly/yearly sharding (simpler: one extra file, no index/merge). Surfaced while building #187.
+- Trends file growth: aggregated trends are the durable store (on the `data` branch); the JD corpus
+  stays git-ignored / ephemeral **by design** (#191). The two trend files grow linearly (~23 KB/yr
+  weekly, ~130 KB/yr daily) — fine for years (cheap O(n) upsert + whole-file dashboard fetch). If they
+  ever get too large, split by month/year (e.g. `trends-YYYY.ndjson`) and have the dashboard fetch the
+  needed range.

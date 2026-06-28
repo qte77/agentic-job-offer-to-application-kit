@@ -76,9 +76,10 @@ Per-adapter endpoint URLs live in `src/ajoa_kit/ingest.py`; sources are ToS-tier
 4. Open the PR against `main`; wait for CI (`gh pr checks <n> --watch`).
 5. Squash-merge once green.
 
-## Changelog (required per PR)
+## Changelog (per behaviour-changing PR)
 
-Every PR adds one [scriv](https://scriv.readthedocs.io/) fragment under `changelog.d/`:
+Every **behaviour-changing** PR adds one [scriv](https://scriv.readthedocs.io/) fragment under
+`changelog.d/` (pure docs / roadmap / CI-config tweaks are exempt):
 
 ```bash
 make changelog_new   # create + stage a fragment
