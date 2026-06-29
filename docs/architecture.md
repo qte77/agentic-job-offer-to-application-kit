@@ -69,7 +69,7 @@ into actually applying (see [research.md §Delivery](research.md#delivery)).
 ## Three mechanics that define it
 
 1. **Orchestration = Claude Code Workflow tool, not make/node.** Workflows run via
-   `Workflow({ scriptPath: 'docs/workflows/cc-workflow-*.js', args })`, resumable and cached by run
+   `Workflow({ scriptPath: '.claude/workflows/cc-workflow-*.js', args })`, resumable and cached by run
    id; subagents are inline `agent()` calls — no `.claude/agents/*.md`, no team mode. The `.js`
    scripts are the reference implementation; the phases are documented agent-agnostically.
 2. **The evidence library is structured data.** `cc-workflow-evidence-library.js` returns the `LIB`
@@ -159,11 +159,7 @@ truth — written into the evidence library.
 agentic-job-offer-to-application-kit/
 ├── README.md / AGENTS.md / CHANGELOG.md / SECURITY.md / LICENSE
 ├── docs/
-│   ├── architecture.md / roadmap.md / userstory.md / research.md
-│   └── workflows/
-│       ├── cc-workflow-evidence-library.js   # Stage 1 (built)
-│       ├── cc-workflow-relevance.js          # Stage 2 screen (built)
-│       └── cc-workflow-tailor-offer.js       # Stage 3 tailor (built)
+│   └── architecture.md / roadmap.md / userstory.md / research.md
 ├── src/ajoa_kit/               # engine: ingest, corpus, chunk, persist_scored, persist_offer, ats_check,
 │                               #   style, prefill, slug_probe, settings, __main__ (CLI)
 ├── scripts/ingest.sh           # thin env shim -> ajoa-kit ingest (borrows polyfetch's uv env via POLYFETCH_DIR)
@@ -174,6 +170,11 @@ agentic-job-offer-to-application-kit/
 ├── results/                    # generated outputs — git-ignored, dir kept via .gitkeep
 │                               #   evidence-library.json, jobs-raw.json, corpus.json, batches/, <lane>/shortlist.*, offers/<slug>/
 ├── pyproject.toml / uv.lock    # uv project; ruff + pyright + complexipy + pytest + scriv config
+├── .claude/
+│   └── workflows/
+│       ├── cc-workflow-evidence-library.js   # Stage 1 (built)
+│       ├── cc-workflow-relevance.js          # Stage 2 screen (built)
+│       └── cc-workflow-tailor-offer.js       # Stage 3 tailor (built)
 └── .github/                    # codeql + dependabot + ci + lint-md-links + issue-triage + ingest-daily + CODEOWNERS (SHA-pinned)
 ```
 

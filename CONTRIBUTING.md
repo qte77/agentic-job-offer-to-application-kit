@@ -26,23 +26,23 @@ make docs-lint   # markdownlint + lychee link check
 ### Pipeline
 
 The full per-search run. The orchestration steps run via the Claude Code Workflow tool — see each
-script's header in [`docs/workflows/`](docs/workflows/) for the exact `args`:
+script's header in [`.claude/workflows/`](.claude/workflows/) for the exact `args`:
 
 ```bash
 POLYFETCH_DIR=../polyfetch-scrape make ingest         # -> results/jobs-raw.json
 #   uv run ajoa-kit ingest --merge  also folds the pull into results/corpus.json (the daily-cron corpus)
 make chunk                                            # -> results/batches/ + manifest.json
 # relevance (Workflow tool) — batchCount = results/batches/manifest.json .batch_count:
-#   Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js", args: { rootDir: ".", batchCount: <N> } })
+#   Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js", args: { rootDir: ".", batchCount: <N> } })
 make persist FILE=<workflow-output.json>              # -> results/<lane>/shortlist.*
 # tailor one shortlisted offer (Workflow tool):
-#   Workflow({ scriptPath: "docs/workflows/cc-workflow-tailor-offer.js", args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
+#   Workflow({ scriptPath: ".claude/workflows/cc-workflow-tailor-offer.js", args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
 uv run ajoa-kit persist-offer <workflow-output.json>  # -> results/offers/<slug>/*.md
 uv run ajoa-kit ats-check results/offers/<slug>/cv.md # ATS parse-safety gate
 ```
 
 Build the evidence library once, upstream, via the Stage-1 Workflow
-(`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
+(`.claude/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
 
 ### CLI subcommands
 

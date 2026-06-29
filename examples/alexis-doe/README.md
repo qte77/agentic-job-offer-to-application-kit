@@ -29,7 +29,7 @@ The relevance workflow is `rootDir`-aware and the batches are pre-generated, so 
 at this folder — no `ingest`/`chunk` needed:
 
 ```text
-Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
+Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js",
            args: { rootDir: "examples/alexis-doe", batchCount: 1 } })
 ```
 
@@ -47,7 +47,7 @@ at it so the tailor step can resolve `results/<lane>/shortlist.json`:
 AJOA_RESULTS_DIR="$PWD/examples/alexis-doe/results" uv run ajoa-kit persist <relevance-output.json>
 
 # 2. tailor one shortlisted offer — lane + offerId come from the shortlist you just wrote:
-#    Workflow({ scriptPath: "docs/workflows/cc-workflow-tailor-offer.js",
+#    Workflow({ scriptPath: ".claude/workflows/cc-workflow-tailor-offer.js",
 #               args: { rootDir: "examples/alexis-doe", lane: "engineering", offerId: "<id>" } })
 
 # 3. persist the pack, then run the ATS parse-safety gate on the tailored CV

@@ -73,7 +73,7 @@ Workflow tool (`Workflow({…})`), so you'll need Claude Code installed as well 
   CV and cover letter — it ships a pre-built evidence library, so no `make ingest` / `make chunk`:
 
   ```text
-  Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
+  Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js",
              args: { rootDir: "examples/alexis-doe", batchCount: 1 } })
   ```
 

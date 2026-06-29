@@ -44,19 +44,19 @@ to the file the next `make` / `ajoa-kit` step reads** (that hand-off is manual):
 
 ```text
 # Stage 1 (once) — save the returned object to results/evidence-library.json:
-Workflow({ scriptPath: "docs/workflows/cc-workflow-evidence-library.js",
+Workflow({ scriptPath: ".claude/workflows/cc-workflow-evidence-library.js",
            args: { workspaceRoot: "/path/to/portfolio", account: "you" } })
 
 # Stage 2 (per search) — ingest -> chunk -> relevance -> persist:
 POLYFETCH_DIR=../polyfetch-scrape make ingest        # -> results/jobs-raw.json
 make chunk                                           # -> results/batches/ (+ manifest.json)
 # relevance: batchCount = results/batches/manifest.json .batch_count; save the result, then persist:
-Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
+Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js",
            args: { rootDir: ".", batchCount: <N> } })
 make persist FILE=<relevance-output.json>            # -> results/<lane>/shortlist.*
 
 # Stage 3 (per offer) — pick an offer id from a shortlist, then tailor -> persist-offer -> ats-check:
-Workflow({ scriptPath: "docs/workflows/cc-workflow-tailor-offer.js",
+Workflow({ scriptPath: ".claude/workflows/cc-workflow-tailor-offer.js",
            args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
 uv run ajoa-kit persist-offer <tailor-output.json>   # -> results/offers/<slug>/*.md
 uv run ajoa-kit ats-check results/offers/<slug>/cv.md
@@ -77,7 +77,7 @@ The synthetic [`examples/alexis-doe/`](../examples/alexis-doe/) workspace ships 
 library + batches, so run the relevance screen straight against it — no `make ingest`/`make chunk`:
 
 ```text
-Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
+Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js",
            args: { rootDir: "examples/alexis-doe", batchCount: 1 } })
 ```
 

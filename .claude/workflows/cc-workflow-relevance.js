@@ -5,13 +5,15 @@
 // (see CONTRIBUTING.md §Commands), read the batch count from
 // results/batches/manifest.json, then run:
 //
-//   Workflow({ scriptPath: 'docs/workflows/cc-workflow-relevance.js', args: {
+//   Workflow({ scriptPath: '.claude/workflows/cc-workflow-relevance.js', args: {
 //     rootDir:     '.',     // repo root holding results/batches/ + results/evidence-library.json
 //     batchCount:  N,       // REQUIRED — results/batches/manifest.json .batch_count
 //     limitBatches: K,      // optional — sample the first K batches (dry run)
 //     // libraryPath / library — optional overrides; by default each agent reads
 //     //   results/evidence-library.json (the Stage-1 output) for the candidate brief
 //   }})
+// (now under .claude/workflows/, it can also be invoked by name: Workflow({ name: 'relevance' }).)
+// ⚠️ TOKEN USAGE: fans out ONE subagent per batch — cost scales with batchCount (e.g. 106 batches ≈ 106 LLM calls). Use limitBatches:K for a cheap dry run before a full pass.
 //
 // Persist the returned shortlist with `ajoa-kit persist` — see CONTRIBUTING.md §Commands.
 //
