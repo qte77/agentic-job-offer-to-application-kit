@@ -1,21 +1,14 @@
 # Generated / PII-bearing dirs — ignored at ANY depth (defensive: a run that writes to a nested
-# results/ or config/ is caught too, not just the repo root). Re-included: the synthetic
-# examples/*/ copies, plus at the repo root the .gitkeep dir-keepers and the shipped, ToS-vetted
-# config/default-seed.json (the ingest fallback). The root re-include + contents-ignore pair is
-# needed because a file under a directory excluded by `config/` cannot otherwise be re-included.
+# results/ or config/ is caught too, not just the repo root). The synthetic examples/*/ fixtures are
+# re-included so NEW example files can be added without -f. Everything already committed inside
+# (results/.gitkeep, config/.gitkeep, and the shipped config/default-seed.json) STAYS tracked
+# regardless — git never untracks a tracked file — so no per-file re-include dance is needed.
 results/
 config/
 /library/
 /input/
 !examples/*/results/
 !examples/*/config/
-!/results/
-/results/*
-!/results/.gitkeep
-!/config/
-/config/*
-!/config/default-seed.json
-!/config/.gitkeep
 
 # Python / tooling
 __pycache__/
