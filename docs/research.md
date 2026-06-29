@@ -206,4 +206,4 @@ once and reuses them across applications — not patched per offer.
 
 Own-voice or set-tone CV / cover-letter writing (a sample wins over a `tone` string, which wins over
 a neutral default) is a shipped Stage-3 feature; its configuration (`config/style.json`) and usage
-(`ajoa-kit style`) live in [README §Run your own search](../README.md#run-your-own-search).
+(`ajoa-kit style`) live in [quickstart §Writing style](quickstart.md#writing-style-optional).
