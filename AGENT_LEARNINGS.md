@@ -1,7 +1,6 @@
 # Agent Learnings
 
-Append-only log of cross-session patterns and their fixes, per the compound-learning rule
-([.claude/rules/compound-learning.md](.claude/rules/compound-learning.md) / AGENTS.md):
+Append-only log of cross-session patterns and their fixes, per the project's compound-learning rule:
 1st occurrence → fix inline; **2nd → record here**; 3rd → promote to `.claude/rules/`; recurring
 workflow → extract to a skill. Each entry: **Pattern** (what recurs) · **Fix** (what to do).
 
