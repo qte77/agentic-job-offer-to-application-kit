@@ -17,6 +17,10 @@
 //     lanes:         []                    // optional: override the default lanes (see below)
 //   }})
 //
+// Persist the returned object as results/evidence-library.json (write the Workflow tool's return
+// value to that path) before running Stage 2 — mirrors the "persist the returned X" step in the
+// relevance/tailor headers; there is no `ajoa-kit` CLI for this Stage-1 save.
+//
 // Resumable / cached by run id: edit the assemble phase and re-invoke with
 // { scriptPath, resumeFromRunId } to re-assemble without re-mining.
 //
