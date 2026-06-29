@@ -21,7 +21,7 @@ The kit productizes the job-research pipeline
   anchored by a hardcoded `ROOT = Path(__file__).resolve().parents[2]`.
 - No `__main__.py`, no `[project.scripts]` entry point — modules are
   invoked ad hoc (`python -m ajoa_kit.<module>`) or via `scripts/ingest.sh`.
-- LLM orchestration lives in `docs/workflows/cc-workflow-*.js`, run via
+- LLM orchestration lives in `.claude/workflows/cc-workflow-*.js`, run via
   the Workflow tool — a tier distinct from any conventional CLI.
 - No `docs/decisions/`; no UI surface.
 
@@ -62,7 +62,7 @@ flags, not routing.) `scripts/ingest.sh` reduces to a thin env shim
 `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR` to the repo root so paths resolve
 from any CWD); `Makefile` targets map to subcommands. Ships in the wheel.
 
-### Layer 3 — LLM orchestration (`docs/workflows/cc-workflow-*.js`)
+### Layer 3 — LLM orchestration (`.claude/workflows/cc-workflow-*.js`)
 
 The agentic fan-out tier, run via the Workflow tool — **separate from
 the conventional CLI** (Layer 2). Repo infrastructure; does **not** ship
@@ -70,6 +70,8 @@ in the wheel. Carries the Stage-2/3 workflows: relevance screen
 (#7, built), `cc-workflow-tailor-offer.js` (#8, designed — per-offer
 pack, **pre-fill + human submit only, NO auto-apply**), ats-check (#9),
 locale templates (#12); cc-workflow naming + batch-args convention (#4).
+
+As of 2026-06 these Layer-3 reference implementations live in `.claude/workflows/` — they are Claude Code Workflow-tool scripts, so the kit's orchestration is Claude-Code-coupled in practice; the phase **contracts** in architecture.md stay agent-agnostic, so another agent can still port them.
 
 ### Layer 4 — UI (`ui/`)
 
@@ -83,7 +85,7 @@ branch JSON; EyeRest-themed (see Brand below). Forks the
 - **Layers 2 / 3 / 4 MAY import from Layer 1.** The CLI, the Workflow
   scripts, and the UI all consume the library API.
 - **Layer 1 MUST NOT** import from the CLI / orchestration / UI, MUST
-  NOT assume `scripts/` or `docs/workflows/` exist, and MUST NOT read or
+  NOT assume `scripts/` or `.claude/workflows/` exist, and MUST NOT read or
   write the `data` branch. The `data` branch is consumed only by Layer 4.
 
 ### HARD GATE — PII (kit-specific; no `analyze-stock-kpi` analogue)

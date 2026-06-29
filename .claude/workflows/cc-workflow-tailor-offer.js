@@ -5,7 +5,7 @@
 // first (evidence-library, ingest, chunk, relevance, then persist — see CONTRIBUTING.md §Commands —
 // so results/<lane>/shortlist.json exists), pick one offer id from a shortlist, then run:
 //
-//   Workflow({ scriptPath: 'docs/workflows/cc-workflow-tailor-offer.js', args: {
+//   Workflow({ scriptPath: '.claude/workflows/cc-workflow-tailor-offer.js', args: {
 //     rootDir: '.',              // repo root holding results/ (override for an alt workspace)
 //     lane:    'engineering',    // REQUIRED — which results/<lane>/shortlist.json to read
 //     offerId: 'ashby:acme:101', // REQUIRED — the shortlist entry id to tailor
@@ -14,6 +14,8 @@
 //     fields:  '<markdown>',      // optional — application-field checklist for the prefill pack (#50);
 //                                // generate with `ajoa-kit prefill-fields ...`. Omit = generic fields.
 //   }})
+// (now under .claude/workflows/, it can also be invoked by name: Workflow({ name: 'tailor-offer' }).)
+// ⚠️ TOKEN USAGE: a few LLM subagents (Match → Tailor → Prefill) per offer — modest, but it is an LLM pass; tailor only offers you actually intend to pursue.
 //
 // Persist the returned pack with `ajoa-kit persist-offer` — see CONTRIBUTING.md §Commands
 // (writes results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md — human reviews + submits).

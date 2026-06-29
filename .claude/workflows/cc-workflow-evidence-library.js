@@ -8,7 +8,7 @@
 // EXECUTION MODEL: a Claude Code Workflow-tool script (not node/make). Run it
 // from a Claude Code session, passing inputs via `args`:
 //
-//   Workflow({ scriptPath: 'docs/workflows/cc-workflow-evidence-library.js', args: {
+//   Workflow({ scriptPath: '.claude/workflows/cc-workflow-evidence-library.js', args: {
 //     workspaceRoot: '/path/to/workspace', // dir holding the candidate's repos
 //     account:       'the candidate',      // owner/account name, for tone framing
 //     profileRepo:   '',                   // optional: path to a profile repo (README = self-presentation)
@@ -16,6 +16,8 @@
 //     maxProjects:   22,
 //     lanes:         []                    // optional: override the default lanes (see below)
 //   }})
+// (now under .claude/workflows/, it can also be invoked by name: Workflow({ name: 'evidence-library' }).)
+// ⚠️ TOKEN USAGE: deep-mines the whole portfolio (one subagent per project + adversarial verify) — the heaviest one-off pass. Run once per profile; resume via { resumeFromRunId } to skip re-mining.
 //
 // Persist the returned object as results/evidence-library.json (write the Workflow tool's return
 // value to that path) before running Stage 2 — mirrors the "persist the returned X" step in the
