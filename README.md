@@ -65,7 +65,8 @@ make install      # sync the dev environment (uv)
 make preview      # serve the dashboard at http://localhost:8000 (PORT=9000 make preview to change)
 ```
 
-Two ways to actually use it once installed:
+Two ways to actually use it once installed — both run the LLM phases via the **Claude Code**
+Workflow tool (`Workflow({…})`), so you'll need Claude Code installed as well as uv:
 
 - **Try the bundled example (no fetch, no data of your own).** Screen the synthetic
   [`examples/alexis-doe/`](examples/alexis-doe/) corpus straight to a scored shortlist plus a tailored
@@ -81,9 +82,9 @@ Two ways to actually use it once installed:
   ats-check. For recurring runs, `ajoa-kit ingest --merge` folds each pull into a running
   `results/corpus.json` (the scheduled `ingest-daily.yaml` cron) so keyword trends accrue over time.
 
-**[docs/quickstart.md](docs/quickstart.md)** narrates both end-to-end (plus the keyword-trends and
-writing-style options), and **[CONTRIBUTING.md §Commands](CONTRIBUTING.md#commands)** is the command
-reference (run, dev, and release; the Makefile is the source of truth).
+End-users: **[docs/quickstart.md](docs/quickstart.md)** narrates the full run end-to-end (prerequisites
+plus the keyword-trends and writing-style options). Contributors: **[CONTRIBUTING.md](CONTRIBUTING.md)**
+is the dev/release command reference (the Makefile is the source of truth).
 
 **Constraints:** no automated submission, no scraping — public no-auth GET only, with a
 human-reviewed prefill pack (see [docs/research.md §Delivery](docs/research.md#delivery)); no PII in

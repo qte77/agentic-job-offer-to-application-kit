@@ -18,6 +18,11 @@ make check       # ruff + format-check + pyright + complexipy + offline pytest +
 make docs-lint   # markdownlint + lychee link check
 ```
 
+`make docs-lint` needs two tools `uv sync` does **not** install —
+[`markdownlint-cli2`](https://github.com/DavidAnson/markdownlint-cli2) (npm) and
+[`lychee`](https://github.com/lycheeverse/lychee) (cargo) — run `make install-docs-tools` once
+(needs `npm` + `cargo` on `PATH`).
+
 ### Pipeline
 
 The full per-search run. The orchestration steps run via the Claude Code Workflow tool — see each

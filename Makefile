@@ -11,7 +11,7 @@
 
 .PHONY: \
 	help \
-	install-uv install \
+	install-uv install install-docs-tools \
 	check lint format check_types check_complexity docs-lint \
 	ingest chunk persist probe \
 	preview trends-data ui-check \
@@ -29,6 +29,10 @@ install-uv: ## Install the uv toolchain (prerequisite for `make install`)
 
 install: ## Sync the dev environment (uv) — needs uv (see `make install-uv`)
 	uv sync
+
+install-docs-tools: ## Install docs-lint tools — markdownlint-cli2 (npm) + lychee (cargo); needs npm + cargo
+	npm install -g markdownlint-cli2
+	cargo install lychee
 
 # MARK: Quality gates
 

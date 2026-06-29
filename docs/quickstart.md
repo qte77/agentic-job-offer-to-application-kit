@@ -21,10 +21,12 @@ them in full.
 
 ## Run your own search
 
-Run the pipeline (ingest → chunk → relevance → persist → tailor → persist-offer →
-ats-check) with the commands in [CONTRIBUTING.md §Commands](../CONTRIBUTING.md#commands) — the
-Makefile is the source of truth, and the CLI flags plus the `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR` /
-`POLYFETCH_DIR` overrides are tabulated there. What you author first is the **source list**:
+**Prerequisites:** [uv](https://docs.astral.sh/uv/) (provisions Python ≥ 3.11), **Claude Code** (its
+Workflow tool runs the relevance/tailor phases), and a `polyfetch-scrape` checkout beside this repo at
+`../polyfetch-scrape` (the network-fetch layer `make ingest` / `probe` borrow). The Makefile is the
+command source of truth (`make help`); the CLI flags and the `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR` /
+`POLYFETCH_DIR` overrides are tabulated in [CONTRIBUTING.md](../CONTRIBUTING.md#commands) for
+contributors. What you author first is the **source list**:
 
 The kit ships a tracked default (`config/default-seed.json`) and runs out of the box. To use your
 own, create `config/seed.json` (git-ignored); it overrides the default, e.g.:
@@ -34,9 +36,31 @@ own, create `config/seed.json` (git-ignored); it overrides the default, e.g.:
  "aggregators": [{"name": "arbeitnow"}, {"name": "themuse"}]}
 ```
 
-Broad no-auth aggregators are ToS-tiered in [ADR-0002](decisions/0002-source-tos-tiers.md). Build the
-evidence library once, upstream, via the Stage-1 Workflow
-(`docs/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
+Broad no-auth aggregators are ToS-tiered in [ADR-0002](decisions/0002-source-tos-tiers.md).
+
+Then run the pipeline — Stage 1 builds your evidence library **once**; Stages 2–3 run per search. The
+`Workflow({…})` blocks run inside a Claude Code session, and **you save each Workflow's returned JSON
+to the file the next `make` / `ajoa-kit` step reads** (that hand-off is manual):
+
+```text
+# Stage 1 (once) — save the returned object to results/evidence-library.json:
+Workflow({ scriptPath: "docs/workflows/cc-workflow-evidence-library.js",
+           args: { workspaceRoot: "/path/to/portfolio", account: "you" } })
+
+# Stage 2 (per search) — ingest -> chunk -> relevance -> persist:
+POLYFETCH_DIR=../polyfetch-scrape make ingest        # -> results/jobs-raw.json
+make chunk                                           # -> results/batches/ (+ manifest.json)
+# relevance: batchCount = results/batches/manifest.json .batch_count; save the result, then persist:
+Workflow({ scriptPath: "docs/workflows/cc-workflow-relevance.js",
+           args: { rootDir: ".", batchCount: <N> } })
+make persist FILE=<relevance-output.json>            # -> results/<lane>/shortlist.*
+
+# Stage 3 (per offer) — pick an offer id from a shortlist, then tailor -> persist-offer -> ats-check:
+Workflow({ scriptPath: "docs/workflows/cc-workflow-tailor-offer.js",
+           args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
+uv run ajoa-kit persist-offer <tailor-output.json>   # -> results/offers/<slug>/*.md
+uv run ajoa-kit ats-check results/offers/<slug>/cv.md
+```
 
 ## Incremental / daily ingest (optional)
 
