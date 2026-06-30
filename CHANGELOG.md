@@ -16,6 +16,55 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.5.0] - 2026-06-30
+
+### Added
+
+- `config/lanes.json` — a single, tracked source of truth for the seven position lanes (`#195`),
+  loaded Python-side by `ingest.load_lanes()` (pydantic-validated) and emitted via the new
+  `ajoa-kit lanes [--json]` command to pass to the relevance/evidence workflows as `args.lanes`. The
+  two JS workflow scripts keep their hardcoded lane arrays only as a no-config fallback that mirrors
+  the file.
+
+- `ajoa-kit refresh [--lane <name>] [--delete] [--dry-run]` (`#214`) — a shortlist liveness sweep that
+  reconciles `results/<lane>/shortlist.json` with reality: each entry is re-checked against the #164
+  corpus `delisted` state **and** a direct read-only URL re-probe, then dead offers are flagged
+  `stale` by default (kept as an audit trail; the dashboard hides them) or removed with `--delete`. An
+  inconclusive probe (network error/timeout) never flags a live entry; `--dry-run` previews. Adds
+  `stale`/`last_checked` to the `ScoredItem` contract and a shared `slug_probe.fetch_status` probe
+  primitive (reusable by #217).
+
+- A **data-branch boundary guard** in `make trends-data` (`#210`): after building the push tree it
+  aborts unless the tree contains only `public-data/trends{,-daily}.ndjson`, so no PII file can ever
+  ride along — the publish boundary is now structural + enforced, not just conventional.
+
+- Two position lanes — `ml` (AI / ML engineer — applied AI, LLM apps, agentic systems) and `fde`
+  (forward-deployed / solutions engineer) — bringing the default set to seven.
+
+- 52 ToS-vetted ATS sources (Greenhouse/Lever/Ashby) plus the Berlin Startup Jobs RSS feed in
+  `config/default-seed.json` — filling the `founding` / `ml` / `architect` / `cloud` lanes and EU/DACH
+  gaps (e.g. CoreWeave, Celonis, Elastic, ClickHouse, Wiz, Glean, Dust, Pennylane, Graphcore). Each
+  re-probed live (HTTP 200 + roles) on 2026-06-30. ADR-0002 records the tier rationale and the
+  excluded candidates (ai-jobs.net no-feed; Workday/Workable/SmartRecruiters names).
+
+- The local dashboard now shows your **real** shortlist: `make preview` aggregates the per-lane
+  `results/<lane>/shortlist.json` (via `scripts/build_ui_shortlist.py`) into the throwaway serve dir,
+  and `ui/src/app.js` (`loadRealShortlist`) loads it **same-origin only** over the synthetic demo set.
+  PII by construction — never committed, and `gh-pages.yaml` still bundles no shortlist, so the
+  published demo stays synthetic.
+
+### Changed
+
+- Relocated the publishable keyword-only trends (`trends.ndjson` / `trends-daily.ndjson`) out of the
+  PII dir `results/` into a dedicated, git-ignored, PII-free **`public-data/`** dir
+  (`AJOA_PUBLIC_DATA_DIR`, default `public-data`), so `results/` is now **exclusively PII** (`#210`).
+  `trend-snapshot` writes there; `make trends-data`, `make preview`, `gh-pages.yaml`, `ingest-daily.yaml`,
+  and the dashboard's `data`-branch fetch (`app.js`) all read the new path.
+
+- `cc-workflow-relevance.js` now derives its lane keys from `cfg.lanes` (the runtime single source of
+  truth, shared with `cc-workflow-evidence-library.js`) instead of a separate hardcoded list, so
+  overriding lanes in one place can no longer silently desync the two workflows.
+
 ## [0.4.0] - 2026-06-28
 
 ### Added
