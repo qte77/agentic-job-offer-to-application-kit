@@ -258,7 +258,7 @@ async function fetchTrends(url) {
 // then to null so the caller uses the synthetic set. An explicit `?base=` is honored first.
 async function loadRealTrends() {
   const sameOrigin = "public/data/trends.ndjson";
-  const dataBranch = `${DATA_BASE_URL}/results/trends.ndjson`;
+  const dataBranch = `${DATA_BASE_URL}/public-data/trends.ndjson`;
   const order = new URLSearchParams(location.search).has("base")
     ? [dataBranch, sameOrigin]
     : [sameOrigin, dataBranch];

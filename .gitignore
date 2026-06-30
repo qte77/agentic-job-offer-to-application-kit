@@ -4,6 +4,9 @@
 # (results/.gitkeep, config/.gitkeep, and the shipped config/default-seed.json) STAYS tracked
 # regardless — git never untracks a tracked file — so no per-file re-include dance is needed.
 results/
+# Generated but PII-FREE: the publishable aggregate trends (#210). Reaches the `data` branch only via
+# `git add -f` (the `make trends-data` tree-allowlist guard asserts ONLY these files are pushed).
+public-data/
 config/
 /library/
 /input/

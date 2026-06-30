@@ -40,3 +40,7 @@ class AppSettings(BaseSettings):
         default=Path("results"),
         description="Directory where ingest/chunk/persist artifacts are written.",
     )
+    public_data_dir: Path = Field(
+        default=Path("public-data"),
+        description="PII-free publishable aggregates (trends); never PII, unlike results_dir.",
+    )

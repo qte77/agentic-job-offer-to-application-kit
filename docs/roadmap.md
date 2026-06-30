@@ -24,7 +24,7 @@
   warn-and-continue case — the adapters were already tolerant, so no hardening was needed — and
   offline `get_json`/`get_bytes` network-helper tests (non-200 → `FetchError`, 200 → parse).
 - Keyword-trend pipeline: runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
-  `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A); reusable
+  `ajoa-kit trend-snapshot` → keyword-only `public-data/trends.ndjson` (#11 PR-A); reusable
   `run-with-keywords` workflow (#79).
 - Two-tab trends dashboard (#11 PR-B): static no-build gh-pages page — Tab A synthetic shortlist,
   Tab B real aggregate `{week,counts}` keyword timeline (line + bar, vendored Chart.js); `WeekCounts`
@@ -55,6 +55,11 @@
   flagging dead offers `stale` (dashboard-hidden) or removing them; an inconclusive probe never expires
   a live entry. The cheap new-offer **delta-screen** (`chunk --new` + `persist --merge`) stays the
   tracked follow-up.
+- PII-free trends relocation (#210): the publishable keyword-only trends moved out of the PII dir
+  `results/` into a dedicated git-ignored `public-data/` (`AJOA_PUBLIC_DATA_DIR`), so `results/` is now
+  **exclusively PII**. `make trends-data` builds the `data`-branch tree from `public-data/` and a
+  **tree-allowlist guard** aborts the push if anything other than `public-data/trends{,-daily}.ndjson`
+  slipped in — the publish boundary is now structural + enforced, not just conventional.
 - UI theming converged on the qte77 brand (#112/#117): EyeRest tokens, `qte77-theme` storage key,
   system/light/dark cycle, `.sr-only` clip-path; Inter now served as WOFF2 (TTF fallback).
 - Governance safe-subset settled (#54, closed): selected-actions allowlist + full SHA-pinning
@@ -75,7 +80,7 @@
   `ingest --merge`. It names companies/titles, so it stays local-only (git-ignored `results/`, never a
   CI artifact or branch); the daily cron still publishes only the aggregate keyword trends.
 - Daily trend granularity — data layer (#187/#188): `trend-snapshot` now also writes
-  `results/trends-daily.ndjson` (`{date, counts}`), and **weekly is rolled up from the daily buckets**
+  `public-data/trends-daily.ndjson` (`{date, counts}`), and **weekly is rolled up from the daily buckets**
   (`weekly_from_daily`) so the two series can't disagree; both publish to the `data` branch (aggregate
   keyword-only). The dashboard Week/Day toggle is deferred to #187 (the daily chart needs accrued
   history first), monthly granularity to #188.

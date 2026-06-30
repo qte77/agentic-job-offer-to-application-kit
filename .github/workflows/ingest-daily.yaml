@@ -23,11 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: write   # `make trends-data` force-pushes results/trends.ndjson to the `data` branch
+      contents: write   # `make trends-data` force-pushes public-data/trends.ndjson to the `data` branch
       actions: read     # `gh run download` fetches the prior run's corpus artifact
     env:
       AJOA_CONFIG_DIR: ${{ github.workspace }}/config
       AJOA_RESULTS_DIR: ${{ github.workspace }}/results
+      # Absolute (not the relative default) because trend-snapshot runs under working-directory:
+      # polyfetch-scrape, where a relative public-data/ would resolve wrong — same as AJOA_RESULTS_DIR.
+      AJOA_PUBLIC_DATA_DIR: ${{ github.workspace }}/public-data
       PYTHONPATH: ${{ github.workspace }}/src
     steps:
       - name: Checkout (main repo; credentials kept for the data-branch push)
@@ -80,16 +83,17 @@ jobs:
       - name: Restore existing trends from the data branch
         run: |
           git fetch --depth=1 origin data 2>/dev/null || true
+          mkdir -p public-data
           # Restore both the weekly and daily aggregate series so trend-snapshot's per-bucket upsert
           # ACCUMULATES (keeps already-published weeks/days, adds/updates this run's) rather than
           # replacing. Atomic via a tmp file: only overwrite on a clean read.
           for f in trends.ndjson trends-daily.ndjson; do
-            if git show "origin/data:results/$f" > "results/$f.tmp" 2>/dev/null; then
-              mv "results/$f.tmp" "results/$f"
-              echo "restored $(wc -l < "results/$f") lines -> results/$f"
+            if git show "origin/data:public-data/$f" > "public-data/$f.tmp" 2>/dev/null; then
+              mv "public-data/$f.tmp" "public-data/$f"
+              echo "restored $(wc -l < "public-data/$f") lines -> public-data/$f"
             else
-              rm -f "results/$f.tmp"
-              echo "no results/$f on the data branch yet — starting fresh"
+              rm -f "public-data/$f.tmp"
+              echo "no public-data/$f on the data branch yet — starting fresh"
             fi
           done
 

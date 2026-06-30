@@ -28,21 +28,22 @@ flowchart TD
   ev --> tailor --> offers["results/offers/SLUG/*.md<br/>+ ats-check"]
   corpus --> trends["trend-snapshot.py<br/>keyword-only, by first_seen"]
   raw -. fallback .-> trends
-  trends --> ndjson["results/trends.ndjson<br/>week + counts"]
-  trends --> dndjson["results/trends-daily.ndjson<br/>date + counts"]
+  trends --> ndjson["public-data/trends.ndjson<br/>week + counts"]
+  trends --> dndjson["public-data/trends-daily.ndjson<br/>date + counts"]
   ndjson -->|aggregate only| dbranch["data branch"] --> ui["ui/ dashboard"]
   dndjson -->|aggregate only| dbranch
 ```
 
-Everything under `results/` stays private (git-ignored locally; a private GHA artifact across runs);
-only the aggregate `week + counts` trends cross to the public `data` branch — see
+Everything under `results/` stays private (git-ignored locally; a private GHA artifact across runs) —
+it is now **exclusively PII**. The keyword-only `week + counts` trends are written to `public-data/`
+(PII-free) and are the only data that crosses to the public `data` branch — see
 [Systems & data boundaries](#systems--data-boundaries).
 
 Run-once upstream: `cc-workflow-evidence-library.js` → `results/evidence-library.json`.
 
 Side branch (any time after ingest): `ajoa-kit trend-snapshot` reads `results/corpus.json` when present
 (bucketing by each JD's `first_seen`), else falls back to `results/jobs-raw.json` (`posted_at`) →
-aggregate keyword-only `results/trends.ndjson` (per ISO week) **and** `results/trends-daily.ndjson` (per
+aggregate keyword-only `public-data/trends.ndjson` (per ISO week) **and** `public-data/trends-daily.ndjson` (per
 day). Weekly is **rolled up from the daily buckets** (`weekly_from_daily`), so the two series can't
 disagree; counts are the config-driven vocabulary — no JD content.
 
@@ -94,8 +95,8 @@ built).
 | JD record | `ingest.record()` | dict — untyped | adapters → corpus / chunk / trends | `results/jobs-raw.json` |
 | Corpus record | `corpus.merge_corpus` | dict + `first_seen` / `last_seen` / `content_hash` | ingest `--merge` → trends / next run | `results/corpus.json` |
 | Daily digest | `corpus.summarize_changes` + `render_daily_summary` | dict → markdown | ingest `--merge` → human | `results/daily-summary.md` (local-only) |
-| Trends week | `trend_snapshot.WeekCounts` | **pydantic** (write-side) | trend-snapshot → dashboard | `results/trends.ndjson` |
-| Trends day | `trend_snapshot.DayCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#187) | `results/trends-daily.ndjson` |
+| Trends week | `trend_snapshot.WeekCounts` | **pydantic** (write-side) | trend-snapshot → dashboard | `public-data/trends.ndjson` |
+| Trends day | `trend_snapshot.DayCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#187) | `public-data/trends-daily.ndjson` |
 | Batches + manifest | `chunk.main` | dict — untyped | chunk → relevance | `results/batches/*.json` |
 | Shortlist | relevance.js schema / `persist_scored` / `refresh` | JSON-Schema (JS) → dict (Py) + `stale`/`last_checked` (#214) | relevance → persist → refresh → dashboard | `results/LANE/shortlist.json` / `.md` |
 | Offer pack | tailor.js schema / `persist_offer` | JSON-Schema (JS) → dict (Py) | tailor → persist | `results/offers/SLUG/*.md` |
@@ -147,8 +148,10 @@ daily `ingest-daily` cron); the orphan `data` branch; gh-pages (the dashboard).
 - `config/` and `results/` are git-ignored — your inputs and every generated artifact stay off `main`.
 - The corpus crosses runs only as a **private GHA artifact**; the local-only `daily-summary.md` (#175)
   names companies/titles and is never uploaded or pushed.
-- Only the aggregate, keyword-only `week + counts` trends reach the **`data` branch** — `make
-  trends-data` builds a one-file tree (just `trends.ndjson`), so nothing else can ride along.
+- `results/` is **exclusively PII**; the publishable keyword-only `week + counts` trends live in a
+  separate git-ignored, PII-free **`public-data/`** dir (#210). Only those reach the **`data` branch**
+  — `make trends-data` builds the tree from `public-data/` and a **tree-allowlist guard** aborts the
+  push unless it contains only `public-data/trends{,-daily}.ndjson`, so nothing else can ride along.
 - **No automated submission** — the pipeline ends at a human-reviewed prefill pack; there is no
   auto-submit path.
 
@@ -183,8 +186,9 @@ agentic-job-offer-to-application-kit/
 │                               #   default-seed.json (shipped sources) · your seed.json overrides it
 ├── tests/                      # value-add suite (pre-filter, canonical_url, dedup, adapters)
 ├── examples/alexis-doe/        # self-contained example mirroring config/ + results/ (committed)
-├── results/                    # generated outputs — git-ignored, dir kept via .gitkeep
+├── results/                    # generated outputs (PII) — git-ignored, dir kept via .gitkeep
 │                               #   evidence-library.json, jobs-raw.json, corpus.json, batches/, <lane>/shortlist.*, offers/<slug>/
+├── public-data/                # PII-free publishable aggregates (trends) — git-ignored; the only data published (#210)
 ├── pyproject.toml / uv.lock    # uv project; ruff + pyright + complexipy + pytest + scriv config
 ├── .claude/
 │   └── workflows/
@@ -204,9 +208,13 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)) and
   `config/lanes.json` (the canonical position lanes, #195). Your `config/seed.json` overrides the
   default-seed when present; absent it, ingest falls back to the default.
-- `results/` — everything generated (`jobs-raw.json`, `corpus.json`, `daily-summary.md`,
-  `trends.ndjson`, `<lane>/shortlist.*`, `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`). The
-  `daily-summary.md` digest (#175) names companies/titles → **local-only**, never a CI artifact or branch.
+- `results/` — everything generated and **PII-bearing** (`jobs-raw.json`, `corpus.json`,
+  `daily-summary.md`, `<lane>/shortlist.*`, `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`),
+  **never published**. The `daily-summary.md` digest (#175) names companies/titles → **local-only**,
+  never a CI artifact or branch.
+- `public-data/` — the **PII-free** publishable aggregates only (`trends.ndjson` / `trends-daily.ndjson`,
+  keyword `{week,counts}`); git-ignored, generated (#210). The one place anything crosses to the `data`
+  branch (via `git add -f`, guarded by `make trends-data`'s tree allowlist).
 - `library/`, `input/` — additional generated/working directories; git-ignored.
 - `examples/alexis-doe/` — a committed, self-contained example mirroring `config/` + `results/`.
 
@@ -228,7 +236,7 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   must-have coverage, #55); `ajoa-kit ats-check` parse-safety (#9);
   style/tone tailoring (#16); cited delivery safety note (research.md §Delivery, #8); structured board
   catalog (#10) with ToS/ToU tiers (ADR-0002, #95); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
-  `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A) rendered by the two-tab
+  `ajoa-kit trend-snapshot` → keyword-only `public-data/trends.ndjson` (#11 PR-A) rendered by the two-tab
   no-build `ui/` dashboard (#11 PR-B, vendored Chart.js — synthetic Tab A + aggregate `{week,counts}`
   Tab B); the reusable `run-with-keywords` workflow (#79); `ajoa-kit refresh` shortlist liveness sweep
   (#214 — corpus-delisted + URL re-probe, flag-`stale`-or-`--delete`); baseline gates (ruff, pyright,

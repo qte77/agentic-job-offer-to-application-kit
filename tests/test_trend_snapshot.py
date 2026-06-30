@@ -147,7 +147,9 @@ def test_bucket_by_week_groups_by_posted_week_and_counts_skipped() -> None:
 def test_main_buckets_corpus_by_first_seen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     results = tmp_path / "results"
     results.mkdir()
+    public = tmp_path / "public-data"  # outputs land here (#210), inputs stay under results/
     monkeypatch.setenv("AJOA_RESULTS_DIR", str(results))
+    monkeypatch.setenv("AJOA_PUBLIC_DATA_DIR", str(public))
     monkeypatch.setattr(trend_snapshot, "load_keywords", lambda _cfg: (["python"], ["python"]))
     # corpus.json present -> bucket by first_seen. posted_at is a different YEAR, so the bucketed
     # week proves which field main() used.
@@ -165,14 +167,17 @@ def test_main_buckets_corpus_by_first_seen(tmp_path: Path, monkeypatch: pytest.M
         )
     )
     trend_snapshot.main()
-    lines = _read_ndjson(results / "trends.ndjson")
+    lines = _read_ndjson(public / "trends.ndjson")
     assert len(lines) == 1
     assert lines[0]["week"].startswith("2026-W")  # first_seen, not posted_at's 2024
     assert lines[0]["counts"]["python"] == 1
     # the daily series is written alongside, bucketed by the same first_seen field
-    daily = _read_ndjson(results / "trends-daily.ndjson")
+    daily = _read_ndjson(public / "trends-daily.ndjson")
     assert daily[0]["date"] == "2026-06-01"
     assert daily[0]["counts"]["python"] == 1
+    # the publishable aggregates leave the PII dir entirely (#210)
+    assert not (results / "trends.ndjson").exists()
+    assert not (results / "trends-daily.ndjson").exists()
 
 
 @pytest.mark.parametrize(
@@ -243,11 +248,13 @@ def test_main_falls_back_to_jobs_raw_posted_at_without_corpus(
 ) -> None:
     results = tmp_path / "results"
     results.mkdir()
+    public = tmp_path / "public-data"  # outputs land here (#210), inputs stay under results/
     monkeypatch.setenv("AJOA_RESULTS_DIR", str(results))
+    monkeypatch.setenv("AJOA_PUBLIC_DATA_DIR", str(public))
     monkeypatch.setattr(trend_snapshot, "load_keywords", lambda _cfg: (["python"], ["python"]))
     # no corpus.json -> read jobs-raw.json, bucket by posted_at (back-compat).
     job = {"id": "a", "title": "Python Dev", "description": "python", "posted_at": "2024-01-15"}
     (results / "jobs-raw.json").write_text(json.dumps([job]))
     trend_snapshot.main()
-    lines = _read_ndjson(results / "trends.ndjson")
+    lines = _read_ndjson(public / "trends.ndjson")
     assert lines[0]["week"] == "2024-W03"  # posted_at week

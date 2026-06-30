@@ -102,7 +102,7 @@ Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js",
 
 Drop a `config/keywords.json` (`{"interest": [...], "title_roles": [...]}`) to override the default
 pre-filter vocabulary. `trend-snapshot` then writes an aggregate, keyword-only per-ISO-week record to
-`results/trends.ndjson` (no JD/PII), and pushing it to the `data` branch re-triggers the Pages deploy
+`public-data/trends.ndjson` (no JD/PII), and pushing it to the `data` branch re-triggers the Pages deploy
 to bundle it **same-origin** into the published site (so the live charts load reliably — no
 cross-origin runtime fetch) — commands in
 [CONTRIBUTING.md §Trends data branch](../CONTRIBUTING.md#trends-data-branch). Local dev and forks

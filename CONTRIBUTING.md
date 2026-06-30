@@ -71,7 +71,8 @@ Per-adapter endpoint URLs live in `src/ajoa_kit/ingest.py`; sources are ToS-tier
 | Variable | Default | Purpose |
 |---|---|---|
 | `AJOA_CONFIG_DIR` | `config` | where `seed.json` / `keywords.json` / `style.json` are read |
-| `AJOA_RESULTS_DIR` | `results` | where ingest/chunk/persist artifacts are written |
+| `AJOA_RESULTS_DIR` | `results` | where ingest/chunk/persist artifacts (PII) are written |
+| `AJOA_PUBLIC_DATA_DIR` | `public-data` | where PII-free publishable trends are written (the only data published, #210) |
 | `POLYFETCH_DIR` | `../polyfetch-scrape` | the `polyfetch-scrape` checkout `make ingest` / `probe` borrow |
 | `PORT` | `8000` | port for `make preview` |
 
@@ -129,12 +130,12 @@ gh workflow run publish-release.yaml -f tag=v0.1.0
 
 The dashboard's real **market-trends** data lives only on the orphan **`data`** branch (never in
 `ui/` or `main`); the live site fetches it at runtime from
-`raw.githubusercontent.com/<owner>/<repo>/data/results/trends.ndjson` (auto-derived from the Pages
+`raw.githubusercontent.com/<owner>/<repo>/data/public-data/trends.ndjson` (auto-derived from the Pages
 origin, so a fork self-hosts its own). To refresh it:
 
 ```bash
-uv run ajoa-kit trend-snapshot   # -> results/trends.ndjson (needs the polyfetch venv; not run in CI)
-make trends-data                 # force-push results/trends.ndjson -> the `data` branch
+uv run ajoa-kit trend-snapshot   # -> public-data/trends.ndjson (needs the polyfetch venv; not run in CI)
+make trends-data                 # force-push public-data/trends.ndjson -> the `data` branch
 ```
 
 The live dashboard picks it up on the next page load — no redeploy. CI can't generate this data
