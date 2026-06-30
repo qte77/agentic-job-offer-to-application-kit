@@ -22,8 +22,8 @@ agent-agnostically so any coding agent can drive them.
 3. **Tailor** (per offer) — match → CV + cover letter + gap report, with an `ats-check` parse-safety
    pass, writing-style/tone matching, and a human-review prefill pack (see docs/research.md §Delivery).
 
-Five configurable **position lanes** (CxO/fractional · founding engineer · senior IC engineering ·
-cloud/DevOps/platform · architect) — see
+Seven configurable **position lanes** (CxO/fractional · founding engineer · senior IC engineering ·
+applied-AI/ML · forward-deployed/solutions · cloud/DevOps/platform · architect) — see
 [docs/architecture.md §Position lanes](docs/architecture.md#position-lanes). Cost model: cheap
 pre-filter → LLM relevance → tailor only the shortlist.
 
