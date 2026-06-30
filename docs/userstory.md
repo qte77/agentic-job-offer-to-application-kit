@@ -22,8 +22,10 @@ one-line rationale.
 As a candidate, I want my evidence, inputs, and results kept out of git, so no personally identifiable
 information (PII) is ever published.
 
-Accept: `results/`, `library/`, `input/`, and real `config/` files are git-ignored; only
-the synthetic `examples/alexis-doe/` workspace is committed.
+Accept: `results/` (now **exclusively PII**), `library/`, `input/`, and real `config/` files are
+git-ignored and **never published**; the only data that crosses to the public `data` branch is the
+PII-free keyword aggregates in `public-data/` (#210). Only the synthetic `examples/alexis-doe/`
+workspace is committed.
 
 ## US3b — See my real shortlist locally
 

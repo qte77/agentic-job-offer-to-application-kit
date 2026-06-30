@@ -37,8 +37,9 @@ class ScoredItem(BaseModel):
     """
 
     # extra="ignore" lets unknown workflow fields pass, but they're dropped from model_dump() — so
-    # persist_scored's jobs-scored.json re-write loses any field beyond the 8 below. None today (the
-    # RESULT schema is exactly these); use extra="allow" for forward-compat round-tripping (#197).
+    # persist's jobs-scored.json re-write loses any field beyond the 10 below. The first 8 are the
+    # relevance RESULT schema; `stale`/`last_checked` are added by the refresh sweep (#214). Use
+    # extra="allow" for forward-compat round-tripping of any other future field (#197).
     model_config = ConfigDict(extra="ignore")
 
     id: str = ""
