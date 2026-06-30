@@ -55,6 +55,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `chunk` | `--batch-size N` (default 40) |
 | `persist` | `FILE` — the relevance workflow result |
 | `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` |
+| `refresh` | reconcile shortlists vs the corpus `delisted` state + a read-only URL re-probe · `--lane <name>` (default: all buckets) · `--delete` (remove vs flag `stale`) · `--dry-run` |
 | `ats-check` | `FILE` — a CV markdown file |
 | `lanes` | `--json` — emit the workflow `lanes` arg from `config/lanes.json` (the canonical 7 lanes) |
 | `style` | `--json` — emit the tailor `style` arg from `config/style.json` |

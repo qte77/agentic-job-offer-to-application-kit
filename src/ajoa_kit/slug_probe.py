@@ -18,6 +18,24 @@ from ajoa_kit.settings import AppSettings
 PROBE_TIMEOUT = 8.0
 
 
+def fetch_status(url: str) -> int | None:
+    """GET ``url`` and return its HTTP status, or ``None`` when it can't be determined.
+
+    A read-only liveness probe (no auth, no body) shared by the shortlist refresh (#214) and the
+    source freshness re-probe (#217). ``None`` means inconclusive (non-http(s), network error,
+    or timeout) — treated as *not dead*, so a flaky network never expires a live entry.
+    """
+    if not url.lower().startswith(("http://", "https://")):  # sec: no file:/javascript:/… schemes
+        return None
+    # lazy: keep this module importable without polyfetch
+    from polyfetch_scrape import fetch  # pyright: ignore[reportMissingImports]
+
+    try:
+        return fetch(url, timeout=PROBE_TIMEOUT).status
+    except Exception:  # an unreachable/blocked URL is inconclusive, not "dead"
+        return None
+
+
 def _count(url: str, key: str | None) -> int | None:
     """GET ``url``; return the item count, or None if it is not a live board."""
     # lazy: keep this module importable without polyfetch

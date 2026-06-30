@@ -81,6 +81,26 @@ def parse_relevant(data: dict) -> tuple[list[dict], int]:
     return kept, dropped
 
 
+def write_lane(lane: str, items: list[dict], results_dir: Path) -> None:
+    """Write one lane's ``shortlist.{json,md}`` — score desc, stale rows (#214) sunk last + tagged.
+
+    Shared by :func:`write_shortlists` (fresh persist) and the refresh sweep
+    (:mod:`ajoa_kit.refresh`); fresh items carry no ``stale`` flag, so the order matches the prior
+    score-only sort.
+    """
+    items = sorted(items, key=lambda x: (bool(x.get("stale")), -(x.get("score") or 0)))
+    d = results_dir / lane
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "shortlist.json").write_text(json.dumps(items, indent=2, ensure_ascii=False))
+    lines = [f'---\ntitle: "{lane} — shortlist ({len(items)})"\n---', ""]
+    for j in items:
+        tag = f"{j.get('score')}/{j.get('verdict')}" + (" · stale" if j.get("stale") else "")
+        lines.append(f"- [{tag}] {j.get('title', '')} @ {j.get('company', '')}")
+        lines.append(f"  - {j.get('url', '')}")
+        lines.append(f"  - {j.get('rationale', '')}")
+    (d / "shortlist.md").write_text("\n".join(lines) + "\n")
+
+
 def write_shortlists(rel: list[dict], results_dir: Path) -> dict[str, int]:
     """Write per-lane shortlist.{json,md}; return the per-lane counts."""
     by_lane: dict[str, list[dict]] = {}
@@ -89,17 +109,7 @@ def write_shortlists(rel: list[dict], results_dir: Path) -> dict[str, int]:
         # empty-string directory under results/ — it lands in unsorted/.
         by_lane.setdefault(j.get("best_lane") or "unsorted", []).append(j)
     for lane, items in by_lane.items():
-        items.sort(key=lambda x: -(x.get("score") or 0))
-        d = results_dir / lane
-        d.mkdir(parents=True, exist_ok=True)
-        (d / "shortlist.json").write_text(json.dumps(items, indent=2, ensure_ascii=False))
-        lines = [f'---\ntitle: "{lane} — shortlist ({len(items)})"\n---', ""]
-        for j in items:
-            tag = f"{j.get('score')}/{j.get('verdict')}"
-            lines.append(f"- [{tag}] {j.get('title', '')} @ {j.get('company', '')}")
-            lines.append(f"  - {j.get('url', '')}")
-            lines.append(f"  - {j.get('rationale', '')}")
-        (d / "shortlist.md").write_text("\n".join(lines) + "\n")
+        write_lane(lane, items, results_dir)
     return {k: len(v) for k, v in by_lane.items()}
 
 

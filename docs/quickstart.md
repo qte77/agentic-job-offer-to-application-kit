@@ -71,6 +71,23 @@ scheduled `.github/workflows/ingest-daily.yaml` (06:00 UTC + manual `workflow_di
 daily, keeping the corpus as a private cross-run artifact (no PII on any branch) and pushing only the
 aggregate keyword trends to the `data` branch. `--merge` leaves `results/jobs-raw.json` unchanged.
 
+## Keep a shortlist current (optional)
+
+Offers get filled or closed, so a shortlist goes stale. After re-running `ingest --merge`,
+reconcile it:
+
+```bash
+uv run ajoa-kit refresh --lane engineering --dry-run   # report what would be flagged
+uv run ajoa-kit refresh --lane engineering             # flag dead offers `stale` (default)
+uv run ajoa-kit refresh --delete                       # remove dead offers from every lane instead
+```
+
+Each `results/<lane>/shortlist.json` entry is re-checked against the corpus `delisted` state **and** a
+read-only URL re-probe (so an offer whose source you stopped tracking is still caught). Dead entries
+are flagged `stale` (kept as an audit trail; `make preview` hides them) or removed with `--delete`; an
+inconclusive probe (network error / timeout) never flags a live entry. Omit `--lane` to sweep every
+bucket.
+
 ## Try the example (no fetch)
 
 The synthetic [`examples/alexis-doe/`](../examples/alexis-doe/) workspace ships a pre-built evidence

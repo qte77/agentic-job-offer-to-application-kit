@@ -49,3 +49,8 @@ class ScoredItem(BaseModel):
     verdict: str = ""
     rationale: str = ""
     url: str = ""
+    # Liveness (#214): the refresh sweep flags an offer that is filled/closed (corpus-delisted or a
+    # dead URL re-probe) and stamps when last checked. Typed (not a dropped extra) so the flag
+    # survives a persist round-trip and the dashboard can hide stale rows.
+    stale: bool = False
+    last_checked: str = ""

@@ -22,6 +22,8 @@ flowchart TD
   raw --> chunk["chunk.py"] --> batches["results/batches/*.json"]
   ev["results/evidence-library.json<br/>Stage 1"] --> rel["cc-workflow-relevance.js<br/>parallel LLM screen"]
   batches --> rel --> short["results/LANE/shortlist (json + md)"]
+  short --> refresh["refresh.py<br/>flag/expire stale (#214)"]
+  corpus --> refresh
   short --> tailor["cc-workflow-tailor-offer.js<br/>per-offer tailor"]
   ev --> tailor --> offers["results/offers/SLUG/*.md<br/>+ ats-check"]
   corpus --> trends["trend-snapshot.py<br/>keyword-only, by first_seen"]
@@ -95,7 +97,7 @@ built).
 | Trends week | `trend_snapshot.WeekCounts` | **pydantic** (write-side) | trend-snapshot → dashboard | `results/trends.ndjson` |
 | Trends day | `trend_snapshot.DayCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#187) | `results/trends-daily.ndjson` |
 | Batches + manifest | `chunk.main` | dict — untyped | chunk → relevance | `results/batches/*.json` |
-| Shortlist | relevance.js schema / `persist_scored` | JSON-Schema (JS) → dict (Py) | relevance → persist → dashboard | `results/LANE/shortlist.json` / `.md` |
+| Shortlist | relevance.js schema / `persist_scored` / `refresh` | JSON-Schema (JS) → dict (Py) + `stale`/`last_checked` (#214) | relevance → persist → refresh → dashboard | `results/LANE/shortlist.json` / `.md` |
 | Offer pack | tailor.js schema / `persist_offer` | JSON-Schema (JS) → dict (Py) | tailor → persist | `results/offers/SLUG/*.md` |
 | `must_haves` | tailor.js / `coverage.py` | JSON-Schema (JS) → dict (Py) | tailor → coverage | `coverage-report.md` |
 | Evidence library `LIB` | `cc-workflow-evidence-library.js` | JSON-Schema (JS) | Stage 1 → relevance / tailor | `results/evidence-library.json` |
@@ -161,6 +163,12 @@ cross-runtime single source of truth (#195). Python loads it via `ingest.load_la
 a no-config fallback that mirrors the file (`cc-workflow-relevance.js` derives just the keys).
 `cfg.lanes` remains the runtime SSOT, written into the evidence library.
 
+**Re-bucket rule.** Each JD is assigned exactly one `best_lane`, so adding or removing a lane requires
+a **full relevance re-run** to re-bucket — there is no correct "incrementally score only the new lane"
+(an existing `engineering` JD could legitimately become `ml`). `ajoa-kit refresh` (#214) is the
+complement: it keeps a lane's *existing* shortlist current (flags/expires filled-or-closed offers via
+the corpus `delisted` state + a read-only URL re-probe) but never re-buckets.
+
 ## Repo structure
 
 ```text
@@ -169,7 +177,7 @@ agentic-job-offer-to-application-kit/
 ├── docs/
 │   └── architecture.md / roadmap.md / userstory.md / research.md
 ├── src/ajoa_kit/               # engine: ingest, corpus, chunk, persist_scored, persist_offer, ats_check,
-│                               #   style, prefill, slug_probe, settings, __main__ (CLI)
+│                               #   style, prefill, slug_probe, refresh, settings, __main__ (CLI)
 ├── scripts/ingest.sh           # thin env shim -> ajoa-kit ingest (borrows polyfetch's uv env via POLYFETCH_DIR)
 ├── config/                     # your inputs — git-ignored except the tracked default-seed.json
 │                               #   default-seed.json (shipped sources) · your seed.json overrides it
@@ -210,6 +218,7 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 | JD parse (per record) | wrap-continue (skip malformed) — typing planned in [ADR-0003](decisions/0003-data-contract-enforcement.md) |
 | config load (seed) | fail-loud (missing/invalid config stops the run) |
 | evidence-library load (relevance) | fail-loud (clear "run Stage 1 first") |
+| shortlist liveness probe (`refresh`, #214) | wrap-continue; an inconclusive probe (network error/timeout) keeps the entry — never expire on a flaky network |
 
 ## Built vs designed
 
@@ -221,8 +230,9 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   catalog (#10) with ToS/ToU tiers (ADR-0002, #95); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
   `ajoa-kit trend-snapshot` → keyword-only `results/trends.ndjson` (#11 PR-A) rendered by the two-tab
   no-build `ui/` dashboard (#11 PR-B, vendored Chart.js — synthetic Tab A + aggregate `{week,counts}`
-  Tab B); the reusable `run-with-keywords` workflow (#79); baseline gates (ruff, pyright, complexipy,
-  pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
+  Tab B); the reusable `run-with-keywords` workflow (#79); `ajoa-kit refresh` shortlist liveness sweep
+  (#214 — corpus-delisted + URL re-probe, flag-`stale`-or-`--delete`); baseline gates (ruff, pyright,
+  complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
 - **Built (dashboard UX + CI):** trends bundled **same-origin** at deploy (Pages re-deploys on
   `data`-branch pushes — no cross-origin fetch); expandable shortlist rows → tailored CV + cover
   letter; **`make preview` shows your real local shortlist** (#209 — aggregated from

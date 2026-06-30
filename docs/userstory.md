@@ -66,3 +66,13 @@ each pull into a running `results/corpus.json` (a 4-state dedup-merge stamping `
 Running `ingest --merge` also writes a local "what changed today" digest to `results/daily-summary.md`
 (new/changed/unchanged/delisted counts + new offers). Because it names companies/titles it stays
 **local-only** — never uploaded by CI or pushed to a branch (#175).
+
+## US7 — Keep my shortlist current
+
+As a candidate revisiting my search over time, I want offers that have been filled or closed flagged
+(or removed) from my shortlist, so it reflects what is still open instead of going stale.
+
+Accept: `ajoa-kit refresh [--lane <name>]` re-checks each `results/<lane>/shortlist.json` entry against
+the corpus `delisted` state and a read-only URL re-probe; dead offers are flagged `stale` by default
+(kept as an audit trail, hidden from the dashboard) or removed with `--delete`; an inconclusive probe
+(network error / timeout) never flags a live entry; `--dry-run` previews. See #214.
