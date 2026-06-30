@@ -94,6 +94,9 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 		rm -f "$$dst"
 		echo "preview: no real trends available -> synthetic fallback"
 	fi
+	# Real shortlist (PII) -> aggregate the per-lane results/<lane>/shortlist.json into the throwaway
+	# copy ONLY; never written to source ui/, never bundled by gh-pages.yaml (published stays synthetic).
+	uv run python scripts/build_ui_shortlist.py "$$site/public/data/shortlist.json"
 	echo "serving $$site -> http://localhost:$${PORT:-8000}/"
 	uv run python -m http.server "$${PORT:-8000}" --directory "$$site"
 

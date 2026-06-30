@@ -1,8 +1,9 @@
 // EyeRest dashboard shell — vanilla ES module, no build step.
-// Renders the synthetic shortlist from public/data/demo.json; the keyword-trends chart shows the
-// real aggregate series ({week,counts}, non-PII) fetched at RUNTIME from the deployment's own
-// `data` branch (see DATA_BASE_URL), falling back to the synthetic trends on any miss. Issue #11
-// skeleton; the live shortlist feed (pseudonymized) stays gated on #52.
+// Renders the synthetic shortlist from public/data/demo.json, OVERRIDDEN by a real LOCAL shortlist
+// (public/data/shortlist.json, bundled same-origin by `make preview`) when present — never published
+// (PII). The keyword-trends chart shows the real aggregate series ({week,counts}, non-PII) fetched at
+// RUNTIME from the deployment's own `data` branch (see DATA_BASE_URL), falling back to synthetic on a
+// miss. Issue #11 skeleton; the PUBLISHED shortlist feed (pseudonymized) stays gated on #52.
 
 // Trends load at runtime from the deployment's own `data` branch (mirrors qte77/analyze-stock-kpi) —
 // the data is never bundled into ui/. Auto-derive the base from the GitHub Pages origin so every
@@ -268,6 +269,21 @@ async function loadRealTrends() {
   return null;
 }
 
+// Load a real, LOCAL shortlist if `make preview` bundled one same-origin. The shortlist carries real
+// company/title/url (PII), so — UNLIKE the aggregate trends — it is NEVER fetched cross-origin / from
+// the `data` branch, and the gh-pages deploy bundles none: published stays synthetic, local shows real,
+// by construction. Absent / empty → the caller keeps demo.json's synthetic shortlist.
+async function loadRealShortlist() {
+  try {
+    const res = await fetch("public/data/shortlist.json");
+    if (!res.ok) return null;
+    const arr = await res.json();
+    return Array.isArray(arr) && arr.length ? arr : null;
+  } catch {
+    return null;
+  }
+}
+
 // Shared Chart.js builder for the two trends charts: resolves the canvas, pivots the records, and
 // re-reads the theme tokens each call (so a theme flip repaints). `dataset(color)` supplies the
 // per-series style and `scales(grid, tick)` the axes; `interaction` is line-only. Destroys `prev` only
@@ -411,6 +427,10 @@ async function init() {
   // present; the shortlist stays synthetic/local. Any miss keeps demo.json's synthetic trends.
   const realTrends = await loadRealTrends();
   if (realTrends) data.trends = realTrends;
+  // A real shortlist (results/<lane>/shortlist.json, aggregated into the throwaway copy by
+  // `make preview`) overrides the synthetic demo set LOCALLY; never present on gh-pages (PII).
+  const realShortlist = await loadRealShortlist();
+  if (realShortlist) data.shortlist = realShortlist;
   laneLabel = Object.fromEntries(data.lanes.map((l) => [l.key, l.label]));
 
   // Load the vendored markdown renderer (marked — no CDN) so the tailor packs read as formatted
