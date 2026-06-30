@@ -56,6 +56,17 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
   → BLOCKED.
 - **LinkedIn / Indeed** — `robots.txt` disallows `/jobs*` + `/api/*`, and the User Agreement / ToS bar
   automation (see research.md §Delivery) → paste-only, BLOCKED.
+- **Berlin Startup Jobs** (#212, 2026-06-30) — `berlinstartupjobs.com/feed/?cat=engineering-tech` RSS;
+  `robots.txt` allows `/feed` (GPTBot/ClaudeBot permitted, 10s crawl-delay); ToS §3.13 acknowledges
+  crawlers over public listings (only registered *customers* are barred from extraction scripts).
+  OK → shipped under `feeds`.
+- **2026-06-30 company batch** (#212) — 52 companies added on already-OK platforms (Greenhouse / Lever /
+  Ashby), each re-probed live (200 + roles); no new platform tiering needed. Excluded as not-automatable
+  or non-OK: **ai-jobs.net** (no public RSS/Atom/JSON feed — interactive CSV/JSON export only);
+  `euremotejobs` / `nodesk` (`ai-train=no`, `ClaudeBot Disallow: /`); `jobs.heise.de` / `jobs.t3n.de`
+  (whitelist-only `robots.txt`). High-fit companies reachable only on a non-OK ATS stay paste-only:
+  Klarna / Zalando (Workday), Hugging Face / Snyk (Workable), Cognigy (SmartRecruiters), DeepMind
+  (Google/Workday).
 
 ### Legal backbone
 
