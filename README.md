@@ -80,7 +80,8 @@ Workflow tool (`Workflow({…})`), so you'll need Claude Code installed as well 
 - **Run your own search.** Author your sources in `config/seed.json` and build your evidence library,
   then run the pipeline against real, public, no-auth JDs: ingest → chunk → relevance → tailor →
   ats-check. For recurring runs, `ajoa-kit ingest --merge` folds each pull into a running
-  `results/corpus.json` (the scheduled `ingest-daily.yaml` cron) so keyword trends accrue over time.
+  `results/corpus.json` (the scheduled `ingest-daily.yaml` cron) so keyword trends accrue over time;
+  `ajoa-kit refresh` flags filled/closed offers in your shortlists (or removes them with `--delete`).
 
 End-users: **[docs/quickstart.md](docs/quickstart.md)** narrates the full run end-to-end (prerequisites
 plus the keyword-trends and writing-style options). Contributors: **[CONTRIBUTING.md](CONTRIBUTING.md)**
