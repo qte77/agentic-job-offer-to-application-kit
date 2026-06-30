@@ -119,5 +119,5 @@ replace = '__version__ = "{new_version}"'
 
 [[tool.bumpversion.files]]
 filename = "README.md"
-search = "version-{current_version}-informational"
-replace = "version-{new_version}-informational"
+search = "version-{current_version}-blue"
+replace = "version-{new_version}-blue"
