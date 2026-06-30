@@ -25,6 +25,15 @@ information (PII) is ever published.
 Accept: `results/`, `library/`, `input/`, and real `config/` files are git-ignored; only
 the synthetic `examples/alexis-doe/` workspace is committed.
 
+## US3b — See my real shortlist locally
+
+As a candidate, I want the dashboard to show my **real** shortlist when I run it locally (not just the
+synthetic demo), while never publishing it, so I can review and filter my actual matches in one place.
+
+Accept: `make preview` aggregates `results/<lane>/shortlist.json` into a throwaway, same-origin file
+that `app.js` loads (`loadRealShortlist`); it is never committed, and `gh-pages.yaml` bundles no
+shortlist, so the deployed demo stays synthetic.
+
 ## US4 — Tailor per offer
 
 As a candidate, I want a tailored CV + cover letter + human-review prefill pack — plus a check of how

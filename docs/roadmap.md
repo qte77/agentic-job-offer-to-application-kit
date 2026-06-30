@@ -40,7 +40,8 @@
   re-deploys on `data`-branch pushes — no fragile cross-origin fetch); expandable shortlist rows that
   reveal the tailored CV + cover letter (demo `cv`/`cover_letter` in `demo.json`); a market-trends
   time-frame picker (All…1w); header Repo/Issues links; `make preview` serves a throwaway copy that
-  keeps real data out of the source `ui/`.
+  keeps real data out of the source `ui/` **and shows your real local shortlist** (#209 — aggregated
+  same-origin from `results/<lane>/shortlist.json`, never published).
 - AI issue-triage CI (`.github/workflows/issue-triage.yaml`): `qte77/gha-issue-triage` (SHA-pinned,
   GitHub Models, zero-secret) auto-labels newly opened issues.
 - Data-contract ADR (ADR-0003, #158): maps the typed vs untyped layer boundaries and sets the

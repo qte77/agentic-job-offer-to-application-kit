@@ -220,8 +220,9 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
 - **Built (dashboard UX + CI):** trends bundled **same-origin** at deploy (Pages re-deploys on
   `data`-branch pushes — no cross-origin fetch); expandable shortlist rows → tailored CV + cover
-  letter; a market-trends time-frame picker; Repo/Issues header links; `make preview` serves a
-  throwaway copy keeping real data out of the source `ui/`; AI issue-triage CI (`issue-triage.yaml`,
+  letter; **`make preview` shows your real local shortlist** (#209 — aggregated from
+  `results/<lane>/shortlist.json`, same-origin, never published); a market-trends time-frame picker;
+  Repo/Issues header links; `make preview` serves a throwaway copy keeping real data out of the source `ui/`; AI issue-triage CI (`issue-triage.yaml`,
   SHA-pinned, GitHub Models, zero-secret).
 - **Designed:** locale-aware document conventions (#12); `pseudonymize-text` PII gate (#52,
   belt-and-suspenders for the live dashboard data feed). #71 Vite intentionally not adopted (no-build).
