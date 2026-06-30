@@ -48,6 +48,27 @@ def test_shipped_default_seed_is_valid() -> None:
     assert all({"source", "url"} <= f.keys() for f in cfg["feeds"])
 
 
+def test_load_lanes_reads_override(tmp_path: Path) -> None:
+    (tmp_path / "lanes.json").write_text(
+        json.dumps([{"key": "ml", "label": "ML", "focus": "models", "gapHint": "research depth"}])
+    )
+    lanes = ingest.load_lanes(tmp_path)
+    assert [lane.key for lane in lanes] == ["ml"]
+    assert lanes[0].gap_hint == "research depth"  # the camelCase JSON alias maps to the field
+
+
+def test_load_lanes_falls_back_to_defaults_when_absent(tmp_path: Path) -> None:
+    assert ingest.load_lanes(tmp_path) is ingest.DEFAULT_LANES  # no lanes.json present
+
+
+def test_shipped_lanes_json_matches_in_code_defaults() -> None:
+    # The shipped config/lanes.json is the SSOT; DEFAULT_LANES is the in-code fallback that must
+    # mirror it (equality guards the two from silently drifting apart).
+    path = Path(__file__).resolve().parents[1] / "config" / "lanes.json"
+    shipped = [ingest.Lane.model_validate(e) for e in json.loads(path.read_text())]
+    assert shipped == ingest.DEFAULT_LANES
+
+
 def test_collect_warn_and_continues_on_failing_source() -> None:
     # A raising source (e.g. a non-200 -> FetchError, or a bad slug) is recorded in `failures`
     # and never aborts the run — the other sources still collect (run-level resilience).

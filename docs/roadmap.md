@@ -46,6 +46,10 @@
   GitHub Models, zero-secret) auto-labels newly opened issues.
 - Data-contract ADR (ADR-0003, #158): maps the typed vs untyped layer boundaries and sets the
   pydantic + JSON-Schema direction with a prioritized hardening backlog (decision only, no code).
+- Position-lane SSOT (#195): a tracked `config/lanes.json` (the canonical 7 lanes) loaded Python-side
+  by `ingest.load_lanes()` (pydantic `Lane`) and emitted via `ajoa-kit lanes --json` to pass the
+  relevance/evidence workflows as `cfg.lanes`; the two JS fallbacks now mirror it. The
+  `persist_scored` lane-membership check + `JobRecord` typing (the rest of ADR-0003) stay backlog.
 - UI theming converged on the qte77 brand (#112/#117): EyeRest tokens, `qte77-theme` storage key,
   system/light/dark cycle, `.sr-only` clip-path; Inter now served as WOFF2 (TTF fallback).
 - Governance safe-subset settled (#54, closed): selected-actions allowlist + full SHA-pinning
@@ -82,8 +86,8 @@
 - `pseudonymize-text` (#52, belt-and-suspenders) for the live dashboard data feed. #71 Vite not
   adopted — the dashboard stays no-build.
 - Data-contract typing (per ADR-0003): a `JobRecord` model + parse-on-read at the JD / relevance /
-  tailor boundaries, config-entry models, and a single `config/lanes.json` lane source (backlog
-  ranked in the ADR).
+  tailor boundaries, config-entry models, and the `persist_scored` lane-membership check against
+  `config/lanes.json` (the lane source itself shipped in #195). Backlog ranked in the ADR.
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
 - Broaden ingest reach: more JSON aggregators as their robots/ToS clear (jobicy/himalayas/remotive
   — #94 deferred follow-ups). Outlook (#109): slug-discovery from public board directories, and

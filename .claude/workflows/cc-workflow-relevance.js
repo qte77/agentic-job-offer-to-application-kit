@@ -42,10 +42,10 @@ const count = cfg.limitBatches ? Math.min(cfg.limitBatches, batchCount) : batchC
 const LIBRARY_PATH = cfg.libraryPath || `${rootDir}/results/evidence-library.json`
 const LIBRARY_INLINE = cfg.library || null
 
-// Honor cfg.lanes (the runtime SSOT, shared with cc-workflow-evidence-library.js) by deriving the
-// keys from it — so overriding lanes in one place can't desync the two workflows. The hardcoded list
-// is only the fallback default when no config is passed; keep it in sync with evidence-library's
-// fallback (the canonical {label,focus,gapHint} defs live there — see docs/architecture.md §Position lanes).
+// Honor cfg.lanes (the runtime SSOT) by deriving the keys from it — so overriding lanes in one place
+// can't desync the two workflows. CANONICAL lane defs live in config/lanes.json (#195); emit them
+// with `ajoa-kit lanes --json` and pass as args.lanes. The hardcoded list below is only the no-config
+// fallback (keep in sync with config/lanes.json — see docs/architecture.md §Position lanes).
 const LANES = (cfg.lanes && cfg.lanes.length)
   ? cfg.lanes.map((l) => l.key)
   : ['cxo', 'founding', 'engineering', 'ml', 'fde', 'cloud', 'architect']

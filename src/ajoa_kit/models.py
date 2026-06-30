@@ -8,7 +8,24 @@ Python-consumed, so always well-formed; it needs no guard.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class Lane(BaseModel):
+    """One position lane — the canonical lane definition (ADR-0003 lane SSOT).
+
+    The authoritative set lives in ``config/lanes.json`` and is loaded by
+    :func:`ajoa_kit.ingest.load_lanes`; the two JS workflow scripts carry an in-code copy only as a
+    no-config fallback. ``gap_hint`` uses the ``gapHint`` alias so a lane round-trips to the exact
+    ``{key,label,focus,gapHint}`` shape the workflows expect as ``args.lanes``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    key: str
+    label: str
+    focus: str
+    gap_hint: str = Field(alias="gapHint")
 
 
 class ScoredItem(BaseModel):
