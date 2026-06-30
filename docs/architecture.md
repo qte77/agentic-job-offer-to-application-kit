@@ -149,9 +149,12 @@ daily `ingest-daily` cron); the orphan `data` branch; gh-pages (the dashboard).
 
 ## Position lanes
 
-Five configurable lanes scored by the relevance screen. The default set (each with a focus and an
-honest gap note) is the `LANES` array in `cc-workflow-evidence-library.js` — the single source of
-truth — written into the evidence library.
+Seven configurable lanes scored by the relevance screen: `cxo`, `founding`, `engineering`, `ml`
+(applied AI / LLM apps / agentic), `fde` (forward-deployed / solutions), `cloud`, `architect`. The
+canonical default set (each with a focus and an honest gap note) is the `LANES` array in
+`cc-workflow-evidence-library.js`; `cc-workflow-relevance.js` derives its lane keys from the same
+`cfg.lanes` (falling back to a list kept in sync with that default) so the two workflows can't
+desync. `cfg.lanes` is the runtime single source of truth, written into the evidence library.
 
 ## Repo structure
 

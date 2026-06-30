@@ -42,9 +42,13 @@ const count = cfg.limitBatches ? Math.min(cfg.limitBatches, batchCount) : batchC
 const LIBRARY_PATH = cfg.libraryPath || `${rootDir}/results/evidence-library.json`
 const LIBRARY_INLINE = cfg.library || null
 
-// Lane keys only; the canonical lane definitions (label/focus/gapHint) live in
-// cc-workflow-evidence-library.js (see docs/architecture.md §Position lanes).
-const LANES = ['cxo', 'founding', 'engineering', 'cloud', 'architect']
+// Honor cfg.lanes (the runtime SSOT, shared with cc-workflow-evidence-library.js) by deriving the
+// keys from it — so overriding lanes in one place can't desync the two workflows. The hardcoded list
+// is only the fallback default when no config is passed; keep it in sync with evidence-library's
+// fallback (the canonical {label,focus,gapHint} defs live there — see docs/architecture.md §Position lanes).
+const LANES = (cfg.lanes && cfg.lanes.length)
+  ? cfg.lanes.map((l) => l.key)
+  : ['cxo', 'founding', 'engineering', 'ml', 'fde', 'cloud', 'architect']
 
 function pad(n) {
   return String(n).padStart(3, '0')
