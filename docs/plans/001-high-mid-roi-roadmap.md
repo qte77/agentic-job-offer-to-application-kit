@@ -21,8 +21,8 @@
 - **TDD red→green for MODULES only** (`src/ajoa_kit/*.py`). No tests for L3 workflow scripts
   (`.claude/workflows/*.js` → `node --check`), L4 `ui/`, Makefile/CI/`.gitignore` glue, `scripts/`
   glue, config JSON, docs.
-- Gates: `make check` (ruff line-length **100** + ruff-format + pyright `src/ajoa_kit` + complexipy ≤10
-  + offline pytest cov≥80) and `make docs-lint`.
+- Gates: `make check` (ruff line-length **100** + ruff-format + pyright `src/ajoa_kit` + complexipy ≤10 +
+  offline pytest cov≥80) and `make docs-lint`.
 - Docs/switches per issue: CHANGELOG (scriv fragment under `changelog.d/`, NOT lint-checked) · README ·
   architecture · roadmap · userstory · URL/env/CLI switches.
 
@@ -55,8 +55,8 @@
 - `src/ajoa_kit/trend_snapshot.py:279-280`: write to `public-data/` not `results/` (add
   `AppSettings.public_data_dir` / `AJOA_PUBLIC_DATA_DIR`). **MODULE → TDD** (output-path test, mirror
   `test_trend_snapshot.py:147` tmp_path+monkeypatch).
-- Glue (no test): Makefile `trends-data` (`:103` — `git add -f public-data/…` + tree-allowlist guard)
-  + `preview` (`:79`); `.github/workflows/gh-pages.yaml:61`; `ingest-daily.yaml:86`; `.gitignore`
+- Glue (no test): Makefile `trends-data` (`:103` — `git add -f public-data/…` + tree-allowlist guard) +
+  `preview` (`:79`); `.github/workflows/gh-pages.yaml:61`; `ingest-daily.yaml:86`; `.gitignore`
   add `public-data/`.
 - Docs: architecture (Data-layout, PII boundary `:145`, contracts), CONTRIBUTING (+env), CHANGELOG.
 
@@ -70,7 +70,7 @@
 
 Lower-priority items surfaced this session; batch into the relevant slice or a cleanup PR.
 
-**Quick wins**
+### Quick wins
 
 - **`!results/**` in the markdownlint-cli2 config** — its globs are `**/*.md` without excluding the
   git-ignored `results/`, so local `make docs-lint` fails on `results/` artifacts (CI is clean). One
@@ -78,13 +78,13 @@ Lower-priority items surfaced this session; batch into the relevant slice or a c
 - **#197** — `ScoredItem` `extra="ignore"` → `"allow"` (`src/ajoa_kit/models.py:25`): one line + one
   round-trip test in `tests/test_persist_scored.py`. MODULE → TDD.
 
-**Cleanups / deletions**
+### Cleanups / deletions
 
 - **Stale `#52` references** — `#52` is closed but still cited as an active gate in `docs/roadmap.md:81`
   and `docs/architecture.md:224` (the `app.js` header was fixed in #209). One-line sweep.
 - `docs/architecture.md` "Built" bullet now says "`make preview`" twice (the #209 edit) — cosmetic.
 
-**Enhancements**
+### Enhancements
 
 - **#209 v2** — attach `results/offers/<slug>/{cv,cover-letter}.md` to the local shortlist so the
   expand isn't empty for tailored offers. Full spec (files + the item→slug join via a shared
