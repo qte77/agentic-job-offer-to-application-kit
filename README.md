@@ -23,9 +23,9 @@ agent-agnostically so any coding agent can drive them.
    pass, writing-style/tone matching, and a human-review prefill pack (see docs/research.md §Delivery).
 
 Seven configurable **position lanes** (CxO/fractional · founding engineer · senior IC engineering ·
-applied-AI/ML · forward-deployed/solutions · cloud/DevOps/platform · architect) — see
-[docs/architecture.md §Position lanes](docs/architecture.md#position-lanes). Cost model: cheap
-pre-filter → LLM relevance → tailor only the shortlist.
+applied-AI/ML · forward-deployed/solutions · cloud/DevOps/platform · architect), defined in
+`config/lanes.json` — see [docs/architecture.md §Position lanes](docs/architecture.md#position-lanes).
+Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
 
 <details>
 <summary>Screenshot — shortlist (first offer expanded to its tailored CV + cover letter)</summary>

@@ -7,6 +7,7 @@ Usage::
     ajoa-kit persist <workflow-result.json>
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
     ajoa-kit ats-check <cv.md>
+    ajoa-kit lanes [--json]
     ajoa-kit style [--json]
     ajoa-kit prefill-fields [--ats greenhouse --slug S --job-id ID]
     ajoa-kit probe
@@ -65,6 +66,22 @@ def _style(args: argparse.Namespace) -> None:
     from ajoa_kit.style import main as run
 
     run(config_dir=AppSettings().config_dir, as_json=args.json)
+
+
+def _lanes(args: argparse.Namespace) -> None:
+    """Emit the position lanes (config/lanes.json) as the workflow `lanes` arg."""
+    import json
+
+    from ajoa_kit.ingest import load_lanes
+    from ajoa_kit.settings import AppSettings
+
+    lanes = load_lanes(AppSettings().config_dir)
+    if args.json:
+        payload = [lane.model_dump(by_alias=True) for lane in lanes]
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return
+    for lane in lanes:
+        print(f"{lane.key}\t{lane.label}")
 
 
 def _prefill_fields(args: argparse.Namespace) -> None:
@@ -136,6 +153,16 @@ def main() -> None:
         "--json", action="store_true", help="Emit the workflow `style` arg object."
     )
     style_p.set_defaults(func=_style)
+
+    lanes_p = sub.add_parser(
+        "lanes", help="Emit position lanes (config/lanes.json) as the workflow lanes arg (#195)."
+    )
+    lanes_p.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the JSON `args.lanes` payload (else a key->label list).",
+    )
+    lanes_p.set_defaults(func=_lanes)
 
     prefill_p = sub.add_parser(
         "prefill-fields",

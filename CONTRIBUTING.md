@@ -56,6 +56,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `persist` | `FILE` — the relevance workflow result |
 | `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` |
 | `ats-check` | `FILE` — a CV markdown file |
+| `lanes` | `--json` — emit the workflow `lanes` arg from `config/lanes.json` (the canonical 7 lanes) |
 | `style` | `--json` — emit the tailor `style` arg from `config/style.json` |
 | `prefill-fields` | `--ats <name> --slug <board> --job-id <id>` (Greenhouse schema lookup) |
 | `probe` | — (probe candidate slugs across ATS platforms) |

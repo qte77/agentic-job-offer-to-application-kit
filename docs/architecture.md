@@ -100,13 +100,15 @@ built).
 | `must_haves` | tailor.js / `coverage.py` | JSON-Schema (JS) → dict (Py) | tailor → coverage | `coverage-report.md` |
 | Evidence library `LIB` | `cc-workflow-evidence-library.js` | JSON-Schema (JS) | Stage 1 → relevance / tailor | `results/evidence-library.json` |
 | App settings | `settings.AppSettings` | **pydantic-settings** | every entry point | — (env / cwd) |
+| Position lanes | `ingest.load_lanes` / `models.Lane` | **pydantic** | human → relevance / evidence (`cfg.lanes`) | `config/lanes.json` |
 | seed / keywords / style | `ingest.load_sources` / `load_keywords`, `style.StyleBrief` | untyped / `@dataclass` | human → ingest / tailor | `config/*.json` |
 
-**Typed today:** `AppSettings`, `WeekCounts` (write). **JS-schema'd at the `agent()` boundary but
-untyped on Python re-read:** shortlist, offer pack, `must_haves`, evidence library. **Untyped:** the
-JD/corpus records (the highest-volume boundary), batches, and the config files. ADR-0003 ranks the
-hardening: `JobRecord` → `ScoredResult` (+ lane-membership check) → shared `must_haves` model →
-config-entry models → a single `config/lanes.json`.
+**Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` (config). **JS-schema'd at the `agent()`
+boundary but untyped on Python re-read:** shortlist, offer pack, `must_haves`, evidence library.
+**Untyped:** the JD/corpus records (the highest-volume boundary), batches, and the remaining config
+files. ADR-0003 ranks the hardening: `JobRecord` → `ScoredResult` (+ lane-membership check) → shared
+`must_haves` model → config-entry models. The single `config/lanes.json` lane source shipped (#195 —
+pydantic `Lane` + `load_lanes`); the `persist_scored` lane-membership check against it is still pending.
 
 ## Patterns
 
@@ -119,7 +121,8 @@ config-entry models → a single `config/lanes.json`.
 - **Dispatch tables** — `ingest.ATS` / `ingest.AGGREGATORS` map a source-type string to its adapter;
   `load_sources` drives them from the seed.
 - **Config-overridable vocabulary** — `ingest.load_keywords` reads `config/keywords.json` or falls back
-  to module constants; `trend_snapshot` reuses it.
+  to module constants; `trend_snapshot` reuses it. `ingest.load_lanes` follows the same shape
+  (`config/lanes.json` → `DEFAULT_LANES`).
 - **Upsert-by-key** — `corpus.merge_corpus` (by JD `id`, four states) and `trend_snapshot.upsert_week`
   (by ISO week) replace in place while preserving the rest.
 - **Record factory** — `ingest.record()` is the single fixed-shape dict every adapter emits
@@ -151,10 +154,12 @@ daily `ingest-daily` cron); the orphan `data` branch; gh-pages (the dashboard).
 
 Seven configurable lanes scored by the relevance screen: `cxo`, `founding`, `engineering`, `ml`
 (applied AI / LLM apps / agentic), `fde` (forward-deployed / solutions), `cloud`, `architect`. The
-canonical default set (each with a focus and an honest gap note) is the `LANES` array in
-`cc-workflow-evidence-library.js`; `cc-workflow-relevance.js` derives its lane keys from the same
-`cfg.lanes` (falling back to a list kept in sync with that default) so the two workflows can't
-desync. `cfg.lanes` is the runtime single source of truth, written into the evidence library.
+canonical set (each with a focus and an honest gap note) lives in **`config/lanes.json`** — the
+cross-runtime single source of truth (#195). Python loads it via `ingest.load_lanes()` (pydantic
+`Lane`); `ajoa-kit lanes --json` emits the payload to pass the relevance/evidence workflows as
+`cfg.lanes`, so one file feeds both runtimes. The two JS scripts keep an in-code `LANES` array only as
+a no-config fallback that mirrors the file (`cc-workflow-relevance.js` derives just the keys).
+`cfg.lanes` remains the runtime SSOT, written into the evidence library.
 
 ## Repo structure
 
@@ -188,9 +193,9 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 
 - `config/` — inputs you author (`seed.json`, optional `style.json` / `keywords.json`); git-ignored
   **except** the tracked, PII-free `config/default-seed.json` (the shipped, ToS-vetted default
-  source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)). Your
-  `config/seed.json` overrides it when present; absent it,
-  ingest falls back to the default.
+  source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)) and
+  `config/lanes.json` (the canonical position lanes, #195). Your `config/seed.json` overrides the
+  default-seed when present; absent it, ingest falls back to the default.
 - `results/` — everything generated (`jobs-raw.json`, `corpus.json`, `daily-summary.md`,
   `trends.ndjson`, `<lane>/shortlist.*`, `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`). The
   `daily-summary.md` digest (#175) names companies/titles → **local-only**, never a CI artifact or branch.

@@ -46,6 +46,9 @@ const ACCOUNT = cfg.account || 'the candidate'
 const PROFILE_REPO = cfg.profileRepo || ''
 const LEAN_AWAY = cfg.leanAwayFrom || ''
 const MAX_PROJECTS = cfg.maxProjects || 22
+// CANONICAL lane defs live in config/lanes.json (the cross-runtime SSOT, #195) — emit them with
+// `ajoa-kit lanes --json` and pass as args.lanes. The array below is only the no-config fallback
+// (keep in sync with config/lanes.json — see docs/architecture.md §Position lanes).
 const LANES = (cfg.lanes && cfg.lanes.length) ? cfg.lanes : [
   { key: 'cxo', label: '(fractional) CxO — fractional CTO / Chief AI Officer / technical advisor', focus: 'early-stage leadership; reframe breadth as a product/systems-level asset', gapHint: 'no evidence of leading people / teams' },
   { key: 'founding', label: 'founding engineer / first technical hire', focus: '0->1 startup; breadth, autonomy, ship end-to-end solo, set up practice from zero', gapHint: 'scaling / team-leadership experience' },
