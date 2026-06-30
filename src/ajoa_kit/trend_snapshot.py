@@ -1,7 +1,7 @@
 """Keyword-only job-market trend snapshot (#11 PR-A).
 
 Derives aggregate keyword-frequency records from the ingested corpus into two series.
-``results/trends-daily.ndjson`` holds ``{date, counts}``; ``results/trends.ndjson`` holds
+``public-data/trends-daily.ndjson`` holds ``{date, counts}``; ``public-data/trends.ndjson`` holds
 ``{week, counts}``, **rolled up from the daily buckets** so the two can't disagree. It prefers the
 #164 incremental ``results/corpus.json`` bucketed by each JD's ``first_seen`` (the field we control
 and always populate), else falls back to ``results/jobs-raw.json`` with the less-reliable
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 class WeekCounts(BaseModel):
     """One ISO week's aggregate keyword frequencies — the publishable trends contract.
 
-    The single typed shape written to ``results/trends.ndjson`` and read by the dashboard's pivot
+    The single typed shape written to ``public-data/trends.ndjson``, read by the dashboard's pivot
     layer: ``{week, counts}`` where ``counts`` is ``{keyword: document-frequency}``. No JD content,
     company, title, or per-posting row ever appears here (ADR-0001 PII gate).
     """
@@ -53,7 +53,7 @@ class WeekCounts(BaseModel):
 class DayCounts(BaseModel):
     """One ISO calendar day's aggregate keyword frequencies — the daily-granularity trends contract.
 
-    The typed shape written to ``results/trends-daily.ndjson``: ``{date, counts}`` (``YYYY-MM-DD``).
+    Written to ``public-data/trends-daily.ndjson`` as ``{date, counts}`` (``YYYY-MM-DD``).
     Same keyword-only, no-PII guarantee as :class:`WeekCounts`; weeks are summed from these days.
     """
 
@@ -255,7 +255,7 @@ def upsert_day(path: Path, date: str, counts: dict[str, int]) -> None:
 
 
 def main() -> None:
-    """Backfill per-ISO-week and per-day keyword frequencies into results/trends{,-daily}.ndjson.
+    """Backfill per-ISO-week and per-day keyword frequencies to public-data/trends{,-daily}.ndjson.
 
     Buckets the corpus by day **once** (the deduped, finest-grained series) and rolls weeks up from
     it (:func:`weekly_from_daily`), so the two series can't disagree. Prefers the #164 incremental
@@ -276,8 +276,12 @@ def main() -> None:
     pat_interest, _ = build_patterns(interest, title_roles)
     days, skipped = bucket_by_day(jobs, pat_interest, date_of=date_of)
     weeks = weekly_from_daily(days)
-    weekly_path = results / "trends.ndjson"
-    daily_path = results / "trends-daily.ndjson"
+    # Inputs stay under results/ (PII); the publishable aggregates go to public-data/ (#210) so the
+    # PII dir is never the source of anything that reaches the data branch.
+    public_data = settings.public_data_dir
+    public_data.mkdir(parents=True, exist_ok=True)
+    weekly_path = public_data / "trends.ndjson"
+    daily_path = public_data / "trends-daily.ndjson"
     for week, counts in weeks.items():
         upsert_week(weekly_path, week, counts)
     for day, counts in days.items():

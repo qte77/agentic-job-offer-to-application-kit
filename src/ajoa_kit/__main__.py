@@ -206,7 +206,7 @@ def main() -> None:
 
     sub.add_parser(
         "trend-snapshot",
-        help="Snapshot keyword-only trends from results/jobs-raw.json into results/trends.ndjson.",
+        help="Snapshot keyword-only trends from the corpus into public-data/trends.ndjson.",
     ).set_defaults(func=_trend_snapshot)
 
     args = parser.parse_args()

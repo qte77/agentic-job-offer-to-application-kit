@@ -22,7 +22,7 @@ on:
     paths:
       - 'ui/**'
       - '.github/workflows/gh-pages.yaml'
-      - 'results/trends.ndjson'  # the `data` branch's only file → redeploy on trends refresh
+      - 'public-data/trends.ndjson'  # the `data` branch's only file → redeploy on trends refresh
   workflow_dispatch:
 
 permissions: {}
@@ -59,7 +59,7 @@ jobs:
           # dashboard loads them SAME-ORIGIN — no cross-origin runtime fetch to raw.githubusercontent
           # (rate-limited / blocked by some networks & extensions -> silent synthetic fallback).
           if git fetch --depth=1 origin data 2>/dev/null \
-            && git show origin/data:results/trends.ndjson > "$site/public/data/trends.ndjson" 2>/dev/null; then
+            && git show origin/data:public-data/trends.ndjson > "$site/public/data/trends.ndjson" 2>/dev/null; then
             echo "bundled $(wc -l < "$site/public/data/trends.ndjson") trend records from the data branch"
           else
             rm -f "$site/public/data/trends.ndjson"

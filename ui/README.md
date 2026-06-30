@@ -12,7 +12,7 @@ same-origin `public/data/shortlist.json` that `app.js` (`loadRealShortlist`) loa
 That real shortlist is **never committed and never published** — `gh-pages.yaml` bundles none, so the
 deployed demo stays synthetic. The **market-trends** chart shows the *real* aggregate series
 (`{week, counts}`, non-PII) fetched at **runtime** from this deployment's own `data` branch
-(`raw.githubusercontent.com/<owner>/<repo>/data/results/trends.ndjson`, auto-derived from the Pages
+(`raw.githubusercontent.com/<owner>/<repo>/data/public-data/trends.ndjson`, auto-derived from the Pages
 origin so every fork self-hosts; `?base=` overrides), **never bundled into `ui/`** — falling back to
 the synthetic trends on any miss. The *published* shortlist feed (pseudonymized) stays gated on the PII
 helper ([issue #52][i52], [issue #11][i11]) per
@@ -41,17 +41,17 @@ the published site at deploy time so the live charts load them **same-origin** (
 cross-origin runtime fetch). Refresh them by generating locally and pushing to that branch:
 
 ```bash
-uv run ajoa-kit trend-snapshot   # results/jobs-raw.json -> results/trends.ndjson (by posted week)
-make trends-data                 # push results/trends.ndjson -> the `data` branch
+uv run ajoa-kit trend-snapshot   # results/jobs-raw.json -> public-data/trends.ndjson (by posted week)
+make trends-data                 # push public-data/trends.ndjson -> the `data` branch
 ```
 
 `make preview` serves a **throwaway copy** of `ui/` with the real trends injected into it (mirroring
 the deploy) — so the **local** dashboard shows real data same-origin while the source `ui/` stays
-**data-free**. Offline-first: it prefers a local `results/trends.ndjson` or `data`-branch ref and only
+**data-free**. Offline-first: it prefers a local `public-data/trends.ndjson` or `data`-branch ref and only
 fetches as a last resort. `?base=<raw-url>` still forces a specific cross-origin source.
 
 `?base=` takes a **raw base URL** — e.g. `https://raw.githubusercontent.com/<owner>/<repo>/<branch>`,
-to which `/results/trends.ndjson` is appended. To point the dashboard at a different branch or fork,
+to which `/public-data/trends.ndjson` is appended. To point the dashboard at a different branch or fork,
 set the branch segment in that URL (there is no separate `?branch=` switch — the branch lives in the
 `?base=` value).
 
@@ -75,7 +75,7 @@ set the branch segment in that URL (there is no separate `?branch=` switch — t
 | `src/app.js` | Shortlist render + filter + expandable rows (tailored CV + cover letter), tab switching, Chart.js line + stacked bars with a time-frame window, same-origin trends loading (rebuilt on `themechange`) |
 | `src/theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
 | `public/data/demo.json` | Synthetic demo data — shortlist (Tab A) + fallback trends as `{week,counts}[]` records (Tab B) |
-| *(real trends)* | Not in `ui/` — fetched at runtime from the repo's `data` branch (`results/trends.ndjson`); refresh via `make trends-data` |
+| *(real trends)* | Not in `ui/` — fetched at runtime from the repo's `data` branch (`public-data/trends.ndjson`); refresh via `make trends-data` |
 | `public/favicon.svg` | qte77 brand mark (adaptive light/dark) — same as `paperverse` |
 | `public/vendor/` | Vendored Chart.js + Inter font TTFs (see [public/vendor/README.md](public/vendor/README.md)) |
 | `tests/` | Folder-parity placeholder (`.gitkeep`); no JS test runner — Python modules are the tested surface |
