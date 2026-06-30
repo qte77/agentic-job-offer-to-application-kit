@@ -66,6 +66,35 @@
   `uses: qte77/.github/.github/workflows/{bump-version,tag-release,publish}.yml@<SHA>` (mirror
   `lint-md-links.yml:17`; pin full SHA). actionlint, no test.
 
+## Backlog (post-run review — fold-ins)
+
+Lower-priority items surfaced this session; batch into the relevant slice or a cleanup PR.
+
+**Quick wins**
+
+- **`!results/**` in the markdownlint-cli2 config** — its globs are `**/*.md` without excluding the
+  git-ignored `results/`, so local `make docs-lint` fails on `results/` artifacts (CI is clean). One
+  line; makes local docs-lint trustworthy again.
+- **#197** — `ScoredItem` `extra="ignore"` → `"allow"` (`src/ajoa_kit/models.py:25`): one line + one
+  round-trip test in `tests/test_persist_scored.py`. MODULE → TDD.
+
+**Cleanups / deletions**
+
+- **Stale `#52` references** — `#52` is closed but still cited as an active gate in `docs/roadmap.md:81`
+  and `docs/architecture.md:224` (the `app.js` header was fixed in #209). One-line sweep.
+- `docs/architecture.md` "Built" bullet now says "`make preview`" twice (the #209 edit) — cosmetic.
+
+**Enhancements**
+
+- **#209 v2** — attach `results/offers/<slug>/{cv,cover-letter}.md` to the local shortlist so the
+  expand isn't empty for tailored offers. Full spec (files + the item→slug join via a shared
+  `persist_offer` slug helper → module logic → TDD) is in the
+  [#209 comment](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/209#issuecomment-4844914822).
+  Build only if the local expand is actually used.
+- Reconsider the `config/*` `git add -f` friction (post-#213): if hand-editing the seed / `lanes.json`
+  annoys, re-add just `!/config/default-seed.json` (+ `!/config/lanes.json`) — buys it back for two
+  files without resurrecting the full re-include dance.
+
 ## Gotchas
 
 - `config/default-seed.json` (and future `config/lanes.json`) are tracked-but-gitignored after #213 →
