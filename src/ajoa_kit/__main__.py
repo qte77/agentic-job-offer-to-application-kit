@@ -6,6 +6,7 @@ Usage::
     ajoa-kit chunk [--batch-size N]
     ajoa-kit persist <workflow-result.json>
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
+    ajoa-kit refresh [--lane NAME] [--delete] [--dry-run]
     ajoa-kit ats-check <cv.md>
     ajoa-kit lanes [--json]
     ajoa-kit style [--json]
@@ -105,6 +106,13 @@ def _trend_snapshot(_args: argparse.Namespace) -> None:
     run()
 
 
+def _refresh(args: argparse.Namespace) -> None:
+    """Reconcile per-lane shortlists: flag (or --delete) filled/closed offers (#214)."""
+    from ajoa_kit.refresh import main as run
+
+    run(lane=args.lane, delete=args.delete, dry_run=args.dry_run)
+
+
 def main() -> None:
     """Parse the chosen subcommand and run the matching L1 pipeline step."""
     parser = argparse.ArgumentParser(
@@ -141,6 +149,19 @@ def main() -> None:
     offer_p.add_argument("file", metavar="FILE", help="Path to workflow-result.json.")
     offer_p.add_argument("--slug", default=None, help="Offer slug (default: pack slug/id).")
     offer_p.set_defaults(func=_persist_offer)
+
+    refresh_p = sub.add_parser(
+        "refresh",
+        help="Flag (or --delete) shortlist offers that are filled/closed (#214).",
+    )
+    refresh_p.add_argument("--lane", default=None, help="Only this lane (default: all buckets).")
+    refresh_p.add_argument(
+        "--delete", action="store_true", help="Remove stale rows instead of flagging them."
+    )
+    refresh_p.add_argument(
+        "--dry-run", action="store_true", help="Report what would change without writing."
+    )
+    refresh_p.set_defaults(func=_refresh)
 
     ats_p = sub.add_parser(
         "ats-check", help="Check a CV markdown file for ATS parse-safety (non-zero if unsafe)."

@@ -50,6 +50,11 @@
   by `ingest.load_lanes()` (pydantic `Lane`) and emitted via `ajoa-kit lanes --json` to pass the
   relevance/evidence workflows as `cfg.lanes`; the two JS fallbacks now mirror it. The
   `persist_scored` lane-membership check + `JobRecord` typing (the rest of ADR-0003) stay backlog.
+- Shortlist liveness (#214): `ajoa-kit refresh [--lane <name>] [--delete] [--dry-run]` reconciles each
+  `results/<lane>/shortlist.json` against the corpus `delisted` state + a read-only URL re-probe,
+  flagging dead offers `stale` (dashboard-hidden) or removing them; an inconclusive probe never expires
+  a live entry. The cheap new-offer **delta-screen** (`chunk --new` + `persist --merge`) stays the
+  tracked follow-up.
 - UI theming converged on the qte77 brand (#112/#117): EyeRest tokens, `qte77-theme` storage key,
   system/light/dark cycle, `.sr-only` clip-path; Inter now served as WOFF2 (TTF fallback).
 - Governance safe-subset settled (#54, closed): selected-actions allowlist + full SHA-pinning

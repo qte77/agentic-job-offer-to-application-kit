@@ -15,11 +15,16 @@ import sys
 
 
 def aggregate(results_glob: str = "results/*/shortlist.json") -> list[dict]:
-    """Flatten per-lane shortlist arrays into one list, ordered by source path."""
+    """Flatten per-lane shortlist arrays into one list, ordered by source path.
+
+    Skips entries the refresh sweep flagged ``stale`` (#214) so the dashboard never shows a
+    filled/closed offer; the flagged row stays in ``results/<lane>/shortlist.json`` (audit trail).
+    """
     return [
         item
         for path in sorted(glob.glob(results_glob))
         for item in json.loads(pathlib.Path(path).read_text())
+        if not item.get("stale")
     ]
 
 
