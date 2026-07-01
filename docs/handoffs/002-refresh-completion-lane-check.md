@@ -37,3 +37,19 @@ green (`gh pr merge <n> --squash --admin --delete-branch`) → sync `main`.
 - Local `make docs-lint` fails on `results/**` artifacts until #227b lands — verify a changed `.md`
   alone with `markdownlint-cli2 --no-globs <file>`.
 - Flaky `lint / links` (lychee) → `gh run rerun <run-id> --failed`, then merge. ruff line-length 100.
+
+## Touch points (current state)
+
+Target signatures + the delta algorithm are in the [plan](../plans/002-refresh-completion-lane-check.md);
+this table is only the **current-state** anchor, so a resuming agent verifies known points instead of
+re-mapping. Paths + symbols, no line numbers (they drift) — verify before editing.
+
+| Slice | File | Current state to verify against |
+|---|---|---|
+| #226 | `src/ajoa_kit/chunk.py` | `main(batch=DEFAULT_BATCH=40)`, reads `results/jobs-raw.json` wholesale, single func, no delta. `chunk.main(batch=40)` is called by keyword in `tests/test_e2e_pipeline.py` → a keyword-only `new` stays back-compat. |
+| #226 | `src/ajoa_kit/persist_scored.py` | `main(src=None)`; `write_lane(lane, items, results_dir)` already shared with `refresh.py`; `write_shortlists` full-overwrites via `by_lane.setdefault(best_lane or "unsorted", …)`; no `merge_shortlists` yet. `ScoredItem` (`models.py`) is `extra="ignore"`, union key = `id`. |
+| #226 | `src/ajoa_kit/__main__.py` | `_chunk`→`run(batch=…)`, `_persist`→`run(src=…)`; `chunk` parser has only `--batch-size`, `persist` only positional `FILE`. |
+| #226 | `results/corpus.json` | records carry `first_seen`/`last_seen`/`content_hash` (`corpus.py::merge_corpus`); flat JSON array. |
+| #226 | tests | **`tests/test_chunk.py` does not exist** (only indirect e2e coverage) — the two delta tests create it. `tests/test_persist_scored.py` has `_item`/`_run` helpers (`AJOA_RESULTS_DIR` + `tmp_path`/`capsys`). |
+| #195a | `src/ajoa_kit/ingest.py` | `load_lanes(config_dir) -> list[Lane]` (extract `{ln.key for …}`); `config/lanes.json` = cxo/founding/engineering/ml/fde/cloud/architect; **not yet imported by `persist_scored.py`**. |
+| #227b | `.markdownlint-cli2.jsonc` (root) | `ignores` = node_modules/.git/.venv/changelog.d — add `"results/**"`. |
