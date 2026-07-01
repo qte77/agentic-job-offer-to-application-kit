@@ -172,6 +172,11 @@ a **full relevance re-run** to re-bucket — there is no correct "incrementally 
 complement: it keeps a lane's *existing* shortlist current (flags/expires filled-or-closed offers via
 the corpus `delisted` state + a read-only URL re-probe) but never re-buckets.
 
+The incremental screen `ajoa-kit chunk --new` → relevance → `persist --merge` (#226) is the *inbound*
+complement: `chunk --new` batches only offers first seen in the latest pull
+(`first_seen == max(last_seen)` in the corpus) and `persist --merge` unions them by id into the
+existing shortlists — new offers into current lanes, never a re-bucket.
+
 ## Repo structure
 
 ```text

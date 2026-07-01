@@ -12,13 +12,34 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import TYPE_CHECKING
 
 from ajoa_kit.settings import AppSettings
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 DEFAULT_BATCH = 40
 
 
-def main(batch: int = DEFAULT_BATCH) -> None:
+def _new_offers(results: Path) -> list[dict]:
+    """Return the corpus records first seen in the latest pull — the #226 incremental delta.
+
+    The most recent pull date is ``max(last_seen)`` across ``results/corpus.json``; an offer is
+    *new* when its ``first_seen`` equals that date (mirrors
+    :func:`ajoa_kit.corpus.summarize_changes`). v1 batches first-seen-new only; re-screening
+    ``changed`` records is a noted follow-up.
+    """
+    corpus_path = results / "corpus.json"
+    if not corpus_path.is_file():
+        msg = "no results/corpus.json — run `ajoa-kit ingest --merge` before `chunk --new`."
+        raise FileNotFoundError(msg)
+    corpus = json.loads(corpus_path.read_text())
+    latest = max(rec["last_seen"] for rec in corpus)
+    return [rec for rec in corpus if rec["first_seen"] == latest]
+
+
+def main(batch: int = DEFAULT_BATCH, *, new: bool = False) -> None:
     """Split the ingested corpus into fixed-size batch files plus a manifest.
 
     Args:
@@ -26,9 +47,12 @@ def main(batch: int = DEFAULT_BATCH) -> None:
             ``--batch-size`` argument is passed here; when invoked directly as
             ``python -m ajoa_kit.chunk [N]`` the module-level ``if __name__``
             block reads ``sys.argv[1]`` and passes it in.
+        new: When true, batch only the latest-pull delta from ``results/corpus.json``
+            (offers whose ``first_seen`` equals the most recent ``last_seen``) for an
+            incremental re-screen (#226), instead of the full ``results/jobs-raw.json``.
     """
     results = AppSettings().results_dir
-    jobs = json.loads((results / "jobs-raw.json").read_text())
+    jobs = _new_offers(results) if new else json.loads((results / "jobs-raw.json").read_text())
     out = results / "batches"
     out.mkdir(parents=True, exist_ok=True)
     for stale in out.glob("batch-*.json"):  # clear previous run
