@@ -9,11 +9,16 @@
 #     research.md §Delivery (the Cybercrime Directive ELI permalink and the EDPB
 #     legitimate-interest guidelines). Both return 403 to datacenter/CI-runner IPs (bot
 #     protection) while resolving fine for humans; they are stable institutional references.
+#   - developers.ashbyhq.com/reference — Ashby's API-explorer /reference/ pages are a
+#     readme.io SPA that returns 404 to non-browser HTTP clients (lychee, WebFetch) while
+#     rendering fine for humans; the applicationForm.submit citation in research.md §Delivery
+#     is valid. Ashby's /docs/ pages resolve normally and stay checked.
 exclude = [
     "^https://example\\.com/",
     "^https://github\\.com/.*/security/advisories/new$",
     "^https://eur-lex\\.europa\\.eu/",
     "^https://(www\\.)?edpb\\.europa\\.eu/",
+    "^https://developers\\.ashbyhq\\.com/reference/",
 ]
 
 # Git-ignored local artifact dirs (absent in a CI checkout; excluded so a local
