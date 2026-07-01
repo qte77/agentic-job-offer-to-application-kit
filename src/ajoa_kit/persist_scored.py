@@ -113,8 +113,40 @@ def write_shortlists(rel: list[dict], results_dir: Path) -> dict[str, int]:
     return {k: len(v) for k, v in by_lane.items()}
 
 
-def main(src: Path | None = None) -> None:
-    """Write scored artifacts to results/; src defaults to sys.argv[1] when called directly."""
+def _union_by_id(existing: list[dict], incoming: list[dict]) -> list[dict]:
+    """Union two scored-item lists by ``id`` — existing kept, incoming (re-scored) wins on a tie."""
+    by_id = {j.get("id"): j for j in existing}
+    for j in incoming:
+        by_id[j.get("id")] = j
+    return list(by_id.values())
+
+
+def merge_shortlists(rel: list[dict], results_dir: Path) -> dict[str, int]:
+    """Union ``rel`` by id into each existing per-lane bucket, then rewrite it (#226 ``--merge``).
+
+    Only lanes present in ``rel`` are touched — a lane absent from this delta is left as-is. Groups
+    by ``best_lane`` with the same ``or "unsorted"`` routing as :func:`write_shortlists`, reads the
+    existing ``results/<lane>/shortlist.json`` (empty if new), and reuses :func:`write_lane`.
+    """
+    by_lane: dict[str, list[dict]] = {}
+    for j in rel:
+        by_lane.setdefault(j.get("best_lane") or "unsorted", []).append(j)
+    counts: dict[str, int] = {}
+    for lane, incoming in by_lane.items():
+        path = results_dir / lane / "shortlist.json"
+        existing = json.loads(path.read_text()) if path.is_file() else []
+        merged = _union_by_id(existing, incoming)
+        write_lane(lane, merged, results_dir)
+        counts[lane] = len(merged)
+    return counts
+
+
+def main(src: Path | None = None, *, merge: bool = False) -> None:
+    """Write scored artifacts to results/; src defaults to sys.argv[1] when called directly.
+
+    With ``merge`` (the #226 incremental re-screen), the scored delta is unioned by id into the
+    existing per-lane buckets and ``jobs-scored.json`` ``relevant`` rather than overwriting them.
+    """
     if src is None:
         src = Path(sys.argv[1])
     settings = AppSettings()
@@ -123,10 +155,15 @@ def main(src: Path | None = None) -> None:
     rel, dropped = parse_relevant(data)  # parse-on-read: fail loud on a non-result; drop bad items
     for j in rel:
         j["url"] = canonical_url(j.get("url", ""))
-    data["relevant"] = rel
     results.mkdir(parents=True, exist_ok=True)
-    (results / "jobs-scored.json").write_text(json.dumps(data, indent=2, ensure_ascii=False))
-    by_lane = write_shortlists(rel, results_dir=results)
+    scored = results / "jobs-scored.json"
+    if merge and scored.is_file():
+        prior_rel = json.loads(scored.read_text()).get("relevant", [])
+        data["relevant"] = _union_by_id(prior_rel, rel)
+    else:
+        data["relevant"] = rel
+    scored.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+    by_lane = merge_shortlists(rel, results) if merge else write_shortlists(rel, results)
     unlaned = sum(1 for j in rel if not j.get("best_lane"))
     summary = ", ".join(f"{k}={v}" for k, v in sorted(by_lane.items()))
     print(

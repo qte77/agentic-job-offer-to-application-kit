@@ -73,8 +73,20 @@ aggregate keyword trends to the `data` branch. `--merge` leaves `results/jobs-ra
 
 ## Keep a shortlist current (optional)
 
-Offers get filled or closed, so a shortlist goes stale. After re-running `ingest --merge`,
-reconcile it:
+Two halves keep a standing shortlist fresh after a re-ingest: **screen the newly-seen offers** into
+it, then **reconcile the stale ones** out.
+
+Screen only the offers first seen in the latest pull (cheap — skips everything already scored) and
+union them into the existing shortlists without clobbering:
+
+```bash
+POLYFETCH_DIR=../polyfetch-scrape uv run ajoa-kit ingest --merge   # updates results/corpus.json
+uv run ajoa-kit chunk --new                                       # batch only the corpus.json delta
+# relevance (Workflow tool) over the delta batches; save the result, then:
+uv run ajoa-kit persist --merge <relevance-output.json>           # union by id into shortlists
+```
+
+Then reconcile — offers get filled or closed, so a shortlist goes stale:
 
 ```bash
 uv run ajoa-kit refresh --lane engineering --dry-run   # report what would be flagged

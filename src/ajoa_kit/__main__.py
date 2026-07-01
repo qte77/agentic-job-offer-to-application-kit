@@ -3,8 +3,8 @@
 Usage::
 
     ajoa-kit ingest
-    ajoa-kit chunk [--batch-size N]
-    ajoa-kit persist <workflow-result.json>
+    ajoa-kit chunk [--batch-size N] [--new]
+    ajoa-kit persist <workflow-result.json> [--merge]
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
     ajoa-kit refresh [--lane NAME] [--delete] [--dry-run]
     ajoa-kit ats-check <cv.md>
@@ -37,14 +37,14 @@ def _chunk(args: argparse.Namespace) -> None:
     from ajoa_kit.chunk import DEFAULT_BATCH
     from ajoa_kit.chunk import main as run
 
-    run(batch=args.batch_size if args.batch_size is not None else DEFAULT_BATCH)
+    run(batch=args.batch_size if args.batch_size is not None else DEFAULT_BATCH, new=args.new)
 
 
 def _persist(args: argparse.Namespace) -> None:
     """Persist a relevance workflow result into scored artifacts."""
     from ajoa_kit.persist_scored import main as run
 
-    run(src=Path(args.file))
+    run(src=Path(args.file), merge=args.merge)
 
 
 def _persist_offer(args: argparse.Namespace) -> None:
@@ -135,12 +135,22 @@ def main() -> None:
     chunk_p.add_argument(
         "--batch-size", type=int, default=None, metavar="N", help="Records per batch (default: 40)."
     )
+    chunk_p.add_argument(
+        "--new",
+        action="store_true",
+        help="Batch only the latest-pull delta from results/corpus.json (#226 re-screen).",
+    )
     chunk_p.set_defaults(func=_chunk)
 
     persist_p = sub.add_parser(
         "persist", help="Write scored artifacts from a workflow-result JSON."
     )
     persist_p.add_argument("file", metavar="FILE", help="Path to workflow-result.json.")
+    persist_p.add_argument(
+        "--merge",
+        action="store_true",
+        help="Union into existing shortlists / jobs-scored by id instead of overwriting (#226).",
+    )
     persist_p.set_defaults(func=_persist)
 
     offer_p = sub.add_parser(

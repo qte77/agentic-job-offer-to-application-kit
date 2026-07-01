@@ -32,13 +32,15 @@ def _item(jid: str, lane: str, score: object, **kw: object) -> dict:
     }
 
 
-def _run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, result: dict) -> Path:
+def _run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, result: dict, *, merge: bool = False
+) -> Path:
     results = tmp_path / "results"
-    results.mkdir()
+    results.mkdir(exist_ok=True)  # exist_ok: a merge test persists twice into one results dir
     monkeypatch.setenv("AJOA_RESULTS_DIR", str(results))
     src = tmp_path / "result.json"
     src.write_text(json.dumps(result))
-    persist_scored.main(src=src)
+    persist_scored.main(src=src, merge=merge)
     return results
 
 
@@ -97,3 +99,35 @@ def test_unlaned_item_goes_to_unsorted_and_is_flagged(
     results = _run(tmp_path, monkeypatch, {"relevant": [_item("a", "", 4)]})  # empty best_lane
     assert (results / "unsorted" / "shortlist.json").is_file()
     assert "un-laned" in capsys.readouterr().out
+
+
+def test_persist_merge_unions_into_existing_buckets(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # seed ml + fde buckets (default overwrite persist)
+    _run(tmp_path, monkeypatch, {"relevant": [_item("a1", "ml", 3), _item("f1", "fde", 5)]})
+    # --merge a new ml id + a re-scored existing ml id; fde is absent from this delta
+    results = _run(
+        tmp_path,
+        monkeypatch,
+        {"relevant": [_item("a2", "ml", 4), _item("a1", "ml", 9)]},
+        merge=True,
+    )
+    ml = {j["id"]: j for j in json.loads((results / "ml" / "shortlist.json").read_text())}
+    assert set(ml) == {"a1", "a2"}  # existing kept, new added
+    assert ml["a1"]["score"] == 9  # same id -> the re-scored (incoming) item wins
+    fde = json.loads((results / "fde" / "shortlist.json").read_text())
+    assert [j["id"] for j in fde] == ["f1"]  # a lane absent from the delta is untouched
+
+
+def test_persist_merge_unions_jobs_scored(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _run(tmp_path, monkeypatch, {"relevant": [_item("a", "ml", 3)]})
+    results = _run(
+        tmp_path,
+        monkeypatch,
+        {"relevant": [_item("a", "ml", 9), _item("b", "ml", 4)]},
+        merge=True,
+    )
+    rel = {j["id"]: j for j in json.loads((results / "jobs-scored.json").read_text())["relevant"]}
+    assert set(rel) == {"a", "b"}  # relevant[] unioned by id
+    assert rel["a"]["score"] == 9  # same id -> new wins
