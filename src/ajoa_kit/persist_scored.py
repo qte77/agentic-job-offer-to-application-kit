@@ -19,6 +19,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import ValidationError
 
+from ajoa_kit.ingest import load_lanes
 from ajoa_kit.models import ScoredItem
 from ajoa_kit.settings import AppSettings
 
@@ -144,8 +145,10 @@ def merge_shortlists(rel: list[dict], results_dir: Path) -> dict[str, int]:
 def main(src: Path | None = None, *, merge: bool = False) -> None:
     """Write scored artifacts to results/; src defaults to sys.argv[1] when called directly.
 
-    With ``merge`` (the #226 incremental re-screen), the scored delta is unioned by id into the
-    existing per-lane buckets and ``jobs-scored.json`` ``relevant`` rather than overwriting them.
+    A ``best_lane`` not in :func:`ajoa_kit.ingest.load_lanes` is blanked (routed to ``unsorted/`` —
+    never a junk ``results/<bogus>/`` dir) and tallied (#195). With ``merge`` (the #226 incremental
+    re-screen), the scored delta is unioned by id into the existing per-lane buckets and
+    ``jobs-scored.json`` ``relevant`` rather than overwriting them.
     """
     if src is None:
         src = Path(sys.argv[1])
@@ -155,6 +158,13 @@ def main(src: Path | None = None, *, merge: bool = False) -> None:
     rel, dropped = parse_relevant(data)  # parse-on-read: fail loud on a non-result; drop bad items
     for j in rel:
         j["url"] = canonical_url(j.get("url", ""))
+    valid = {lane.key for lane in load_lanes(settings.config_dir)}
+    unlaned = sum(1 for j in rel if not j.get("best_lane"))  # the LLM left best_lane empty
+    invalid = 0
+    for j in rel:
+        if j.get("best_lane") and j["best_lane"] not in valid:
+            j["best_lane"] = ""  # hallucinated lane -> unsorted/ (no junk results/<bogus>/)
+            invalid += 1
     results.mkdir(parents=True, exist_ok=True)
     scored = results / "jobs-scored.json"
     if merge and scored.is_file():
@@ -164,11 +174,10 @@ def main(src: Path | None = None, *, merge: bool = False) -> None:
         data["relevant"] = rel
     scored.write_text(json.dumps(data, indent=2, ensure_ascii=False))
     by_lane = merge_shortlists(rel, results) if merge else write_shortlists(rel, results)
-    unlaned = sum(1 for j in rel if not j.get("best_lane"))
     summary = ", ".join(f"{k}={v}" for k, v in sorted(by_lane.items()))
     print(
         f"persisted {len(rel)} JDs -> results/jobs-scored.json; per-lane: {summary} "
-        f"(dropped {dropped} malformed, {unlaned} un-laned)"
+        f"(dropped {dropped} malformed, {unlaned} un-laned, {invalid} invalid-lane)"
     )
 
 
