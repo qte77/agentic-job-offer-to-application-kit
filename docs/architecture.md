@@ -111,7 +111,8 @@ boundary but untyped on Python re-read:** shortlist, offer pack, `must_haves`, e
 **Untyped:** the JD/corpus records (the highest-volume boundary), batches, and the remaining config
 files. ADR-0003 ranks the hardening: `JobRecord` → `ScoredResult` (+ lane-membership check) → shared
 `must_haves` model → config-entry models. The single `config/lanes.json` lane source shipped (#195 —
-pydantic `Lane` + `load_lanes`); the `persist_scored` lane-membership check against it is still pending.
+pydantic `Lane` + `load_lanes`) and the `persist_scored` lane-membership check against it now ships too
+(a hallucinated `best_lane` is blanked to `unsorted/`); `JobRecord` typing remains the next ADR-0003 item.
 
 ## Patterns
 

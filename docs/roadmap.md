@@ -49,7 +49,8 @@
 - Position-lane SSOT (#195): a tracked `config/lanes.json` (the canonical 7 lanes) loaded Python-side
   by `ingest.load_lanes()` (pydantic `Lane`) and emitted via `ajoa-kit lanes --json` to pass the
   relevance/evidence workflows as `cfg.lanes`; the two JS fallbacks now mirror it. The
-  `persist_scored` lane-membership check + `JobRecord` typing (the rest of ADR-0003) stay backlog.
+  `persist_scored` lane-membership check now ships (a hallucinated `best_lane` → `unsorted/`);
+  `JobRecord` typing (the rest of ADR-0003) stays backlog.
 - Shortlist liveness (#214): `ajoa-kit refresh [--lane <name>] [--delete] [--dry-run]` reconciles each
   `results/<lane>/shortlist.json` against the corpus `delisted` state + a read-only URL re-probe,
   flagging dead offers `stale` (dashboard-hidden) or removing them; an inconclusive probe never expires
@@ -101,8 +102,8 @@
 - `pseudonymize-text` (#52, belt-and-suspenders) for the live dashboard data feed. #71 Vite not
   adopted — the dashboard stays no-build.
 - Data-contract typing (per ADR-0003): a `JobRecord` model + parse-on-read at the JD / relevance /
-  tailor boundaries, config-entry models, and the `persist_scored` lane-membership check against
-  `config/lanes.json` (the lane source itself shipped in #195). Backlog ranked in the ADR.
+  tailor boundaries, and config-entry models (the `config/lanes.json` lane source and its
+  `persist_scored` membership check both shipped, #195). Backlog ranked in the ADR.
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
 - Broaden ingest reach: more JSON aggregators as their robots/ToS clear (jobicy/himalayas/remotive
   — #94 deferred follow-ups). Outlook (#109): slug-discovery from public board directories, and

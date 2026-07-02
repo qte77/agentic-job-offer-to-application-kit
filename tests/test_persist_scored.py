@@ -54,13 +54,13 @@ def test_valid_result_writes_per_lane_shortlists_sorted(
             "relevant": [
                 _item("a", "engineering", 3),
                 _item("b", "engineering", 5),
-                _item("c", "platform", 4),
+                _item("c", "cloud", 4),
             ]
         },
     )
     eng = json.loads((results / "engineering" / "shortlist.json").read_text())
     assert [j["id"] for j in eng] == ["b", "a"]  # sorted by score desc
-    assert (results / "platform" / "shortlist.json").is_file()
+    assert (results / "cloud" / "shortlist.json").is_file()
     assert json.loads((results / "jobs-scored.json").read_text())["relevant"][0]["id"] == "a"
 
 
@@ -131,3 +131,20 @@ def test_persist_merge_unions_jobs_scored(tmp_path: Path, monkeypatch: pytest.Mo
     rel = {j["id"]: j for j in json.loads((results / "jobs-scored.json").read_text())["relevant"]}
     assert set(rel) == {"a", "b"}  # relevant[] unioned by id
     assert rel["a"]["score"] == 9  # same id -> new wins
+
+
+def test_persist_routes_hallucinated_lane_to_unsorted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # a best_lane not in config/lanes.json is blanked and routed to unsorted/ (no junk
+    # results/<bogus>/ dir) and tallied; a valid lane still buckets normally.
+    results = _run(
+        tmp_path,
+        monkeypatch,
+        {"relevant": [_item("a", "engineering", 4), _item("b", "nonsense-lane", 5)]},
+    )
+    assert not (results / "nonsense-lane").exists()  # no junk dir for the hallucinated lane
+    unsorted = json.loads((results / "unsorted" / "shortlist.json").read_text())
+    assert [j["id"] for j in unsorted] == ["b"]  # the bogus-lane JD kept, routed to unsorted
+    assert (results / "engineering" / "shortlist.json").is_file()  # valid lane still buckets
+    assert "invalid-lane" in capsys.readouterr().out  # tallied in the summary line
