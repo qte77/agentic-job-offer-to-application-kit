@@ -53,8 +53,13 @@
 - Shortlist liveness (#214): `ajoa-kit refresh [--lane <name>] [--delete] [--dry-run]` reconciles each
   `results/<lane>/shortlist.json` against the corpus `delisted` state + a read-only URL re-probe,
   flagging dead offers `stale` (dashboard-hidden) or removing them; an inconclusive probe never expires
-  a live entry. The cheap new-offer **delta-screen** (`chunk --new` + `persist --merge`) stays the
-  tracked follow-up.
+  a live entry.
+- Incremental new-offer delta-screen (#226): `ajoa-kit chunk --new` batches only the latest-pull corpus
+  delta (offers whose `first_seen == max(last_seen)`) and `ajoa-kit persist --merge` unions the scored
+  delta by `id` into the existing per-lane shortlists + `jobs-scored.json` (a re-scored offer wins)
+  instead of overwriting — completing the incremental refresh cycle (the "scan new" complement to
+  #214's "check still valid"). v1 is first-seen-new only; re-screening `changed` records is the noted
+  follow-up.
 - PII-free trends relocation (#210): the publishable keyword-only trends moved out of the PII dir
   `results/` into a dedicated git-ignored `public-data/` (`AJOA_PUBLIC_DATA_DIR`), so `results/` is now
   **exclusively PII**. `make trends-data` builds the `data`-branch tree from `public-data/` and a

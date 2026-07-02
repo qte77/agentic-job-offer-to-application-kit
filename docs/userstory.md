@@ -78,3 +78,7 @@ Accept: `ajoa-kit refresh [--lane <name>]` re-checks each `results/<lane>/shortl
 the corpus `delisted` state and a read-only URL re-probe; dead offers are flagged `stale` by default
 (kept as an audit trail, hidden from the dashboard) or removed with `--delete`; an inconclusive probe
 (network error / timeout) never flags a live entry; `--dry-run` previews. See #214.
+
+The inbound complement keeps it current from the other side: `ajoa-kit chunk --new` → `persist --merge`
+screens only offers first seen in the latest pull into the existing shortlists (union by `id`, no
+clobber) instead of re-running the whole screen. See #226.
