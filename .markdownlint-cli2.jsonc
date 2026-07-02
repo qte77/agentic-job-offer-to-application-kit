@@ -13,7 +13,8 @@
     "node_modules/**",
     ".git/**",
     ".venv/**",
-    "changelog.d/**"
+    "changelog.d/**",
+    "results/**"               // git-ignored pipeline artifacts (local shortlist.md etc., #227)
   ],
   "config": {
     "default": true,
