@@ -23,12 +23,11 @@ DEFAULT_BATCH = 40
 
 
 def _new_offers(results: Path) -> list[dict]:
-    """Return the corpus records first seen in the latest pull — the #226 incremental delta.
+    """Return the corpus records new or changed in the latest pull — the delta (#226/#235).
 
-    The most recent pull date is ``max(last_seen)`` across ``results/corpus.json``; an offer is
-    *new* when its ``first_seen`` equals that date (mirrors
-    :func:`ajoa_kit.corpus.summarize_changes`). v1 batches first-seen-new only; re-screening
-    ``changed`` records is a noted follow-up.
+    The most recent pull date is ``max(last_seen)``; a record is in the delta when its
+    ``last_changed`` equals it — newly seen this pull or content-changed (#235). Pre-#235 corpora
+    without ``last_changed`` fall back to ``first_seen`` (new-only, the #226 behaviour).
     """
     corpus_path = results / "corpus.json"
     if not corpus_path.is_file():
@@ -36,7 +35,7 @@ def _new_offers(results: Path) -> list[dict]:
         raise FileNotFoundError(msg)
     corpus = json.loads(corpus_path.read_text())
     latest = max(rec["last_seen"] for rec in corpus)
-    return [rec for rec in corpus if rec["first_seen"] == latest]
+    return [rec for rec in corpus if rec.get("last_changed", rec["first_seen"]) == latest]
 
 
 def main(batch: int = DEFAULT_BATCH, *, new: bool = False) -> None:

@@ -60,8 +60,8 @@
   delta (offers whose `first_seen == max(last_seen)`) and `ajoa-kit persist --merge` unions the scored
   delta by `id` into the existing per-lane shortlists + `jobs-scored.json` (a re-scored offer wins)
   instead of overwriting — completing the incremental refresh cycle (the "scan new" complement to
-  #214's "check still valid"). v1 is first-seen-new only; re-screening `changed` records is the noted
-  follow-up.
+  #214's "check still valid"). Extended by #235 to also re-screen `changed` records (not just
+  first-seen-new), via a `last_changed` corpus stamp.
 - PII-free trends relocation (#210): the publishable keyword-only trends moved out of the PII dir
   `results/` into a dedicated git-ignored `public-data/` (`AJOA_PUBLIC_DATA_DIR`), so `results/` is now
   **exclusively PII**. `make trends-data` builds the `data`-branch tree from `public-data/` and a

@@ -93,7 +93,7 @@ built).
 | Contract | Defined at | Typed? | Producer → consumer | Artifact |
 |---|---|---|---|---|
 | JD record | `ingest.record()` | dict — untyped | adapters → corpus / chunk / trends | `results/jobs-raw.json` |
-| Corpus record | `corpus.merge_corpus` | dict + `first_seen` / `last_seen` / `content_hash` | ingest `--merge` → trends / next run | `results/corpus.json` |
+| Corpus record | `corpus.merge_corpus` | dict + `first_seen` / `last_seen` / `last_changed` / `content_hash` | ingest `--merge` → trends / chunk / next run | `results/corpus.json` |
 | Daily digest | `corpus.summarize_changes` + `render_daily_summary` | dict → markdown | ingest `--merge` → human | `results/daily-summary.md` (local-only) |
 | Trends week | `trend_snapshot.WeekCounts` | **pydantic** (write-side) | trend-snapshot → dashboard | `public-data/trends.ndjson` |
 | Trends day | `trend_snapshot.DayCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#187) | `public-data/trends-daily.ndjson` |
@@ -174,8 +174,8 @@ complement: it keeps a lane's *existing* shortlist current (flags/expires filled
 the corpus `delisted` state + a read-only URL re-probe) but never re-buckets.
 
 The incremental screen `ajoa-kit chunk --new` → relevance → `persist --merge` (#226) is the *inbound*
-complement: `chunk --new` batches only offers first seen in the latest pull
-(`first_seen == max(last_seen)` in the corpus) and `persist --merge` unions them by id into the
+complement: `chunk --new` batches offers new or changed in the latest pull
+(`last_changed == max(last_seen)` in the corpus, #235) and `persist --merge` unions them by id into the
 existing shortlists — new offers into current lanes, never a re-bucket. If a `--merge` re-screen does
 reassign an offer's `best_lane`, `persist` evicts it from the old lane bucket so it never
 double-buckets (#236).

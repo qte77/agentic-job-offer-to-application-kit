@@ -52,7 +52,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | Subcommand | Flags / args |
 |---|---|
 | `ingest` | `--merge` — also fold the pull into a running `results/corpus.json` (4-state dedup-merge) · reads `config/seed.json`, else `config/default-seed.json` |
-| `chunk` | `--batch-size N` (default 40) · `--new` — batch only the latest-pull `corpus.json` delta for an incremental re-screen (#226) |
+| `chunk` | `--batch-size N` (default 40) · `--new` — batch only the latest-pull `corpus.json` delta (offers new or changed this pull) for an incremental re-screen (#226/#235) |
 | `persist` | `FILE` — the relevance workflow result · `--merge` — union into the existing shortlists / `jobs-scored.json` by id instead of overwriting (#226) |
 | `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` |
 | `refresh` | reconcile shortlists vs the corpus `delisted` state + a read-only URL re-probe · `--lane <name>` (default: all buckets) · `--delete` (remove vs flag `stale`) · `--dry-run` |

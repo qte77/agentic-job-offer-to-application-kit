@@ -142,3 +142,16 @@ def test_render_daily_summary_caps_a_long_new_offer_list() -> None:
     assert "Co49" in md  # 50th (index 49) listed
     assert "Co50" not in md  # capped at 50
     assert "10 more" in md  # "…and 10 more"
+
+
+def test_merge_stamps_last_changed_on_new_and_changed() -> None:
+    # #235: `last_changed` marks the last pull a record was new or its content changed, so
+    # `chunk --new` can re-screen changed records (corpus.json otherwise can't distinguish them).
+    day1 = corpus.merge_corpus(prior=[], fresh=[_jd("a", desc="old"), _jd("b")], today="2026-06-01")
+    assert all(r["last_changed"] == "2026-06-01" for r in day1)  # both new -> stamped
+    day2 = corpus.merge_corpus(
+        prior=day1, fresh=[_jd("a", desc="new"), _jd("b")], today="2026-06-27"
+    )
+    by_id = {r["id"]: r for r in day2}
+    assert by_id["a"]["last_changed"] == "2026-06-27"  # content changed -> re-stamped
+    assert by_id["b"]["last_changed"] == "2026-06-01"  # unchanged -> preserved
