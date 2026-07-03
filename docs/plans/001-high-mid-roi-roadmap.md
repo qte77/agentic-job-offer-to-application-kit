@@ -86,11 +86,10 @@ Lower-priority items surfaced this session; batch into the relevant slice or a c
 
 ### Enhancements
 
-- **#209 v2** — attach `results/offers/<slug>/{cv,cover-letter}.md` to the local shortlist so the
-  expand isn't empty for tailored offers. Full spec (files + the item→slug join via a shared
-  `persist_offer` slug helper → module logic → TDD) is in the
+- **#209 v2 (shipped)** — the local shortlist expand now shows the tailored CV + cover letter:
+  `persist_offer` writes a `results/offers/<slug>/meta.json` (JD id) and `attach_tailor_docs` joins the
+  pack back to each shortlist row by id (robust to a custom `--slug`). Original spec in the
   [#209 comment](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/209#issuecomment-4844914822).
-  Build only if the local expand is actually used.
 - Reconsider the `config/*` `git add -f` friction (post-#213): if hand-editing the seed / `lanes.json`
   annoys, re-add just `!/config/default-seed.json` (+ `!/config/lanes.json`) — buys it back for two
   files without resurrecting the full re-include dance.

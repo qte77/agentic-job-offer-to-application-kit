@@ -98,6 +98,42 @@ def test_main_honors_results_dir_env(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert (tmp_path / "ws" / "offers" / "acme-ai-101" / "match.md").exists()
 
 
+def test_write_pack_writes_meta_json_when_id_present(tmp_path: Path) -> None:
+    # The offer dir is named by the (possibly custom) slug, but the local dashboard joins packs to
+    # shortlist rows by JD id — so persist_offer records {id, slug} in meta.json (#209).
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "offer_id": "ashby:acme-ai:101"}, slug="pretty-name", results_dir=tmp_path
+    )
+    assert json.loads((offer_dir / "meta.json").read_text()) == {
+        "id": "ashby:acme-ai:101",
+        "slug": "pretty-name",
+    }
+
+
+def test_write_pack_no_meta_json_without_id(tmp_path: Path) -> None:
+    # A pack with no id (older/canned) can't be joined — no meta.json; the artifacts still write.
+    offer_dir = persist_offer.write_pack(PACK, slug="acme-ai-101", results_dir=tmp_path)
+    assert not (offer_dir / "meta.json").exists()
+    assert (offer_dir / "cv.md").is_file()
+
+
+def test_attach_tailor_docs_joins_cv_by_id(tmp_path: Path) -> None:
+    # A tailored pack (with id) attaches its *stripped* cv/cover-letter bodies onto the matching
+    # shortlist row (by JD id, not slug); a row with no pack is left without cv/cover_letter (#209).
+    persist_offer.write_pack(
+        {**PACK, "offer_id": "ashby:acme-ai:101"}, slug="pretty-name", results_dir=tmp_path
+    )
+    rows = [
+        {"id": "ashby:acme-ai:101", "title": "AI Engineer"},
+        {"id": "greenhouse:globex:7", "title": "Platform Engineer"},  # no pack on disk
+    ]
+    out = persist_offer.attach_tailor_docs(rows, results_dir=tmp_path)
+    assert out[0]["cv"].startswith("## Summary")  # frontmatter stripped, body attached
+    assert "Dear hiring team" in out[0]["cover_letter"]
+    assert "cv" not in out[1]  # unmatched row untouched
+    assert "cover_letter" not in out[1]
+
+
 class TestSafeSlugProperties:
     _SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 

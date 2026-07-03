@@ -3,15 +3,18 @@
 Thin glue for ``make preview`` only: writes a throwaway ``public/data/shortlist.json`` into the
 temp serve dir so the dashboard shows the REAL shortlist, not the synthetic demo set.
 
-The real shortlist is PII: never committed, never published (gh-pages bundles no shortlist). No
-``cv``/``cover_letter`` is attached here (those live per offer under ``results/offers/<slug>/`` and
-are wired in a follow-up) — rows render with an empty detail.
+The real shortlist is PII: never committed, never published (gh-pages bundles no shortlist). For any
+row whose offer has been tailored, its ``cv``/``cover_letter`` are attached from
+``results/offers/<slug>/`` (joined by JD id via ``persist_offer.attach_tailor_docs``, #209); rows
+without a tailored pack render with an empty detail.
 """
 
 import glob
 import json
 import pathlib
 import sys
+
+from ajoa_kit.persist_offer import attach_tailor_docs
 
 
 def aggregate(results_glob: str = "results/*/shortlist.json") -> list[dict]:
@@ -31,6 +34,7 @@ def aggregate(results_glob: str = "results/*/shortlist.json") -> list[dict]:
 def main(out_path: str) -> None:
     items = aggregate()
     if items:
+        attach_tailor_docs(items, pathlib.Path("results"))
         pathlib.Path(out_path).write_text(json.dumps(items))
         msg = f"preview: bundled {len(items)} real shortlist rows -> {out_path}"
     else:
