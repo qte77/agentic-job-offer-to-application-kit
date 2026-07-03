@@ -70,3 +70,22 @@ def test_chunk_new_fails_loud_without_corpus(
     _setup(tmp_path, monkeypatch)  # no corpus.json written
     with pytest.raises(FileNotFoundError, match="corpus"):
         chunk.main(batch=40, new=True)
+
+
+def test_chunk_new_includes_changed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # #235: --new batches first-seen-new AND content-changed records (both carry last_changed ==
+    # the latest pull date); an unchanged record (older last_changed) is skipped.
+    results = _setup(tmp_path, monkeypatch)
+
+    def _lc(jid: str, first: str, changed: str) -> dict:
+        return {**_rec(jid, first, "2026-06-30"), "last_changed": changed}
+
+    corpus_json = [
+        _lc("new1", "2026-06-30", "2026-06-30"),
+        _lc("changed1", "2026-06-01", "2026-06-30"),
+        _lc("unchanged1", "2026-06-01", "2026-06-01"),
+    ]
+    (results / "corpus.json").write_text(json.dumps(corpus_json))
+    chunk.main(batch=40, new=True)
+    batch = json.loads((results / "batches" / "batch-000.json").read_text())
+    assert sorted(j["id"] for j in batch) == ["changed1", "new1"]  # unchanged1 skipped

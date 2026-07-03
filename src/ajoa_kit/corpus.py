@@ -3,7 +3,8 @@
 Pure stdlib (no polyfetch, no network). The daily ingest keeps a corpus keyed by JD ``id`` so a
 re-pull never loses history: each record carries ``first_seen`` (when it first appeared),
 ``last_seen`` (the most recent pull it was present in), and a ``content_hash`` of its JD content
-(title + location + description). :func:`merge_corpus` is a four-state merge:
+(title + location + description); ``last_changed`` marks the pull it was last new or changed (#235).
+:func:`merge_corpus` is a four-state merge:
 
   - **new** — id absent from the prior corpus → ``first_seen = last_seen = today``.
   - **changed** — id present but ``content_hash`` differs → adopt the fresh content,
@@ -53,13 +54,22 @@ def merge_corpus(prior: list[dict], fresh: list[dict], today: str) -> list[dict]
         digest = content_hash(rec)
         old = prior_by_id.get(rec["id"])
         if old is None:  # new
-            merged.append({**rec, "first_seen": today, "last_seen": today, "content_hash": digest})
+            merged.append(
+                {
+                    **rec,
+                    "first_seen": today,
+                    "last_seen": today,
+                    "last_changed": today,
+                    "content_hash": digest,
+                }
+            )
         elif old.get("content_hash") != digest:  # changed — adopt fresh content, keep first_seen
             merged.append(
                 {
                     **rec,
                     "first_seen": old.get("first_seen", today),
                     "last_seen": today,
+                    "last_changed": today,
                     "content_hash": digest,
                 }
             )
