@@ -7,21 +7,24 @@ trends relocated to `public-data/` with a data-branch guard (#210 / #225), the C
 (#222), and the doc-gap closes (#228). Follow-ups opened: #226, #227. This plan came from the ROI pass
 over the 9 open issues (Tier 1 + 2, minus deferred #197 / #217).
 
-## Resume here (in order)
+## Shipped — plan 002 complete
 
-1. **#226** — delta-screen. `chunk.py` `main(batch, *, new=False)` (batch the `first_seen == max(last_seen)`
-   corpus delta) + `persist_scored.py` `merge_shortlists` / `main(src, *, merge=False)` (union by id,
-   reuse `write_lane`) + `__main__` `chunk --new` / `persist --merge`. **TDD** the two modules. Branch
-   `feat/delta-screen`. Close #226.
-2. **#195a** — lane-check. After #226. `persist_scored.main()` blanks any `best_lane` not in
-   `load_lanes()` → routes to `unsorted/` (no junk `results/<bogus>/` dir) + tallies invalid. **TDD**.
-   Branch `feat/lane-check`. Keep #195 open (comment).
-3. **#227b** — one line: add `"results/**"` to `.markdownlint-cli2.jsonc` `ignores`. No test, exempt.
-   Comment on #227.
+1. **#226** — delta-screen: `chunk --new` + `persist --merge` (PR #233, closed #226); narrative-doc
+   follow-up PR #234.
+2. **#195a** — lane-check: `persist_scored` routes a hallucinated `best_lane` to `unsorted/` + tallies
+   invalid (PR #238). #195 kept open for the parked JobRecord half.
+3. **#227b** — `"results/**"` added to `.markdownlint-cli2.jsonc` `ignores` (PR #237); commented on #227.
 
-**Deferred (YAGNI; left open):** #197 (no field dropped today), #217 (not urgent; `ingest` already
-reports dead sources). **Gated:** #193 (`qte77/.github#33` open). **Needs a decision:** #227 #52 sweep
-(is `pseudonymize-text` dropped or deferred?).
+Also this session: handoff-convention doc + lychee Ashby-`/reference/` exclude (PR #232); **#209 v2** —
+the local shortlist expand now shows the tailored CV/cover-letter via `persist_offer` `meta.json` +
+`attach_tailor_docs` (PR #241).
+
+## Next / open
+
+- **New follow-ups (opened):** #235 (`chunk --new` should also re-screen `changed` corpus records),
+  #236 (`persist --merge` must evict a re-laned offer from its old bucket — pairs with #235).
+- **Deferred (YAGNI; left open):** #197 (no field dropped today), #217 (not urgent). **Gated:** #193
+  (`qte77/.github#33` open). **Needs a decision:** #227 #52 sweep (`pseudonymize-text` dropped or deferred?).
 
 ## Per-slice recipe
 
@@ -40,8 +43,10 @@ green (`gh pr merge <n> --squash --admin --delete-branch`) → sync `main`.
 
 ## Touch points (current state)
 
+> **Historical — all three slices shipped (see Shipped above); this is the pre-implementation snapshot.**
+
 Target signatures + the delta algorithm are in the [plan](../plans/002-refresh-completion-lane-check.md);
-this table is only the **current-state** anchor, so a resuming agent verifies known points instead of
+this table was the **current-state** anchor so a resuming agent verified known points instead of
 re-mapping. Paths + symbols, no line numbers (they drift) — verify before editing.
 
 | Slice | File | Current state to verify against |
