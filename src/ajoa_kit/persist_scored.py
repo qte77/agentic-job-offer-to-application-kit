@@ -122,21 +122,35 @@ def _union_by_id(existing: list[dict], incoming: list[dict]) -> list[dict]:
     return list(by_id.values())
 
 
-def merge_shortlists(rel: list[dict], results_dir: Path) -> dict[str, int]:
-    """Union ``rel`` by id into each existing per-lane bucket, then rewrite it (#226 ``--merge``).
+def _evict_ids(incoming_ids: set[str], skip_lanes: set[str], results_dir: Path) -> None:
+    """Evict ``incoming_ids`` from every existing bucket except ``skip_lanes`` (#236)."""
+    for path in results_dir.glob("*/shortlist.json"):
+        lane = path.parent.name
+        if lane in skip_lanes:
+            continue
+        existing = json.loads(path.read_text())
+        kept = [it for it in existing if it.get("id") not in incoming_ids]
+        if len(kept) != len(existing):
+            write_lane(lane, kept, results_dir)
 
-    Only lanes present in ``rel`` are touched — a lane absent from this delta is left as-is. Groups
-    by ``best_lane`` with the same ``or "unsorted"`` routing as :func:`write_shortlists`, reads the
-    existing ``results/<lane>/shortlist.json`` (empty if new), and reuses :func:`write_lane`.
+
+def merge_shortlists(rel: list[dict], results_dir: Path) -> dict[str, int]:
+    """Union ``rel`` by id into each per-lane bucket; evict re-laned ids from their old lane (#236).
+
+    An incoming id ends up in its new lane only, so a re-laned offer never double-buckets. Groups by
+    ``best_lane`` (``or "unsorted"``) and reuses :func:`write_lane`; untouched lanes stay as-is.
     """
     by_lane: dict[str, list[dict]] = {}
     for j in rel:
         by_lane.setdefault(j.get("best_lane") or "unsorted", []).append(j)
+    incoming_ids = {str(j.get("id") or "") for j in rel}
+    _evict_ids(incoming_ids, set(by_lane), results_dir)
     counts: dict[str, int] = {}
     for lane, incoming in by_lane.items():
         path = results_dir / lane / "shortlist.json"
         existing = json.loads(path.read_text()) if path.is_file() else []
-        merged = _union_by_id(existing, incoming)
+        cleaned = [it for it in existing if it.get("id") not in incoming_ids]
+        merged = _union_by_id(cleaned, incoming)
         write_lane(lane, merged, results_dir)
         counts[lane] = len(merged)
     return counts

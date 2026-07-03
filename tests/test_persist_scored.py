@@ -133,6 +133,24 @@ def test_persist_merge_unions_jobs_scored(tmp_path: Path, monkeypatch: pytest.Mo
     assert rel["a"]["score"] == 9  # same id -> new wins
 
 
+def test_persist_merge_evicts_relaned_offer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # An offer that changes lane on --merge must move, not duplicate: it lands in its new lane only,
+    # evicted from the old bucket (#236); an unrelated id in the old lane stays.
+    _run(tmp_path, monkeypatch, {"relevant": [_item("x", "ml", 5), _item("keep", "ml", 3)]})
+    results = _run(
+        tmp_path,
+        monkeypatch,
+        {"relevant": [_item("x", "engineering", 6)]},
+        merge=True,
+    )
+    eng = [j["id"] for j in json.loads((results / "engineering" / "shortlist.json").read_text())]
+    ml = [j["id"] for j in json.loads((results / "ml" / "shortlist.json").read_text())]
+    assert eng == ["x"]  # re-laned into engineering
+    assert ml == ["keep"]  # evicted from ml; the unrelated ml id remains
+
+
 def test_persist_routes_hallucinated_lane_to_unsorted(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
