@@ -34,7 +34,9 @@ synthetic demo), while never publishing it, so I can review and filter my actual
 
 Accept: `make preview` aggregates `results/<lane>/shortlist.json` into a throwaway, same-origin file
 that `app.js` loads (`loadRealShortlist`); it is never committed, and `gh-pages.yaml` bundles no
-shortlist, so the deployed demo stays synthetic.
+shortlist, so the deployed demo stays synthetic. Expanding a row reveals the tailored CV + cover
+letter for offers you've tailored — `build_ui_shortlist` joins `results/offers/<slug>/` to the row by
+JD id (#209).
 
 ## US4 — Tailor per offer
 

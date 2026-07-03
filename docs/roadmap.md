@@ -41,7 +41,8 @@
   reveal the tailored CV + cover letter (demo `cv`/`cover_letter` in `demo.json`); a market-trends
   time-frame picker (All…1w); header Repo/Issues links; `make preview` serves a throwaway copy that
   keeps real data out of the source `ui/` **and shows your real local shortlist** (#209 — aggregated
-  same-origin from `results/<lane>/shortlist.json`, never published).
+  same-origin from `results/<lane>/shortlist.json`, never published); expanding a tailored offer's row
+  now reveals its CV + cover letter, joined from `results/offers/<slug>/` by JD id.
 - AI issue-triage CI (`.github/workflows/issue-triage.yaml`): `qte77/gha-issue-triage` (SHA-pinned,
   GitHub Models, zero-secret) auto-labels newly opened issues.
 - Data-contract ADR (ADR-0003, #158): maps the typed vs untyped layer boundaries and sets the

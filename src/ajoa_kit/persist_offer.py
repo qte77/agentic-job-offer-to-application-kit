@@ -7,7 +7,8 @@ returned JSON into on-disk markdown artifacts a human reviews before submitting.
 
 Writes ``results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md`` (plus a
 ``coverage-report.md`` when the pack carries ``must_haves``, and a ``cv-ats-check.md`` when the CV
-trips the parse-safety pass, #75). The results root comes from
+trips the parse-safety pass, #75), and a ``meta.json`` recording the JD id so the local dashboard
+can join the pack back to its shortlist row (#209). The results root comes from
 ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate workspace works.
 
 No submission, no auto-apply: the prefill pack is a human-review artifact only — it lists
@@ -120,7 +121,63 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
             "Review before submitting — non-blocking warnings, not errors.\n\n"
             f"{items}\n"
         )
+    # Sidecar for the local dashboard join (#209): the dir is named by the (maybe custom) slug, so
+    # record the JD id -> this offer so build_ui_shortlist can attach cv/cover-letter by id.
+    jd_id = pack.get("offer_id") or pack.get("id")
+    if jd_id:
+        (offer_dir / "meta.json").write_text(json.dumps({"id": jd_id, "slug": safe_slug(slug)}))
     return offer_dir
+
+
+def strip_frontmatter(md: str) -> str:
+    r"""Drop the ``---\ntitle: "..."\n---`` block :func:`render` prepends, returning the body."""
+    if md.startswith("---\n"):
+        end = md.find("\n---\n", 4)
+        if end != -1:
+            return md[end + len("\n---\n") :].lstrip("\n")
+    return md
+
+
+# The two artifacts the dashboard expand shows; filenames sourced from ARTIFACTS (single source).
+_JOIN_DOCS = {key: filename for key, filename, _ in ARTIFACTS if key in {"cv", "cover_letter"}}
+
+
+def _load_offer_index(results_dir: Path) -> dict[str, Path]:
+    """Map each offer's JD id to its dir, from ``results_dir/offers/*/meta.json`` (#209)."""
+    index: dict[str, Path] = {}
+    for meta_path in (results_dir / "offers").glob("*/meta.json"):
+        try:
+            meta = json.loads(meta_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(meta, dict) and meta.get("id"):
+            index[str(meta["id"])] = meta_path.parent
+    return index
+
+
+def _read_offer_docs(offer_dir: Path) -> dict[str, str]:
+    """Read + strip the join docs present in ``offer_dir`` -> ``{cv/cover_letter: body}``."""
+    docs: dict[str, str] = {}
+    for key, filename in _JOIN_DOCS.items():
+        doc = offer_dir / filename
+        if doc.is_file():
+            docs[key] = strip_frontmatter(doc.read_text())
+    return docs
+
+
+def attach_tailor_docs(rows: list[dict], results_dir: Path) -> list[dict]:
+    """Attach each row's tailored ``cv``/``cover_letter`` from its offer pack, joined by id (#209).
+
+    Uses :func:`_load_offer_index` (id -> offer dir) + :func:`_read_offer_docs`; rows without a
+    tailored pack stay untouched.
+    """
+    index = _load_offer_index(results_dir)
+    for row in rows:
+        rid = str(row.get("id") or "")
+        offer_dir = index.get(rid) if rid else None
+        if offer_dir is not None:
+            row.update(_read_offer_docs(offer_dir))
+    return rows
 
 
 def load_pack(src: Path) -> dict:
