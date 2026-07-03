@@ -176,7 +176,9 @@ the corpus `delisted` state + a read-only URL re-probe) but never re-buckets.
 The incremental screen `ajoa-kit chunk --new` → relevance → `persist --merge` (#226) is the *inbound*
 complement: `chunk --new` batches only offers first seen in the latest pull
 (`first_seen == max(last_seen)` in the corpus) and `persist --merge` unions them by id into the
-existing shortlists — new offers into current lanes, never a re-bucket.
+existing shortlists — new offers into current lanes, never a re-bucket. If a `--merge` re-screen does
+reassign an offer's `best_lane`, `persist` evicts it from the old lane bucket so it never
+double-buckets (#236).
 
 ## Repo structure
 
