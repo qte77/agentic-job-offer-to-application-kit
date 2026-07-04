@@ -31,16 +31,15 @@ class Lane(BaseModel):
 class ScoredItem(BaseModel):
     """One scored JD from the relevance workflow.
 
-    Lenient by design (``extra="ignore"``, all fields optional) so a new field never drops a row;
+    Lenient by design (``extra="allow"``, all fields optional) so a new field never drops a row;
     only a wrong-typed item (a non-numeric ``score`` or non-object entry) is dropped at the read
     boundary.
     """
 
-    # extra="ignore" lets unknown workflow fields pass, but they're dropped from model_dump() — so
-    # persist's jobs-scored.json re-write loses any field beyond the 10 below. The first 8 are the
-    # relevance RESULT schema; `stale`/`last_checked` are added by the refresh sweep (#214). Use
-    # extra="allow" for forward-compat round-tripping of any other future field (#197).
-    model_config = ConfigDict(extra="ignore")
+    # extra="allow" keeps unknown workflow fields through model_dump(), so persist's jobs-scored.json
+    # re-write round-trips any field the relevance schema grows beyond the 10 below (#197). The first
+    # 8 are the relevance RESULT schema; `stale`/`last_checked` are added by the refresh sweep (#214).
+    model_config = ConfigDict(extra="allow")
 
     id: str = ""
     title: str = ""

@@ -64,6 +64,20 @@ def test_valid_result_writes_per_lane_shortlists_sorted(
     assert json.loads((results / "jobs-scored.json").read_text())["relevant"][0]["id"] == "a"
 
 
+def test_unknown_result_field_survives_round_trip(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A field the relevance schema grows beyond ScoredItem's known set must round-trip (#197):
+    # extra="allow" keeps it through model_dump() into jobs-scored.json and the per-lane shortlist.
+    results = _run(
+        tmp_path, monkeypatch, {"relevant": [_item("a", "engineering", 4, confidence=0.9)]}
+    )
+    scored = json.loads((results / "jobs-scored.json").read_text())["relevant"][0]
+    assert scored["confidence"] == 0.9
+    eng = json.loads((results / "engineering" / "shortlist.json").read_text())[0]
+    assert eng["confidence"] == 0.9  # survives into the per-lane bucket too
+
+
 def test_malformed_items_are_dropped_and_counted(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
