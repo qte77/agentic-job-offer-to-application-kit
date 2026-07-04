@@ -7,6 +7,7 @@ Usage::
     ajoa-kit persist <workflow-result.json> [--merge]
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
     ajoa-kit refresh [--lane NAME] [--delete] [--dry-run]
+    ajoa-kit verify-sources [--dry-run]
     ajoa-kit ats-check <cv.md>
     ajoa-kit lanes [--json]
     ajoa-kit style [--json]
@@ -113,6 +114,13 @@ def _refresh(args: argparse.Namespace) -> None:
     run(lane=args.lane, delete=args.delete, dry_run=args.dry_run)
 
 
+def _verify_sources(args: argparse.Namespace) -> None:
+    """Re-probe seed feeds/ats and stamp _date_verified on the live ones (#217)."""
+    from ajoa_kit.verify_sources import main as run
+
+    run(dry_run=args.dry_run)
+
+
 def main() -> None:
     """Parse the chosen subcommand and run the matching L1 pipeline step."""
     parser = argparse.ArgumentParser(
@@ -172,6 +180,15 @@ def main() -> None:
         "--dry-run", action="store_true", help="Report what would change without writing."
     )
     refresh_p.set_defaults(func=_refresh)
+
+    verify_p = sub.add_parser(
+        "verify-sources",
+        help="Re-probe seed feeds/ats, stamp _date_verified on the live ones (#217).",
+    )
+    verify_p.add_argument(
+        "--dry-run", action="store_true", help="Report what would change without writing."
+    )
+    verify_p.set_defaults(func=_verify_sources)
 
     ats_p = sub.add_parser(
         "ats-check", help="Check a CV markdown file for ATS parse-safety (non-zero if unsafe)."
