@@ -94,14 +94,11 @@
 
 ## Next
 
-- Locale-aware document conventions (#12).
-- Prefill-pack reach beyond Greenhouse (#56).
 - Daily granularity in the trends dashboard (#187); monthly trend granularity (#188).
 
 ## Later — hardening & reach
 
-- `pseudonymize-text` (#52, belt-and-suspenders) for the live dashboard data feed. #71 Vite not
-  adopted — the dashboard stays no-build.
+- #71 Vite not adopted — the dashboard stays no-build.
 - Data-contract typing (per ADR-0003): a `JobRecord` model + parse-on-read at the JD / relevance /
   tailor boundaries, and config-entry models (the `config/lanes.json` lane source and its
   `persist_scored` membership check both shipped, #195). Backlog ranked in the ADR.

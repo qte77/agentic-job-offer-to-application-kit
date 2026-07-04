@@ -255,9 +255,8 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   `results/<lane>/shortlist.json`, same-origin, never published); a market-trends time-frame picker;
   Repo/Issues header links; `make preview` serves a throwaway copy keeping real data out of the source `ui/`; AI issue-triage CI (`issue-triage.yaml`,
   SHA-pinned, GitHub Models, zero-secret).
-- **Designed:** locale-aware document conventions (#12); `pseudonymize-text` PII gate (#52,
-  belt-and-suspenders for the live dashboard data feed). #71 Vite intentionally not adopted (no-build).
-- **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks; a multi-column
+- **Designed:** #71 Vite intentionally not adopted (no-build).
+- **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks, locale-aware document conventions (#12, not planned); a multi-column
   dashboard rework + AG-UI/A2UI generative-UI (the no-build `ui/` renders fixed data — shortlist +
   trends — so agent-emitted dynamic UI isn't needed; multi-column is a trivial CSS-Grid change if ever
   wanted, no framework).
