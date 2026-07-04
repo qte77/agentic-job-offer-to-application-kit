@@ -82,7 +82,8 @@ Workflow tool (`Workflow({…})`), so you'll need Claude Code installed as well 
   ats-check. For recurring runs, `ajoa-kit ingest --merge` folds each pull into a running
   `results/corpus.json` (the scheduled `ingest-daily.yaml` cron) so keyword trends accrue over time;
   `ajoa-kit chunk --new` → `persist --merge` re-screens only the newly-seen offers into your shortlist,
-  and `ajoa-kit refresh` flags filled/closed offers (or removes them with `--delete`).
+  and `ajoa-kit refresh` flags filled/closed offers (or removes them with `--delete`);
+  `ajoa-kit verify-sources` re-probes the seed and re-stamps `_date_verified` on the sources still live.
 
 End-users: **[docs/quickstart.md](docs/quickstart.md)** narrates the full run end-to-end (prerequisites
 plus the keyword-trends and writing-style options). Contributors: **[CONTRIBUTING.md](CONTRIBUTING.md)**

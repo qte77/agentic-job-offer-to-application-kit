@@ -83,6 +83,13 @@ verbatim JD text is not, which is why the public dashboard ships only aggregate 
   403). Every `_blocked` / `_deferred` entry carries a `_date_verified` stamp (date of the last
   ToS/reachability check). crewai / latticeflow stay `_blocked` via the #96 re-probe, where their
   reasons are verified.
+- **Freshness upkeep (#217).** Every `feeds` / `ats` entry now also carries a `_date_verified` stamp
+  (previously only `_blocked` / `_deferred` did), and it is **expected on new `feeds` / `ats`
+  entries**. `ajoa-kit verify-sources [--dry-run]` re-probes them read-only (no auth) and re-stamps the
+  live ones — feeds by a 2xx/3xx GET, ats boards by a live role count via `slug_probe.PROBES` — while
+  reporting the rest for manual triage; a one-pass backfill dated all 142 sources (2026-07-04). Running
+  it on a schedule is **deferred** (low-stakes: a normal `ingest` run already lists dead sources in its
+  summary), so the verb is run by hand for now.
 - #94 shipped the **arbeitnow** adapter (loaded `aggregators` key); attribution is recorded in
   config/ADR — the published dashboard emits only aggregate facts, not arbeitnow content, so no
   on-page backlink. jobicy / himalayas / remotive stay `_deferred` pending the robots/ToS resolutions
@@ -106,4 +113,5 @@ verbatim JD text is not, which is why the public dashboard ships only aggregate 
 - [research.md §Delivery](../research.md#delivery) — safe/unsafe boundary, per-platform READ/SUBMIT
   analysis, CFAA/GDPR citations, and primary sources (retrieved 2026-06-14).
 - [config/default-seed.json](../../config/default-seed.json) — the shipped registry this ADR governs.
-- Kit issues #10 (sources catalog), #94 (aggregator adapters), #95 (this ADR), #96 (company re-probe).
+- Kit issues #10 (sources catalog), #94 (aggregator adapters), #95 (this ADR), #96 (company re-probe),
+  #217 (`_date_verified` backfill + `verify-sources` re-probe verb).
