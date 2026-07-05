@@ -16,6 +16,108 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.6.0] - 2026-07-05
+
+### Added
+
+- `ajoa-kit chunk --new` and `persist --merge` (`#226`) complete the incremental refresh cycle:
+  `chunk --new` batches only the latest-pull delta from `results/corpus.json` (offers whose
+  `first_seen` equals the most recent `last_seen`) instead of the whole `jobs-raw.json`, and
+  `persist --merge` unions the scored delta by `id` into the existing per-lane `shortlist.json`
+  buckets and `jobs-scored.json` `relevant[]` (a re-scored offer wins on a tie) rather than
+  overwriting them — so a daily re-screen adds new offers to a standing shortlist without clobbering
+  it. Lanes absent from the delta are untouched; `chunk --new` fails loud if no corpus exists.
+
+- The local `make preview` shortlist expand now shows the tailored **CV + cover letter** for offers
+  you have tailored (`#209`). `persist_offer` writes a `results/offers/<slug>/meta.json` recording the
+  JD id, and `build_ui_shortlist` joins each pack back to its shortlist row by that id — so a custom
+  `--slug` no longer hides the pack. Rows for un-tailored offers render an empty detail as before.
+
+- `ajoa-kit chunk --new` now also re-screens **changed** records, not just first-seen-new (`#235`).
+  `ingest --merge` stamps a `last_changed` date on each corpus record (the pull it was last new or had
+  its content change), and `chunk --new` batches every record whose `last_changed` is the latest pull
+  — so a JD whose description materially changed gets re-scored/re-laned, not only newly-posted ones.
+  Pre-`#235` corpora without `last_changed` fall back to `first_seen` (new-only, unchanged behaviour).
+
+- `ajoa-kit verify-sources [--dry-run]` re-probes every `config/default-seed.json` `feeds`/`ats`
+  source read-only (no auth) and stamps `_date_verified` on the live ones, reporting the rest for
+  manual triage (`#217`). Feeds are confirmed by a 2xx/3xx GET, ats boards by a live role count via
+  the existing `slug_probe.PROBES`; an inconclusive probe never re-dates a source. A one-pass
+  backfill (2026-07-04) dated all 142 seed sources, and the writer touches only the changed
+  `feeds`/`ats` lines (the multi-line `aggregators`/`_deferred` doc blocks stay byte-identical).
+
+- Monthly trend granularity — data layer (`#188`): `ajoa-kit trend-snapshot` now also rolls the
+  daily series up into `public-data/trends-monthly.ndjson` (`{month, counts}`, `YYYY-MM`) via
+  `monthly_from_daily` — same aggregate keyword-only contract as weekly/daily, so the three series
+  can never disagree. Published to the `data` branch (`make trends-data` allowlist extended; the
+  daily-cron restore keeps it accumulating). The dashboard `Monthly` dropdown + same-origin bundle
+  stay deferred (with `#187`).
+
+- Tracked **`config/keywords.json`** — the canonical pre-filter vocabulary (config-SSOT, mirroring
+  the `config/lanes.json` pattern): `load_keywords` falls back to the in-code mirror in
+  `defaults.py`, and a drift-guard test keeps file and mirror equal. Its terms become the published
+  trend keys, so the shipped set stays generic; point `AJOA_CONFIG_DIR` at a private dir for a
+  personal vocabulary.
+
+- `make trends-data` **shrink guard** (`#249` slice D): the push aborts when an outgoing trend
+  series has fewer buckets than (or is locally absent while present on) the `data` branch — a
+  silently-failed restore can no longer wipe accumulated history on the force-push.
+  `TRENDS_FORCE=1` overrides for an intentional prune.
+
+- The dashboard footer now shows the kit version (`v0.5.0`, `#app-version` next to the deploy
+  date), kept in sync by bump-my-version alongside the README badge and `__init__.py`.
+
+### Changed
+
+- `Makefile`: the aggregate-trends publish set is now the single `TRENDS_PUBLISH` variable feeding
+  the add loop, the `#210` boundary-guard allowlist (fail-closed) and the summary echo — one edit
+  point for future series instead of six scattered literals.
+
+- Refactor epic slices A+B (`#249`): all pydantic data models now live in `models.py`
+  (`WeekCounts`/`DayCounts`/`MonthCounts` moved from `trend_snapshot.py`; `AppSettings` stays in
+  `settings.py`), and the in-code defaults (keyword vocabulary, canonical lanes, ingest caps/flags)
+  moved to a new `defaults.py`.
+
+- Refactor epic slice C (`#249`): `ingest.py` split into `sources.py` (fetch helpers, the 10
+  explicit per-API adapters, `ATS`/`AGGREGATORS`, `load_sources`) and `normalize.py` (record shape,
+  HTML/URL normalization, keyword pre-filter), leaving `ingest.py` a slim orchestrator. Zero
+  behavior change; `persist_scored`'s deliberate `canonical_url` duplicate now imports the single
+  `normalize` source.
+
+- Refactor epic slice E (`#249`): the single-file dashboard script split into a thin `app.js`
+  orchestrator + three same-origin ES modules — `dom-utils.js` (esc/safeUrl/`sanitizeHtml`
+  allowlist), `shortlist.js` (table + tailor packs + `marked` loader), `trends.js` (Chart.js
+  rendering + trends loading, owning the chart instances). No build step introduced; `index.html`
+  and the strict CSP unchanged; cross-module state passes as parameters/owned setters
+  (`invalidateTrends`), never shared mutable bindings.
+
+### Fixed
+
+- `ajoa-kit persist` now validates each `best_lane` against `config/lanes.json` (`#195`): a
+  hallucinated lane (one not in `load_lanes()`) is blanked and routed to `results/unsorted/` instead
+  of spawning a junk `results/<bogus>/` directory, and the count is reported as `N invalid-lane` in
+  the persist summary. The scored JD is kept — only the bad lane is dropped — and `ingest.load_lanes`
+  becomes a live consumer of `persist_scored`.
+
+- `ajoa-kit persist --merge` now **evicts a re-laned offer from its old lane bucket** (`#236`): if a
+  re-screen assigns an offer a different `best_lane`, `merge_shortlists` removes it from the previous
+  bucket instead of leaving a stale duplicate, so `results/<lane>/shortlist.json` and
+  `jobs-scored.json` no longer disagree.
+
+- `ScoredItem` now uses `extra="allow"` so a field the relevance workflow emits beyond the known set
+  round-trips into `jobs-scored.json` and the per-lane shortlists instead of being silently dropped
+  on re-write (`#197`).
+
+- `make ui-check` was red on an untouched checkout: the by-design `shortlist.json` 404 (the #209
+  local-real-shortlist probe) counted as a console failure. The harness now tracks 404 URLs,
+  allowlists that one, and fails explicitly on any other 404.
+
+- Inactive tab pills / header chips / Copy buttons could render with a washed-out native button
+  face over their themed backgrounds in some engines (reported as a white overlay in both themes;
+  not reproducible in Chromium, where computed styles and painted pixels verify the tokens). All
+  styled buttons now set `appearance: none` explicitly, so the authored transparent/`--surface`
+  backgrounds are honored everywhere; the `#trends-range` select keeps its native arrow.
+
 ## [0.5.0] - 2026-06-30
 
 ### Added
