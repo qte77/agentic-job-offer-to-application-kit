@@ -99,11 +99,16 @@
   `public-data/trends-daily.ndjson` (`{date, counts}`), and **weekly is rolled up from the daily buckets**
   (`weekly_from_daily`) so the two series can't disagree; both publish to the `data` branch (aggregate
   keyword-only). The dashboard Week/Day toggle is deferred to #187 (the daily chart needs accrued
-  history first), monthly granularity to #188.
+  history first).
+- Monthly trend granularity — data layer (#188): `monthly_from_daily` rolls the same daily buckets up
+  into `public-data/trends-monthly.ndjson` (`{month, counts}`, ~12 records/yr), published alongside
+  weekly/daily (the `make trends-data` allowlist is now the single `TRENDS_PUBLISH` variable,
+  fail-closed). The dashboard `Monthly` dropdown + same-origin bundle ride with #187 (Wave 3).
 
 ## Next
 
-- Daily granularity in the trends dashboard (#187); monthly trend granularity (#188).
+- Daily + monthly granularity in the trends dashboard (#187/#188 UI half: dropdown + same-origin
+  bundles; the data layers are shipped).
 
 ## Later — hardening & reach
 

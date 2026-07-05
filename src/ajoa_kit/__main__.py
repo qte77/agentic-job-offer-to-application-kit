@@ -233,7 +233,7 @@ def main() -> None:
 
     sub.add_parser(
         "trend-snapshot",
-        help="Snapshot keyword-only trends from the corpus into public-data/trends.ndjson.",
+        help="Snapshot keyword-only trends into public-data/trends{,-daily,-monthly}.ndjson.",
     ).set_defaults(func=_trend_snapshot)
 
     args = parser.parse_args()

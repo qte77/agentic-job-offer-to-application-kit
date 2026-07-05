@@ -175,6 +175,10 @@ def test_main_buckets_corpus_by_first_seen(tmp_path: Path, monkeypatch: pytest.M
     daily = _read_ndjson(public / "trends-daily.ndjson")
     assert daily[0]["date"] == "2026-06-01"
     assert daily[0]["counts"]["python"] == 1
+    # the monthly series is rolled up from the same days (#188)
+    monthly = _read_ndjson(public / "trends-monthly.ndjson")
+    assert monthly[0]["month"] == "2026-06"
+    assert monthly[0]["counts"]["python"] == 1
     # the publishable aggregates leave the PII dir entirely (#210)
     assert not (results / "trends.ndjson").exists()
     assert not (results / "trends-daily.ndjson").exists()
@@ -229,6 +233,55 @@ def test_weekly_from_daily_sums_days_and_matches_bucket_by_week() -> None:
     assert weeks["2024-W04"] == {"rust": 1}
     direct, _ = trend_snapshot.bucket_by_week(jobs, pat)
     assert weeks == direct  # roll-up equals direct weekly bucketing
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "2024-01-15T10:30:00+02:00",  # ISO-8601 with offset
+        "2024-01-15T10:30:00Z",  # ISO-8601 Zulu suffix
+        "2024-01-15",  # ISO date-only
+        "Mon, 15 Jan 2024 10:30:00 +0000",  # RFC-822
+        "1705276800",  # epoch seconds (2024-01-15 00:00 UTC)
+        "1705276800000",  # epoch milliseconds, same instant
+    ],
+)
+def test_parse_month_resolves_each_adapter_format(raw: str) -> None:
+    assert trend_snapshot.parse_month(raw) == "2024-01"
+
+
+@pytest.mark.parametrize("raw", ["", "   ", "not a date", "2024-13-99"])
+def test_parse_month_returns_none_when_unparseable(raw: str) -> None:
+    assert trend_snapshot.parse_month(raw) is None
+
+
+def test_monthly_from_daily_sums_days_and_matches_bucket_by_month() -> None:
+    # Monthly is a roll-up of daily (same shape as weekly): two JDs first-seen in different weeks of
+    # one month sum to that month's document frequency, equal to computing the month directly.
+    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    jobs = [
+        {"title": "Python", "description": "python", "posted_at": "2024-01-15"},  # Jan
+        {"title": "Python2", "description": "python", "posted_at": "2024-01-29"},  # Jan, other week
+        {"title": "Rust", "description": "rust", "posted_at": "2024-02-05"},  # Feb
+    ]
+    days, _ = trend_snapshot.bucket_by_day(jobs, pat)
+    months = trend_snapshot.monthly_from_daily(days)
+    assert months["2024-01"] == {"python": 2}  # summed across the month's days, deduped per JD
+    assert months["2024-02"] == {"rust": 1}
+    direct, _ = trend_snapshot.bucket_by_month(jobs, pat)
+    assert months == direct  # roll-up equals direct monthly bucketing
+
+
+def test_upsert_month_appends_and_replaces_same_month(tmp_path: Path) -> None:
+    path = tmp_path / "trends-monthly.ndjson"
+    trend_snapshot.upsert_month(path, "2026-06", {"python": 3})
+    trend_snapshot.upsert_month(path, "2026-07", {"python": 5})
+    trend_snapshot.upsert_month(path, "2026-06", {"python": 9})  # same month -> replace
+    records = _read_ndjson(path)
+    months = [r["month"] for r in records]
+    assert months.count("2026-06") == 1
+    assert "2026-07" in months
+    assert next(r["counts"] for r in records if r["month"] == "2026-06") == {"python": 9}
 
 
 def test_upsert_day_appends_and_replaces_same_date(tmp_path: Path) -> None:
