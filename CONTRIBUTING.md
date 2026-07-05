@@ -135,8 +135,8 @@ The dashboard's real **market-trends** data lives only on the orphan **`data`** 
 origin, so a fork self-hosts its own). To refresh it:
 
 ```bash
-uv run ajoa-kit trend-snapshot   # -> public-data/trends.ndjson (needs the polyfetch venv; not run in CI)
-make trends-data                 # force-push public-data/trends.ndjson -> the `data` branch
+uv run ajoa-kit trend-snapshot   # -> public-data/trends{,-daily,-monthly}.ndjson (needs the polyfetch venv; not run in CI)
+make trends-data                 # force-push the $(TRENDS_PUBLISH) trend files -> the `data` branch
 ```
 
 The live dashboard picks it up on the next page load — no redeploy. CI can't generate this data
