@@ -14,7 +14,8 @@ from pathlib import Path
 import pytest
 
 from ajoa_kit import __main__ as cli
-from ajoa_kit import ingest
+from ajoa_kit import defaults, ingest, normalize
+from ajoa_kit.models import Lane
 
 
 def _write(path: Path, slug: str) -> None:
@@ -58,15 +59,15 @@ def test_load_lanes_reads_override(tmp_path: Path) -> None:
 
 
 def test_load_lanes_falls_back_to_defaults_when_absent(tmp_path: Path) -> None:
-    assert ingest.load_lanes(tmp_path) is ingest.DEFAULT_LANES  # no lanes.json present
+    assert ingest.load_lanes(tmp_path) is defaults.DEFAULT_LANES  # no lanes.json present
 
 
 def test_shipped_lanes_json_matches_in_code_defaults() -> None:
     # The shipped config/lanes.json is the SSOT; DEFAULT_LANES is the in-code fallback that must
     # mirror it (equality guards the two from silently drifting apart).
     path = Path(__file__).resolve().parents[1] / "config" / "lanes.json"
-    shipped = [ingest.Lane.model_validate(e) for e in json.loads(path.read_text())]
-    assert shipped == ingest.DEFAULT_LANES
+    shipped = [Lane.model_validate(e) for e in json.loads(path.read_text())]
+    assert shipped == defaults.DEFAULT_LANES
 
 
 def test_shipped_keywords_json_matches_in_code_defaults() -> None:
@@ -88,7 +89,7 @@ def test_collect_warn_and_continues_on_failing_source() -> None:
         raise RuntimeError("boom")
 
     def ok() -> list[dict]:
-        return [ingest.record(id="x", ats="rss", source="s", title="Engineer")]
+        return [normalize.record(id="x", ats="rss", source="s", title="Engineer")]
 
     state = ingest.collect([("bad", boom), ("good", ok)])
     assert any("bad" in f and "RuntimeError" in f for f in state["failures"])
@@ -98,7 +99,7 @@ def test_collect_warn_and_continues_on_failing_source() -> None:
 
 
 def test_update_corpus_first_run_seeds_with_first_seen(tmp_path: Path) -> None:
-    jobs = [ingest.record(id="a", ats="rss", source="s", title="Engineer", description="build")]
+    jobs = [normalize.record(id="a", ats="rss", source="s", title="Engineer", description="build")]
     ingest._update_corpus(jobs, tmp_path, "2026-06-01")
     corpus = json.loads((tmp_path / "corpus.json").read_text())
     assert len(corpus) == 1
@@ -109,10 +110,10 @@ def test_update_corpus_first_run_seeds_with_first_seen(tmp_path: Path) -> None:
 
 def test_update_corpus_second_run_keeps_delisted_and_updates_changed(tmp_path: Path) -> None:
     # First pull: a + b. Second pull: a's description changed, b is gone (delisted).
-    a0 = ingest.record(id="a", ats="rss", source="s", title="Engineer", description="v1")
-    b0 = ingest.record(id="b", ats="rss", source="s", title="SRE", description="ops")
+    a0 = normalize.record(id="a", ats="rss", source="s", title="Engineer", description="v1")
+    b0 = normalize.record(id="b", ats="rss", source="s", title="SRE", description="ops")
     ingest._update_corpus([a0, b0], tmp_path, "2026-06-01")
-    a1 = ingest.record(id="a", ats="rss", source="s", title="Engineer", description="v2")
+    a1 = normalize.record(id="a", ats="rss", source="s", title="Engineer", description="v2")
     ingest._update_corpus([a1], tmp_path, "2026-06-27")
 
     corpus = {r["id"]: r for r in json.loads((tmp_path / "corpus.json").read_text())}

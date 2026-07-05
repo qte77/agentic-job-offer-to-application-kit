@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from ajoa_kit import ingest
-from ajoa_kit.ingest import is_interesting, is_role_title, keep
+from ajoa_kit import defaults, ingest, normalize
+from ajoa_kit.normalize import is_interesting, is_role_title, keep
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -59,12 +59,12 @@ def test_load_keywords_reads_config_override(tmp_path: Path) -> None:
 def test_load_keywords_falls_back_to_defaults(tmp_path: Path) -> None:
     # no keywords.json in tmp_path -> the hardcoded defaults apply
     interest, title_roles = ingest.load_keywords(tmp_path)
-    assert interest == ingest.INTEREST
-    assert title_roles == ingest.TITLE_ROLES
+    assert interest == defaults.INTEREST
+    assert title_roles == defaults.TITLE_ROLES
 
 
 def test_custom_keyword_set_matches_on_word_boundary() -> None:
-    pat_interest, pat_title = ingest.build_patterns(["rust"], ["rust"])
+    pat_interest, pat_title = normalize.build_patterns(["rust"], ["rust"])
     assert is_interesting("Senior Rust Engineer", pat_interest)
     # 'rust' inside 'Trust' is not a whole word -> must NOT match
     assert not is_interesting("Trust & Safety Lead", pat_interest)
@@ -72,7 +72,7 @@ def test_custom_keyword_set_matches_on_word_boundary() -> None:
 
 
 def test_punctuation_terms_match_as_whole_tokens() -> None:
-    pat, _ = ingest.build_patterns(["c++", ".net", "node.js", "ci-cd", "c#"], [])
+    pat, _ = normalize.build_patterns(["c++", ".net", "node.js", "ci-cd", "c#"], [])
     assert is_interesting("Senior C++ Engineer", pat)
     assert is_interesting("Built on .NET 8", pat)
     assert is_interesting("Node.js backend", pat)
@@ -81,13 +81,13 @@ def test_punctuation_terms_match_as_whole_tokens() -> None:
 
 
 def test_single_letter_term_not_matched_inside_punctuated_token() -> None:
-    pat, _ = ingest.build_patterns(["c"], [])
+    pat, _ = normalize.build_patterns(["c"], [])
     assert not is_interesting("C++ developer", pat)  # 'c' must not leak into 'c++'
     assert is_interesting("the C language", pat)  # but matches as a standalone token
 
 
 def test_plain_word_boundary_allows_trailing_sentence_punctuation() -> None:
-    pat, _ = ingest.build_patterns(["python", "go"], [])
+    pat, _ = normalize.build_patterns(["python", "go"], [])
     assert is_interesting("We use Python.", pat)  # trailing period is still a boundary
     assert is_interesting("ships in Go, daily", pat)  # trailing comma too
     assert not is_interesting("Pythonic idioms", pat)  # not a sub-token
@@ -103,12 +103,12 @@ class TestBuildPatternsProperties:
     @given(t=_TERM)
     @settings(deadline=None)
     def test_term_matches_when_space_delimited(self, t: str) -> None:
-        pat, _ = ingest.build_patterns([t], [])
+        pat, _ = normalize.build_patterns([t], [])
         assert pat.search(f" {t} ")
 
     @given(t=_TERM, c=_CONT)
     @settings(deadline=None)
     def test_term_not_matched_inside_a_larger_token(self, t: str, c: str) -> None:
-        pat, _ = ingest.build_patterns([t], [])
+        pat, _ = normalize.build_patterns([t], [])
         assert not pat.search(t + c)
         assert not pat.search(c + t)

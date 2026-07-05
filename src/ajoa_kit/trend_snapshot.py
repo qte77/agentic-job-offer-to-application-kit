@@ -27,8 +27,9 @@ from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from typing import TYPE_CHECKING
 
-from ajoa_kit.ingest import build_patterns, load_keywords
+from ajoa_kit.ingest import load_keywords
 from ajoa_kit.models import DayCounts, MonthCounts, WeekCounts
+from ajoa_kit.normalize import build_patterns
 from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
