@@ -125,9 +125,10 @@ pydantic `Lane` + `load_lanes`) and the `persist_scored` lane-membership check a
   and never aborts the run.
 - **Dispatch tables** — `ingest.ATS` / `ingest.AGGREGATORS` map a source-type string to its adapter;
   `load_sources` drives them from the seed.
-- **Config-overridable vocabulary** — `ingest.load_keywords` reads `config/keywords.json` or falls back
-  to module constants; `trend_snapshot` reuses it. `ingest.load_lanes` follows the same shape
-  (`config/lanes.json` → `DEFAULT_LANES`).
+- **Config-SSOT vocabulary** — the tracked `config/keywords.json` is canonical;
+  `ingest.load_keywords` falls back to the in-code mirror in `defaults.py` (a drift-guard test keeps
+  file and mirror equal); `trend_snapshot` reuses it. `ingest.load_lanes` follows the same shape
+  (`config/lanes.json` → `defaults.DEFAULT_LANES`).
 - **Upsert-by-key** — `corpus.merge_corpus` (by JD `id`, four states) and `trend_snapshot.upsert_week`
   (by ISO week) replace in place while preserving the rest.
 - **Record factory** — `ingest.record()` is the single fixed-shape dict every adapter emits
@@ -212,9 +213,11 @@ agentic-job-offer-to-application-kit/
 The authoritative list of git-ignored, never-committed paths (so no PII is ever committed) — the
 single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 
-- `config/` — inputs you author (`seed.json`, optional `style.json` / `keywords.json`); git-ignored
+- `config/` — inputs you author (`seed.json`, optional `style.json`); git-ignored
   **except** the tracked, PII-free `config/default-seed.json` (the shipped, ToS-vetted default
-  source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)) and
+  source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)),
+  the tracked `config/keywords.json` (the canonical pre-filter vocabulary — generic terms only,
+  they become the published trend keys) and
   `config/lanes.json` (the canonical position lanes, #195). Your `config/seed.json` overrides the
   default-seed when present; absent it, ingest falls back to the default.
 - `results/` — everything generated and **PII-bearing** (`jobs-raw.json`, `corpus.json`,

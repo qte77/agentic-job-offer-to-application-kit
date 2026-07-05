@@ -112,8 +112,10 @@ Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js",
 
 ## Keyword trends (optional)
 
-Drop a `config/keywords.json` (`{"interest": [...], "title_roles": [...]}`) to override the default
-pre-filter vocabulary. `trend-snapshot` then writes an aggregate, keyword-only per-ISO-week record to
+The tracked `config/keywords.json` (`{"interest": [...], "title_roles": [...]}`) is the canonical
+pre-filter vocabulary (#249) — edit it to change what's tracked, but **keep it non-identifying**:
+its terms become the published trend keys on the live dashboard. For a personal/private vocabulary,
+point `AJOA_CONFIG_DIR` at your own config dir instead. `trend-snapshot` then writes an aggregate, keyword-only per-ISO-week record to
 `public-data/trends.ndjson` (no JD/PII), and pushing it to the `data` branch re-triggers the Pages deploy
 to bundle it **same-origin** into the published site (so the live charts load reliably — no
 cross-origin runtime fetch) — commands in
