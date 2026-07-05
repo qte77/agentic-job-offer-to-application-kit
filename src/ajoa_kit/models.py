@@ -1,9 +1,11 @@
-"""Typed L1 data contracts (ADR-0003) — pydantic models for parse-on-read at the JS→Python seams.
+"""Typed L1 data contracts (ADR-0003) — every pydantic data model lives here.
 
-Only what re-enters Python from a file needs one today: the relevance workflow result, JSON-Schema
--validated JS-side but read back here from a human-supplied path. Other boundaries (a ``JobRecord``
-for the JD record, config-entry models) are follow-ups — the JD record is Python-produced and
-Python-consumed, so always well-formed; it needs no guard.
+Two seam families today: parse-on-read at the JS→Python boundary (the relevance workflow result —
+JSON-Schema-validated JS-side but read back from a human-supplied path: :class:`ScoredItem`,
+:class:`Lane`), and the publishable trend-series contracts (:class:`WeekCounts` /
+:class:`DayCounts` / :class:`MonthCounts`, written as NDJSON to ``public-data/``). A ``JobRecord``
+for the JD record stays a follow-up — Python-produced and Python-consumed, so always well-formed.
+``AppSettings`` is config, not a data contract, and stays in :mod:`ajoa_kit.settings`.
 """
 
 from __future__ import annotations
@@ -54,3 +56,37 @@ class ScoredItem(BaseModel):
     # survives a persist round-trip and the dashboard can hide stale rows.
     stale: bool = False
     last_checked: str = ""
+
+
+class WeekCounts(BaseModel):
+    """One ISO week's aggregate keyword frequencies — the publishable trends contract.
+
+    The single typed shape written to ``public-data/trends.ndjson``, read by the dashboard's pivot
+    layer: ``{week, counts}`` where ``counts`` is ``{keyword: document-frequency}``. No JD content,
+    company, title, or per-posting row ever appears here (ADR-0001 PII gate).
+    """
+
+    week: str
+    counts: dict[str, int]
+
+
+class DayCounts(BaseModel):
+    """One ISO calendar day's aggregate keyword frequencies — the daily-granularity trends contract.
+
+    Written to ``public-data/trends-daily.ndjson`` as ``{date, counts}`` (``YYYY-MM-DD``).
+    Same keyword-only, no-PII guarantee as :class:`WeekCounts`; weeks are summed from these days.
+    """
+
+    date: str
+    counts: dict[str, int]
+
+
+class MonthCounts(BaseModel):
+    """One calendar month's aggregate keyword frequencies — the monthly-granularity contract (#188).
+
+    Written to ``public-data/trends-monthly.ndjson`` as ``{month, counts}`` (``YYYY-MM``).
+    Same keyword-only, no-PII guarantee as :class:`WeekCounts`; months are summed from the days.
+    """
+
+    month: str
+    counts: dict[str, int]

@@ -15,8 +15,8 @@ typed contracts only at a few spots. A map of the current surfaces:
 ### Typed today
 
 - `AppSettings` (`settings.py`) — pydantic-settings; env-overridable path config.
-- `WeekCounts` (`trend_snapshot.py`) — pydantic, but validated on the **write** side only; the read
-  side uses raw `json.loads(...).get(...)`.
+- `WeekCounts` / `DayCounts` / `MonthCounts` (`models.py`) — pydantic, but validated on the
+  **write** side only; the read side uses raw `json.loads(...).get(...)`.
 - JS inline **JSON Schema** objects in `cc-workflow-*.js` (`RESULT`, `LIB`, the tailor `matchSchema`/
   `strField`) — validate each `agent()` **output** at the moment it is produced.
 
