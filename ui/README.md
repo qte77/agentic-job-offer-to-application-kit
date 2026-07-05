@@ -72,7 +72,10 @@ set the branch segment in that URL (there is no separate `?branch=` switch — t
 | --- | --- |
 | `index.html` | Shell markup: header (theme toggle + Repo/Issues links), two view tabs (Shortlist table / Market-trends charts) + a trends time-frame picker |
 | `src/style.css` | EyeRest tokens (light/dark/auto via `data-theme`) + components + tabs |
-| `src/app.js` | Shortlist render + filter + expandable rows (tailored CV + cover letter), tab switching, Chart.js line + stacked bars with a time-frame window, same-origin trends loading (rebuilt on `themechange`) |
+| `src/app.js` | Orchestrator (sole `<script type="module">` entry): loads demo/real data, owns UI state (range/lane labels), wires listeners + WAI-ARIA tabs; composes the sibling modules below |
+| `src/dom-utils.js` | Shared helpers: `esc`/`safeUrl`/`cssVar`, the `sanitizeHtml` allowlist (the one sanctioned markdown→HTML path), score classing |
+| `src/shortlist.js` | Shortlist render + filter + expandable rows (tailored CV + cover letter), copy-to-clipboard packs, vendored-`marked` loader, local real-shortlist fetch |
+| `src/trends.js` | Chart.js line + stacked bars with the time-frame window, same-origin→data-branch trends loading, theme-flip invalidation (owns the chart instances) |
 | `src/theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
 | `public/data/demo.json` | Synthetic demo data — shortlist (Tab A) + fallback trends as `{week,counts}[]` records (Tab B) |
 | *(real trends)* | Not in `ui/` — fetched at runtime from the repo's `data` branch (`public-data/trends.ndjson`); refresh via `make trends-data` |
