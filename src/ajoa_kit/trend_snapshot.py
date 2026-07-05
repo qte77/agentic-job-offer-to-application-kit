@@ -61,6 +61,17 @@ class DayCounts(BaseModel):
     counts: dict[str, int]
 
 
+class MonthCounts(BaseModel):
+    """One calendar month's aggregate keyword frequencies — the monthly-granularity contract (#188).
+
+    Written to ``public-data/trends-monthly.ndjson`` as ``{month, counts}`` (``YYYY-MM``).
+    Same keyword-only, no-PII guarantee as :class:`WeekCounts`; months are summed from the days.
+    """
+
+    month: str
+    counts: dict[str, int]
+
+
 def extract_counts(jobs: list[dict], pattern: re.Pattern[str]) -> dict[str, int]:
     """Per-keyword document frequency across JDs (word-boundary, case-insensitive match).
 
@@ -139,6 +150,22 @@ def parse_day(posted_at: str) -> str | None:
         dt = parse(s)
         if dt is not None:
             return dt.date().isoformat()
+    return None
+
+
+def parse_month(posted_at: str) -> str | None:
+    """Map a raw ``posted_at`` to its calendar month ``YYYY-MM``; None if empty/unparseable.
+
+    Same date-dialect handling as :func:`parse_week` / :func:`parse_day` (epoch / ISO-8601 /
+    RFC-822), keyed one level coarser. Months are rolled up from days (:func:`monthly_from_daily`).
+    """
+    s = (posted_at or "").strip()
+    if not s:
+        return None
+    for parse in _DATE_PARSERS:
+        dt = parse(s)
+        if dt is not None:
+            return f"{dt.year:04d}-{dt.month:02d}"
     return None
 
 
@@ -224,6 +251,37 @@ def bucket_by_week(
     return weekly_from_daily(days), skipped
 
 
+def monthly_from_daily(day_counts: dict[str, dict[str, int]]) -> dict[str, dict[str, int]]:
+    """Roll daily ``{date: counts}`` up into ``{month: counts}`` by summing each month's days.
+
+    Exact for the same reason as :func:`weekly_from_daily`: each JD sits in exactly one day (hence
+    one month), so summing per-day document-frequencies reproduces the monthly one exactly.
+    """
+    months: dict[str, dict[str, int]] = {}
+    for date_str, counts in day_counts.items():
+        # Defensive: day keys from parse_day are always valid ISO dates (see weekly_from_daily).
+        month = parse_month(date_str)
+        if month is None:
+            continue
+        bucket = months.setdefault(month, {})
+        for term, c in counts.items():
+            bucket[term] = bucket.get(term, 0) + c
+    return months
+
+
+def bucket_by_month(
+    jobs: list[dict],
+    pattern: re.Pattern[str],
+    date_of: Callable[[dict], str] = _posted_at,
+) -> tuple[dict[str, dict[str, int]], int]:
+    """Group JDs by calendar month — derived from :func:`bucket_by_day`, same as weekly.
+
+    Returns ``({month: {keyword: document-frequency}}, skipped)``.
+    """
+    days, skipped = bucket_by_day(jobs, pattern, date_of)
+    return monthly_from_daily(days), skipped
+
+
 def _upsert(path: Path, key_field: str, record: dict) -> None:
     """Append one NDJSON ``record``, replacing any line with the same ``record[key_field]``.
 
@@ -254,14 +312,19 @@ def upsert_day(path: Path, date: str, counts: dict[str, int]) -> None:
     _upsert(path, "date", DayCounts(date=date, counts=counts).model_dump())
 
 
-def main() -> None:
-    """Backfill per-ISO-week and per-day keyword frequencies to public-data/trends{,-daily}.ndjson.
+def upsert_month(path: Path, month: str, counts: dict[str, int]) -> None:
+    """Append/replace one ``{month, counts}`` NDJSON record (idempotent per calendar month)."""
+    _upsert(path, "month", MonthCounts(month=month, counts=counts).model_dump())
 
-    Buckets the corpus by day **once** (the deduped, finest-grained series) and rolls weeks up from
-    it (:func:`weekly_from_daily`), so the two series can't disagree. Prefers the #164 incremental
-    ``results/corpus.json`` bucketed by each JD's ``first_seen``; falls back to
-    ``results/jobs-raw.json`` by ``posted_at`` when no corpus exists yet. Both outputs are aggregate
-    keyword-only (no JD content) — publishable.
+
+def main() -> None:
+    """Backfill week/day/month keyword frequencies to public-data/trends{,-daily,-monthly}.ndjson.
+
+    Buckets the corpus by day **once** (the deduped, finest-grained series) and rolls weeks and
+    months up from it (:func:`weekly_from_daily` / :func:`monthly_from_daily`), so the series can't
+    disagree. Prefers the #164 incremental ``results/corpus.json`` bucketed by each JD's
+    ``first_seen``; falls back to ``results/jobs-raw.json`` by ``posted_at`` when no corpus exists
+    yet. All outputs are aggregate keyword-only (no JD content) — publishable.
     """
     settings = AppSettings()
     results = settings.results_dir
@@ -276,18 +339,23 @@ def main() -> None:
     pat_interest, _ = build_patterns(interest, title_roles)
     days, skipped = bucket_by_day(jobs, pat_interest, date_of=date_of)
     weeks = weekly_from_daily(days)
+    months = monthly_from_daily(days)
     # Inputs stay under results/ (PII); the publishable aggregates go to public-data/ (#210) so the
     # PII dir is never the source of anything that reaches the data branch.
     public_data = settings.public_data_dir
     public_data.mkdir(parents=True, exist_ok=True)
     weekly_path = public_data / "trends.ndjson"
     daily_path = public_data / "trends-daily.ndjson"
+    monthly_path = public_data / "trends-monthly.ndjson"
     for week, counts in weeks.items():
         upsert_week(weekly_path, week, counts)
     for day, counts in days.items():
         upsert_day(daily_path, day, counts)
+    for month, counts in months.items():
+        upsert_month(monthly_path, month, counts)
     print(
-        f"backfilled {len(weeks)} ISO weeks -> {weekly_path} and {len(days)} days -> {daily_path} "
+        f"backfilled {len(weeks)} ISO weeks -> {weekly_path}, {len(days)} days -> {daily_path} "
+        f"and {len(months)} months -> {monthly_path} "
         f"(by {dated_by}; skipped {skipped} JDs with no parseable date)"
     )
 
