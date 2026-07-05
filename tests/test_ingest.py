@@ -69,6 +69,18 @@ def test_shipped_lanes_json_matches_in_code_defaults() -> None:
     assert shipped == ingest.DEFAULT_LANES
 
 
+def test_shipped_keywords_json_matches_in_code_defaults() -> None:
+    # The shipped config/keywords.json is the SSOT (published as trend keys — keep it generic);
+    # defaults.INTEREST/TITLE_ROLES are the in-code no-config mirror, guarded against drift the
+    # same way as lanes (#249 slice B).
+    from ajoa_kit import defaults
+
+    path = Path(__file__).resolve().parents[1] / "config" / "keywords.json"
+    shipped = json.loads(path.read_text())
+    assert shipped["interest"] == defaults.INTEREST
+    assert shipped["title_roles"] == defaults.TITLE_ROLES
+
+
 def test_collect_warn_and_continues_on_failing_source() -> None:
     # A raising source (e.g. a non-200 -> FetchError, or a bad slug) is recorded in `failures`
     # and never aborts the run — the other sources still collect (run-level resilience).
