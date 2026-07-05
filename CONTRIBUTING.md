@@ -99,15 +99,16 @@ Edit it under a `### Added` / `### Changed` / `### Fixed` heading. Fragments col
 
 ## Releasing
 
-SemVer; the version lives in `pyproject.toml` `[project].version` (mirrored in the README badge and
-`src/ajoa_kit/__init__.py`). `CHANGELOG.md` is assembled by scriv from the per-PR fragments above.
+SemVer; the version lives in `pyproject.toml` `[project].version` (mirrored in the README badge,
+`src/ajoa_kit/__init__.py`, and the dashboard footer `ui/index.html` `#app-version`). `CHANGELOG.md`
+is assembled by scriv from the per-PR fragments above.
 
 **Cutting a release** (maintainer):
 
 1. Run **bump-my-version** (`patch` / `minor` / `major`) from the Actions tab —
    `gh workflow run bump-my-version.yaml -f bump_type=patch`. It bumps `pyproject.toml` + the README
-   badge + `src/ajoa_kit/__init__.py`, syncs `uv.lock`, collects the `changelog.d/` fragments into
-   `CHANGELOG.md`, and opens a `chore(release): bump …` PR.
+   badge + `src/ajoa_kit/__init__.py` + the dashboard footer, syncs `uv.lock`, collects the
+   `changelog.d/` fragments into `CHANGELOG.md`, and opens a `chore(release): bump …` PR.
 2. **Run the PR's checks.** It is bot-authored (`GITHUB_TOKEN`), so its Actions checks idle at
    `action_required` until a real-user event — push an empty commit to the bump branch
    (`git commit --allow-empty -m "ci: run checks" && git push origin HEAD:<bump-branch>`) or close +
