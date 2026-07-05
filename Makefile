@@ -110,6 +110,19 @@ TRENDS_PUBLISH := public-data/trends.ndjson public-data/trends-daily.ndjson publ
 
 trends-data: ## Push $(TRENDS_PUBLISH) to the `data` branch (real trends for the live dashboard)
 	test -f public-data/trends.ndjson || { echo "no public-data/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"; exit 2; }
+	# Shrink guard (#249 slice D): refuse to overwrite the data branch with a SMALLER (or locally
+	# absent) series — a silently-failed restore would otherwise wipe accumulated history on the
+	# force-push (how the pre-#210 weekly history was lost). One NDJSON line == one bucket.
+	# TRENDS_FORCE=1 skips the guard for an intentional prune.
+	git fetch -q origin data 2>/dev/null || true
+	for f in $(TRENDS_PUBLISH); do
+		old="$$(git show "origin/data:$$f" 2>/dev/null | wc -l)"
+		new="$$(test -f "$$f" && wc -l < "$$f" || echo 0)"
+		if [ -z "$${TRENDS_FORCE:-}" ] && [ "$$new" -lt "$$old" ]; then
+			echo "trends-data: refusing push — $$f would shrink $$old -> $$new buckets (TRENDS_FORCE=1 to override)"
+			exit 1
+		fi
+	done
 	# Aggregate trend files committed in a throwaway index (never touches the working tree), force-pushed
 	# to the data branch; the dashboard fetches them at runtime via raw.githubusercontent.com. Only the
 	# keyword-only {week,counts}/{date,counts}/{month,counts} files are added — no JD content can ride along.

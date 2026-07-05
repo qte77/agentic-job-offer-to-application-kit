@@ -15,7 +15,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from ajoa_kit import ingest, trend_snapshot
+from ajoa_kit import normalize, trend_snapshot
 
 
 def _read_ndjson(path: Path) -> list[dict]:
@@ -23,7 +23,7 @@ def _read_ndjson(path: Path) -> list[dict]:
 
 
 def test_extract_counts_document_frequency_and_multiword() -> None:
-    pat, _ = ingest.build_patterns(["python", "site reliability", "kubernetes"], ["python"])
+    pat, _ = normalize.build_patterns(["python", "site reliability", "kubernetes"], ["python"])
     jobs = [
         {"title": "Site Reliability Engineer", "description": "Python and Kubernetes."},
         {"title": "Backend Engineer", "description": "Python, python, PYTHON."},
@@ -63,7 +63,7 @@ class TestTrendSnapshotProperties:
     @given(jobs=_JOBS)
     @settings(deadline=None)
     def test_extract_counts_bounded_by_job_count(self, jobs: list[dict]) -> None:
-        pat, _ = ingest.build_patterns(["python", "rust", "go", "ml"], [])
+        pat, _ = normalize.build_patterns(["python", "rust", "go", "ml"], [])
         counts = trend_snapshot.extract_counts(jobs, pat)
         assert all(1 <= c <= len(jobs) for c in counts.values())
 
@@ -108,7 +108,7 @@ def test_parse_week_returns_none_when_unparseable(raw: str) -> None:
 
 
 def test_bucket_by_week_activity_dating_prefers_last_modified_with_fallback() -> None:
-    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    pat, _ = normalize.build_patterns(["python", "rust"], [])
     jobs = [
         # posted W03, but last-modified W08 -> activity dating must place it in W08
         {
@@ -131,7 +131,7 @@ def test_bucket_by_week_activity_dating_prefers_last_modified_with_fallback() ->
 
 
 def test_bucket_by_week_groups_by_posted_week_and_counts_skipped() -> None:
-    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    pat, _ = normalize.build_patterns(["python", "rust"], [])
     jobs = [
         {"title": "Python Dev", "description": "python", "posted_at": "2024-01-15"},  # W03
         {"title": "More Python", "description": "python", "posted_at": "2024-01-16"},  # W03
@@ -205,7 +205,7 @@ def test_parse_day_returns_none_when_unparseable(raw: str) -> None:
 
 
 def test_bucket_by_day_groups_by_posted_day_and_counts_skipped() -> None:
-    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    pat, _ = normalize.build_patterns(["python", "rust"], [])
     jobs = [
         {"title": "Python Dev", "description": "python", "posted_at": "2024-01-15"},
         {"title": "More Python", "description": "python", "posted_at": "2024-01-15"},  # same day
@@ -221,7 +221,7 @@ def test_bucket_by_day_groups_by_posted_day_and_counts_skipped() -> None:
 def test_weekly_from_daily_sums_days_and_matches_bucket_by_week() -> None:
     # Weekly is a roll-up of daily: two JDs first-seen on different days of one ISO week sum to that
     # week's document frequency, and that must equal computing the week directly.
-    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    pat, _ = normalize.build_patterns(["python", "rust"], [])
     jobs = [
         {"title": "Python", "description": "python", "posted_at": "2024-01-15"},  # Mon, W03
         {"title": "Python2", "description": "python", "posted_at": "2024-01-17"},  # Wed, W03
@@ -258,7 +258,7 @@ def test_parse_month_returns_none_when_unparseable(raw: str) -> None:
 def test_monthly_from_daily_sums_days_and_matches_bucket_by_month() -> None:
     # Monthly is a roll-up of daily (same shape as weekly): two JDs first-seen in different weeks of
     # one month sum to that month's document frequency, equal to computing the month directly.
-    pat, _ = ingest.build_patterns(["python", "rust"], [])
+    pat, _ = normalize.build_patterns(["python", "rust"], [])
     jobs = [
         {"title": "Python", "description": "python", "posted_at": "2024-01-15"},  # Jan
         {"title": "Python2", "description": "python", "posted_at": "2024-01-29"},  # Jan, other week

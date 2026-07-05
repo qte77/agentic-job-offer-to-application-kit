@@ -15,7 +15,7 @@ across `_reason` / `_tos` strings in the seed file and prose in `research.md`. T
 tiering explicit and records both the legal backbone and a 2026-06-20 empirical re-verification
 (read-only `polyfetch` probes of each API + `robots.txt` + ToS page).
 
-The loader (`ingest.load_sources`) consumes **only** `feeds` + `ats` + `aggregators`; `_blocked` and
+The loader (`sources.load_sources`) consumes **only** `feeds` + `ats` + `aggregators`; `_blocked` and
 `_deferred` are documentation, never loaded — so this ADR governs what graduates *into* those loaded
 keys.
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ajoa_kit import ingest
+from ajoa_kit import sources
 
 if TYPE_CHECKING:
     import pytest
@@ -77,8 +77,8 @@ ARBEITNOW_JSON = {
 
 
 def test_personio_normalizes_and_tolerates_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(ingest, "get_bytes", lambda _url: (PERSONIO_XML, "httpx"))
-    recs = list(ingest.from_personio({"slug": "acme", "company": "Acme", "lane": "engineering"}))
+    monkeypatch.setattr(sources, "get_bytes", lambda _url: (PERSONIO_XML, "httpx"))
+    recs = list(sources.from_personio({"slug": "acme", "company": "Acme", "lane": "engineering"}))
 
     assert len(recs) == 2
     first = recs[0]
@@ -96,8 +96,8 @@ def test_personio_normalizes_and_tolerates_missing(monkeypatch: pytest.MonkeyPat
 
 
 def test_rss_normalizes_and_canonicalizes_url(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(ingest, "get_bytes", lambda _url: (RSS_XML, "httpx"))
-    recs = list(ingest.from_rss({"source": "demo", "url": "https://ex.co/rss"}))
+    monkeypatch.setattr(sources, "get_bytes", lambda _url: (RSS_XML, "httpx"))
+    recs = list(sources.from_rss({"source": "demo", "url": "https://ex.co/rss"}))
 
     assert len(recs) == 1
     r = recs[0]
@@ -109,8 +109,8 @@ def test_rss_normalizes_and_canonicalizes_url(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_arbeitnow_normalizes_and_tolerates_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(ingest, "get_json", lambda _url: (ARBEITNOW_JSON, "httpx"))
-    recs = list(ingest.from_arbeitnow({"name": "arbeitnow"}))
+    monkeypatch.setattr(sources, "get_json", lambda _url: (ARBEITNOW_JSON, "httpx"))
+    recs = list(sources.from_arbeitnow({"name": "arbeitnow"}))
 
     assert len(recs) == 2
     first = recs[0]
@@ -157,8 +157,8 @@ def test_greenhouse_joins_departments_and_tolerates_null_location(
             },
         ]
     }
-    monkeypatch.setattr(ingest, "get_json", lambda _u: (payload, "httpx"))
-    recs = list(ingest.from_greenhouse({"slug": "acme", "company": "Acme", "lane": "engineering"}))
+    monkeypatch.setattr(sources, "get_json", lambda _u: (payload, "httpx"))
+    recs = list(sources.from_greenhouse({"slug": "acme", "company": "Acme", "lane": "engineering"}))
     assert recs[0]["id"] == "greenhouse:acme:1"
     assert recs[0]["department"] == "Engineering, Platform"  # multi-dept join
     assert recs[0]["location"] == "Remote"
@@ -202,8 +202,8 @@ def test_ashby_joins_dept_team_and_url_description_fallbacks(
             },
         ]
     }
-    monkeypatch.setattr(ingest, "get_json", lambda _u: (payload, "httpx"))
-    recs = list(ingest.from_ashby({"slug": "acme", "company": "Acme", "lane": "engineering"}))
+    monkeypatch.setattr(sources, "get_json", lambda _u: (payload, "httpx"))
+    recs = list(sources.from_ashby({"slug": "acme", "company": "Acme", "lane": "engineering"}))
     assert recs[0]["department"] == "Engineering / Core"
     assert recs[0]["remote"] is True
     assert recs[0]["url"] == "https://ashby/apply/a1"  # no jobUrl -> applyUrl fallback
@@ -237,8 +237,8 @@ def test_lever_list_guard_and_workplace_remote_mapping(monkeypatch: pytest.Monke
         },
         {"id": "l3", "text": "No WT", "categories": {"team": "Data"}},
     ]
-    monkeypatch.setattr(ingest, "get_json", lambda _u: (payload, "httpx"))
-    recs = list(ingest.from_lever({"slug": "acme", "company": "Acme", "lane": "engineering"}))
+    monkeypatch.setattr(sources, "get_json", lambda _u: (payload, "httpx"))
+    recs = list(sources.from_lever({"slug": "acme", "company": "Acme", "lane": "engineering"}))
     assert recs[0]["department"] == "Eng"
     assert recs[0]["location"] == "NYC"
     assert recs[0]["remote"] is True
@@ -253,8 +253,9 @@ def test_lever_list_guard_and_workplace_remote_mapping(monkeypatch: pytest.Monke
 def test_lever_non_list_payload_yields_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
     # The Lever endpoint returns a bare array; a dict (error/edge shape) must yield nothing,
     # not crash — the `isinstance(data, list)` guard.
-    monkeypatch.setattr(ingest, "get_json", lambda _u: ({"unexpected": "dict"}, "httpx"))
-    assert list(ingest.from_lever({"slug": "acme", "company": "Acme", "lane": "engineering"})) == []
+    monkeypatch.setattr(sources, "get_json", lambda _u: ({"unexpected": "dict"}, "httpx"))
+    entry = {"slug": "acme", "company": "Acme", "lane": "engineering"}
+    assert list(sources.from_lever(entry)) == []
 
 
 def test_recruitee_joins_and_location_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -280,8 +281,8 @@ def test_recruitee_joins_and_location_fallback(monkeypatch: pytest.MonkeyPatch) 
             },
         ]
     }
-    monkeypatch.setattr(ingest, "get_json", lambda _u: (payload, "httpx"))
-    recs = list(ingest.from_recruitee({"slug": "acme", "company": "Acme", "lane": "engineering"}))
+    monkeypatch.setattr(sources, "get_json", lambda _u: (payload, "httpx"))
+    recs = list(sources.from_recruitee({"slug": "acme", "company": "Acme", "lane": "engineering"}))
     assert recs[0]["location"] == "Munich, DE"  # city + country_code join
     assert recs[0]["department"] == "Engineering, Backend"  # department + category join
     assert recs[0]["url"] == "https://r/1"
@@ -312,8 +313,8 @@ def test_workable_shortcode_id_and_telecommuting(monkeypatch: pytest.MonkeyPatch
             },
         ]
     }
-    monkeypatch.setattr(ingest, "get_json", lambda _u: (payload, "httpx"))
-    recs = list(ingest.from_workable({"slug": "acme", "company": "Acme", "lane": "engineering"}))
+    monkeypatch.setattr(sources, "get_json", lambda _u: (payload, "httpx"))
+    recs = list(sources.from_workable({"slug": "acme", "company": "Acme", "lane": "engineering"}))
     assert recs[0]["id"] == "workable:acme:ABC123"  # shortcode preferred over numeric id
     assert recs[0]["location"] == "Lisbon, PT"
     assert recs[0]["remote"] is True
@@ -351,8 +352,8 @@ THEMUSE_JSON = {
 def test_themuse_normalizes_nested_fields_and_tolerates_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(ingest, "get_json", lambda _u: (THEMUSE_JSON, "httpx"))
-    recs = list(ingest.from_themuse({"name": "themuse"}))
+    monkeypatch.setattr(sources, "get_json", lambda _u: (THEMUSE_JSON, "httpx"))
+    recs = list(sources.from_themuse({"name": "themuse"}))
 
     assert len(recs) == 2
     first = recs[0]

@@ -15,34 +15,16 @@ import json
 import re
 import sys
 from pathlib import Path
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import ValidationError
 
 from ajoa_kit.ingest import load_lanes
 from ajoa_kit.models import ScoredItem
+
+# The deliberate ingest-era duplicate collapsed here (#249 slice C): the lightweight
+# normalize module removed the original reason to duplicate (avoiding ingest's heavy import).
+from ajoa_kit.normalize import canonical_url
 from ajoa_kit.settings import AppSettings
-
-_TRACKING = {"gclid", "fbclid", "mc_cid", "mc_eid", "igshid", "ref_src"}
-
-
-def canonical_url(url: str) -> str:
-    """Drop tracking query params (utm_*, gclid, ...) for clean clickthrough URLs.
-
-    Duplicated from ``ingest`` by design (two stable call sites; AHA — not extracted to a
-    shared module until a third consumer appears).
-    """
-    if not url:
-        return url
-    s = urlsplit(url)
-    if not s.query:
-        return url
-    kept = [
-        (k, v)
-        for k, v in parse_qsl(s.query, keep_blank_values=True)
-        if not k.lower().startswith("utm_") and k.lower() not in _TRACKING
-    ]
-    return urlunsplit((s.scheme, s.netloc, s.path, urlencode(kept), s.fragment))
 
 
 def load_result(src: Path) -> dict:

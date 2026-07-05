@@ -58,7 +58,7 @@ ToS/ToU tier classification for shipped sources is [ADR-0002](decisions/0002-sou
 
 ## ATS feed/API endpoints (no-auth)
 
-The ingest layer (`src/ajoa_kit/ingest.py`) pulls job descriptions from public,
+The ingest layer (`src/ajoa_kit/sources.py` adapters, orchestrated by `ingest.py`) pulls job descriptions from public,
 no-auth feed/API endpoints — company slugs come from `config/seed.json`, never
 hard-coded; each adapter yields one normalized record shape. Parsing is stdlib-only
 (`json` + `xml.etree`, `defusedxml` when available); polyfetch is the default fetcher

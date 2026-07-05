@@ -7,8 +7,7 @@ from urllib.parse import parse_qsl, urlsplit
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from ajoa_kit.ingest import canonical_url
-from ajoa_kit.persist_scored import canonical_url as canonical_url_scored
+from ajoa_kit.normalize import canonical_url
 
 
 def test_drops_tracking_keeps_meaningful() -> None:
@@ -25,12 +24,12 @@ def test_all_tracking_yields_clean_url() -> None:
 
 
 class TestCanonicalUrlProperties:
-    # Reason: pure URL normalizer over arbitrary text; deadline off.
+    # Reason: pure URL normalizer over arbitrary text; deadline off. (The former persist_scored
+    # lockstep assertion is gone — #249 slice C collapsed that duplicate onto this single source.)
     @given(u=st.text())
     @settings(deadline=None)
-    def test_idempotent_strips_utm_and_matches_scored_copy(self, u: str) -> None:
+    def test_idempotent_and_strips_utm(self, u: str) -> None:
         once = canonical_url(u)
         assert canonical_url(once) == once  # idempotent
         keys = [k.lower() for k, _ in parse_qsl(urlsplit(once).query, keep_blank_values=True)]
         assert not any(k.startswith("utm_") for k in keys)  # no tracking params survive
-        assert canonical_url_scored(u) == once  # the AHA-duplicated copy stays in lockstep

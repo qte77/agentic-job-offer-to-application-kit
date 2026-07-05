@@ -78,7 +78,7 @@ into actually applying (see [research.md §Delivery](research.md#delivery)).
 2. **The evidence library is structured data.** `cc-workflow-evidence-library.js` returns the `LIB`
    object (skill clusters, master CV bullets, per-lane angles, gaps) written to
    `results/evidence-library.json` — the retrieval source of truth the relevance and tailor steps read.
-3. **A web-access layer wraps polyfetch.** `src/ajoa_kit/ingest.py` fetches via `polyfetch-scrape`
+3. **A web-access layer wraps polyfetch.** `src/ajoa_kit/sources.py` fetches via `polyfetch-scrape`
    (httpx → curl_cffi → headless), invoked with `uv run --directory $POLYFETCH_DIR` — never vendored.
    Feed/API-first, no-auth, GET only; each record carries `fetched_backend` for tier monitoring.
 
@@ -92,7 +92,7 @@ built).
 
 | Contract | Defined at | Typed? | Producer → consumer | Artifact |
 |---|---|---|---|---|
-| JD record | `ingest.record()` | dict — untyped | adapters → corpus / chunk / trends | `results/jobs-raw.json` |
+| JD record | `normalize.record()` | dict — untyped | adapters → corpus / chunk / trends | `results/jobs-raw.json` |
 | Corpus record | `corpus.merge_corpus` | dict + `first_seen` / `last_seen` / `last_changed` / `content_hash` | ingest `--merge` → trends / chunk / next run | `results/corpus.json` |
 | Daily digest | `corpus.summarize_changes` + `render_daily_summary` | dict → markdown | ingest `--merge` → human | `results/daily-summary.md` (local-only) |
 | Trends week | `models.WeekCounts` | **pydantic** (write-side) | trend-snapshot → dashboard | `public-data/trends.ndjson` |
@@ -105,7 +105,7 @@ built).
 | Evidence library `LIB` | `cc-workflow-evidence-library.js` | JSON-Schema (JS) | Stage 1 → relevance / tailor | `results/evidence-library.json` |
 | App settings | `settings.AppSettings` | **pydantic-settings** | every entry point | — (env / cwd) |
 | Position lanes | `ingest.load_lanes` / `models.Lane` | **pydantic** | human → relevance / evidence (`cfg.lanes`) | `config/lanes.json` |
-| seed / keywords / style | `ingest.load_sources` / `load_keywords`, `style.StyleBrief` | untyped / `@dataclass` | human → ingest / tailor | `config/*.json` |
+| seed / keywords / style | `sources.load_sources` / `ingest.load_keywords`, `style.StyleBrief` | untyped / `@dataclass` | human → ingest / tailor | `config/*.json` |
 
 **Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` (config). **JS-schema'd at the `agent()`
 boundary but untyped on Python re-read:** shortlist, offer pack, `must_haves`, evidence library.
@@ -119,11 +119,11 @@ pydantic `Lane` + `load_lanes`) and the `persist_scored` lane-membership check a
 
 - **Pure core, injected `today`** — `corpus.merge_corpus` / `summarize_changes` take the date as an
   argument (the caller passes `date.today()`), so L1 is deterministic and testable; no `datetime.now()`.
-- **Lazy `polyfetch_scrape` import** — `ingest.get_json` / `get_bytes` import the fetch stack *inside*
+- **Lazy `polyfetch_scrape` import** — `sources.get_json` / `get_bytes` import the fetch stack *inside*
   the function, so the pure logic (and its tests) import offline.
 - **Warn-and-continue** — `ingest.collect` wraps each source pull; one bad source lands in `failures`
   and never aborts the run.
-- **Dispatch tables** — `ingest.ATS` / `ingest.AGGREGATORS` map a source-type string to its adapter;
+- **Dispatch tables** — `sources.ATS` / `sources.AGGREGATORS` map a source-type string to its adapter;
   `load_sources` drives them from the seed.
 - **Config-SSOT vocabulary** — the tracked `config/keywords.json` is canonical;
   `ingest.load_keywords` falls back to the in-code mirror in `defaults.py` (a drift-guard test keeps
@@ -131,7 +131,7 @@ pydantic `Lane` + `load_lanes`) and the `persist_scored` lane-membership check a
   (`config/lanes.json` → `defaults.DEFAULT_LANES`).
 - **Upsert-by-key** — `corpus.merge_corpus` (by JD `id`, four states) and `trend_snapshot.upsert_week`
   (by ISO week) replace in place while preserving the rest.
-- **Record factory** — `ingest.record()` is the single fixed-shape dict every adapter emits
+- **Record factory** — `normalize.record()` is the single fixed-shape dict every adapter emits
   (`canonical_url` applied at construction).
 - **Run-scoped artifacts** — `results/` is git-ignored and handed between steps (and across CI runs) as
   a private GHA artifact, never inlined into the orchestrator.

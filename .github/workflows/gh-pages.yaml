@@ -51,6 +51,8 @@ jobs:
       - name: Publish ui/ to gh-pages branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The bundled weekly series (single point of edit for this step, #249 slice D).
+          TRENDS_FILE: public-data/trends.ndjson
         run: |
           set -euo pipefail
           site="$(mktemp -d)"
@@ -58,11 +60,12 @@ jobs:
           # Bundle the latest PII-free aggregate trends ({week,counts}) from the `data` branch so the
           # dashboard loads them SAME-ORIGIN — no cross-origin runtime fetch to raw.githubusercontent
           # (rate-limited / blocked by some networks & extensions -> silent synthetic fallback).
+          dst="$site/public/data/$(basename "$TRENDS_FILE")"
           if git fetch --depth=1 origin data 2>/dev/null \
-            && git show origin/data:public-data/trends.ndjson > "$site/public/data/trends.ndjson" 2>/dev/null; then
-            echo "bundled $(wc -l < "$site/public/data/trends.ndjson") trend records from the data branch"
+            && git show "origin/data:$TRENDS_FILE" > "$dst" 2>/dev/null; then
+            echo "bundled $(wc -l < "$dst") trend records from the data branch"
           else
-            rm -f "$site/public/data/trends.ndjson"
+            rm -f "$dst"
             echo "no data-branch trends; dashboard falls back to runtime fetch / synthetic"
           fi
           # Stamp the real deploy date into the published copy (no-build; the committed
