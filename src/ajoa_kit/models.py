@@ -36,9 +36,9 @@ class ScoredItem(BaseModel):
     boundary.
     """
 
-    # extra="allow" keeps unknown workflow fields through model_dump(), so persist's jobs-scored.json
-    # re-write round-trips any field the relevance schema grows beyond the 10 below (#197). The first
-    # 8 are the relevance RESULT schema; `stale`/`last_checked` are added by the refresh sweep (#214).
+    # extra="allow" keeps unknown workflow fields through model_dump(), so persist's re-write of
+    # jobs-scored.json round-trips any field the relevance schema grows beyond the 10 below (#197).
+    # The first 8 are the relevance RESULT schema; `stale`/`last_checked` come from refresh (#214).
     model_config = ConfigDict(extra="allow")
 
     id: str = ""
