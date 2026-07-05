@@ -413,6 +413,18 @@ footer a:hover { text-decoration: underline; }
   color: var(--bg);
 }
 
+/* De-nativize every styled button: with `appearance: auto`, some engines (WebKit/Safari notably)
+   paint the NATIVE button face underneath our authored transparent/--surface backgrounds — it
+   reads as a white overlay on the inactive controls in both themes and kills contrast. Chromium
+   drops the native face on its own once a background is authored; this makes it explicit
+   everywhere. (The #trends-range select keeps `auto` for its native dropdown arrow.) */
+.tab,
+.theme-toggle,
+.tailor-copy {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 /* ── Theme toggle — auto/light/dark cycle button (mirrors qte77.github.io) ── */
 /* Chip visuals are shared with .header-link below (see the grouped rule); here just the
    button-specific resets. Default inline-block display is kept so the ::before width-sizer works. */
