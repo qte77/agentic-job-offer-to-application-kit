@@ -121,3 +121,8 @@ replace = '__version__ = "{new_version}"'
 filename = "README.md"
 search = "version-{current_version}-blue"
 replace = "version-{new_version}-blue"
+
+[[tool.bumpversion.files]]
+filename = "ui/index.html"
+search = 'app-version">{current_version}<'
+replace = 'app-version">{new_version}<'
