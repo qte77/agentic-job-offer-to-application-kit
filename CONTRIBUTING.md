@@ -56,6 +56,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `persist` | `FILE` — the relevance workflow result · `--merge` — union into the existing shortlists / `jobs-scored.json` by id instead of overwriting (#226) |
 | `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` |
 | `refresh` | reconcile shortlists vs the corpus `delisted` state + a read-only URL re-probe · `--lane <name>` (default: all buckets) · `--delete` (remove vs flag `stale`) · `--dry-run` |
+| `verify-sources` | re-probe every `config/default-seed.json` `feeds`/`ats` source (read-only, no auth), stamp `_date_verified` on the live ones, report the rest for manual triage · `--dry-run` (#217) |
 | `ats-check` | `FILE` — a CV markdown file |
 | `lanes` | `--json` — emit the workflow `lanes` arg from `config/lanes.json` (the canonical 7 lanes) |
 | `style` | `--json` — emit the tailor `style` arg from `config/style.json` |

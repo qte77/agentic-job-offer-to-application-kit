@@ -86,6 +86,15 @@
   (`corpus.summarize_changes` + `render_daily_summary` → `results/daily-summary.md`), emitted from
   `ingest --merge`. It names companies/titles, so it stays local-only (git-ignored `results/`, never a
   CI artifact or branch); the daily cron still publishes only the aggregate keyword trends.
+- Source freshness re-probe (#217): `ajoa-kit verify-sources [--dry-run]` re-probes every
+  `config/default-seed.json` `feeds`/`ats` source read-only and stamps `_date_verified` on the live
+  ones (feeds by a 2xx/3xx GET, ats boards by a live role count via `slug_probe.PROBES`), reporting the
+  rest for manual triage. A one-pass backfill dated all 142 seed sources (2026-07-04); `_date_verified`
+  is now expected on new `feeds`/`ats` entries too (ADR-0002). A scheduled re-probe is **deferred**
+  (low-stakes — `ingest` already lists dead sources); the verb is run by hand for now.
+- Forward-compat scored fields (#197): `ScoredItem` now uses `extra="allow"`, so a relevance-result
+  field beyond the known set round-trips into `jobs-scored.json` + the per-lane shortlists instead of
+  being dropped on the persist re-write.
 - Daily trend granularity — data layer (#187/#188): `trend-snapshot` now also writes
   `public-data/trends-daily.ndjson` (`{date, counts}`), and **weekly is rolled up from the daily buckets**
   (`weekly_from_daily`) so the two series can't disagree; both publish to the `data` branch (aggregate
