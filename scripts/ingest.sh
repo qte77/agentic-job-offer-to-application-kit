@@ -9,5 +9,9 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)" # repo root
 POLYFETCH_DIR="${POLYFETCH_DIR:-${HERE}/../polyfetch-scrape}"
 export AJOA_CONFIG_DIR="${HERE}/config"
 export AJOA_RESULTS_DIR="${HERE}/results"
+export PYTHONPATH="${HERE}/src"
+# --with lists every ajoa_kit dep polyfetch's env doesn't ship (defusedxml stopped being
+# transitive when polyfetch dropped its arXiv vertical, 6f42aa2).
 exec uv run --directory "${POLYFETCH_DIR}" \
+  --with pydantic --with pydantic-settings --with defusedxml \
   python -m ajoa_kit ingest "$@"
