@@ -75,7 +75,10 @@ jobs:
       # ajoa_kit itself via PYTHONPATH. Paths are absolute (AJOA_*_DIR) since the cwd is polyfetch's.
       - name: Ingest — incremental merge into results/corpus.json
         working-directory: polyfetch-scrape
-        run: uv run --with pydantic --with pydantic-settings python -m ajoa_kit ingest --merge
+        # --with lists every ajoa_kit dep absent from polyfetch's own env: defusedxml became
+        # explicit when polyfetch 6f42aa2 dropped its arXiv vertical (and the transitive dep
+        # this run had silently leaned on) — the 2026-07-04/05 cron failures.
+        run: uv run --with pydantic --with pydantic-settings --with defusedxml python -m ajoa_kit ingest --merge
 
       # Seed the snapshot with the data branch's existing trends so trend-snapshot's per-week upsert
       # ACCUMULATES (keeps already-published weeks, adds/updates the corpus's first_seen weeks)
@@ -99,7 +102,7 @@ jobs:
 
       - name: Keyword-trend snapshot (buckets by first_seen)
         working-directory: polyfetch-scrape
-        run: uv run --with pydantic --with pydantic-settings python -m ajoa_kit trend-snapshot
+        run: uv run --with pydantic --with pydantic-settings --with defusedxml python -m ajoa_kit trend-snapshot
 
       - name: Push aggregate trends to the data branch
         run: |
