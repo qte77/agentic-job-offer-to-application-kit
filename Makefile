@@ -119,7 +119,7 @@ trends-data: ## Push $(TRENDS_PUBLISH) to the `data` branch (real trends for the
 	tree="$$(git write-tree)"
 	# Boundary guard (#210): the pushed tree may contain ONLY the allowlisted aggregate files — abort
 	# before push if any other path slipped in (structural defense for the PII boundary). Fail-closed:
-	# an empty $(TRENDS_PUBLISH) matches nothing and refuses every path.
+	# an empty allowlist variable matches nothing and refuses every path.
 	for f in $$(git ls-tree -r --name-only "$$tree"); do
 		case " $(TRENDS_PUBLISH) " in
 			*" $$f "*) ;;
