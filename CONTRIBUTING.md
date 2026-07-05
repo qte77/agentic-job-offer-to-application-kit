@@ -71,7 +71,7 @@ Per-adapter endpoint URLs live in `src/ajoa_kit/ingest.py`; sources are ToS-tier
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `AJOA_CONFIG_DIR` | `config` | where `seed.json` / `keywords.json` / `style.json` are read |
+| `AJOA_CONFIG_DIR` | `config` | where `seed.json` / `keywords.json` / `style.json` are read (the tracked `keywords.json` is canonical + published as trend keys — keep it generic; use a private dir for personal vocab) |
 | `AJOA_RESULTS_DIR` | `results` | where ingest/chunk/persist artifacts (PII) are written |
 | `AJOA_PUBLIC_DATA_DIR` | `public-data` | where PII-free publishable trends are written (the only data published, #210) |
 | `POLYFETCH_DIR` | `../polyfetch-scrape` | the `polyfetch-scrape` checkout `make ingest` / `probe` borrow |

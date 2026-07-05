@@ -27,49 +27,14 @@ from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel
-
 from ajoa_kit.ingest import build_patterns, load_keywords
+from ajoa_kit.models import DayCounts, MonthCounts, WeekCounts
 from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
     import re
     from collections.abc import Callable
     from pathlib import Path
-
-
-class WeekCounts(BaseModel):
-    """One ISO week's aggregate keyword frequencies — the publishable trends contract.
-
-    The single typed shape written to ``public-data/trends.ndjson``, read by the dashboard's pivot
-    layer: ``{week, counts}`` where ``counts`` is ``{keyword: document-frequency}``. No JD content,
-    company, title, or per-posting row ever appears here (ADR-0001 PII gate).
-    """
-
-    week: str
-    counts: dict[str, int]
-
-
-class DayCounts(BaseModel):
-    """One ISO calendar day's aggregate keyword frequencies — the daily-granularity trends contract.
-
-    Written to ``public-data/trends-daily.ndjson`` as ``{date, counts}`` (``YYYY-MM-DD``).
-    Same keyword-only, no-PII guarantee as :class:`WeekCounts`; weeks are summed from these days.
-    """
-
-    date: str
-    counts: dict[str, int]
-
-
-class MonthCounts(BaseModel):
-    """One calendar month's aggregate keyword frequencies — the monthly-granularity contract (#188).
-
-    Written to ``public-data/trends-monthly.ndjson`` as ``{month, counts}`` (``YYYY-MM``).
-    Same keyword-only, no-PII guarantee as :class:`WeekCounts`; months are summed from the days.
-    """
-
-    month: str
-    counts: dict[str, int]
 
 
 def extract_counts(jobs: list[dict], pattern: re.Pattern[str]) -> dict[str, int]:

@@ -95,8 +95,9 @@ built).
 | JD record | `ingest.record()` | dict — untyped | adapters → corpus / chunk / trends | `results/jobs-raw.json` |
 | Corpus record | `corpus.merge_corpus` | dict + `first_seen` / `last_seen` / `last_changed` / `content_hash` | ingest `--merge` → trends / chunk / next run | `results/corpus.json` |
 | Daily digest | `corpus.summarize_changes` + `render_daily_summary` | dict → markdown | ingest `--merge` → human | `results/daily-summary.md` (local-only) |
-| Trends week | `trend_snapshot.WeekCounts` | **pydantic** (write-side) | trend-snapshot → dashboard | `public-data/trends.ndjson` |
-| Trends day | `trend_snapshot.DayCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#187) | `public-data/trends-daily.ndjson` |
+| Trends week | `models.WeekCounts` | **pydantic** (write-side) | trend-snapshot → dashboard | `public-data/trends.ndjson` |
+| Trends day | `models.DayCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#187) | `public-data/trends-daily.ndjson` |
+| Trends month | `models.MonthCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#188) | `public-data/trends-monthly.ndjson` |
 | Batches + manifest | `chunk.main` | dict — untyped | chunk → relevance | `results/batches/*.json` |
 | Shortlist | relevance.js schema / `persist_scored` / `refresh` | JSON-Schema (JS) → dict (Py) + `stale`/`last_checked` (#214) | relevance → persist → refresh → dashboard | `results/LANE/shortlist.json` / `.md` |
 | Offer pack | tailor.js schema / `persist_offer` | JSON-Schema (JS) → dict (Py) | tailor → persist | `results/offers/SLUG/*.md` |
@@ -124,9 +125,10 @@ pydantic `Lane` + `load_lanes`) and the `persist_scored` lane-membership check a
   and never aborts the run.
 - **Dispatch tables** — `ingest.ATS` / `ingest.AGGREGATORS` map a source-type string to its adapter;
   `load_sources` drives them from the seed.
-- **Config-overridable vocabulary** — `ingest.load_keywords` reads `config/keywords.json` or falls back
-  to module constants; `trend_snapshot` reuses it. `ingest.load_lanes` follows the same shape
-  (`config/lanes.json` → `DEFAULT_LANES`).
+- **Config-SSOT vocabulary** — the tracked `config/keywords.json` is canonical;
+  `ingest.load_keywords` falls back to the in-code mirror in `defaults.py` (a drift-guard test keeps
+  file and mirror equal); `trend_snapshot` reuses it. `ingest.load_lanes` follows the same shape
+  (`config/lanes.json` → `defaults.DEFAULT_LANES`).
 - **Upsert-by-key** — `corpus.merge_corpus` (by JD `id`, four states) and `trend_snapshot.upsert_week`
   (by ISO week) replace in place while preserving the rest.
 - **Record factory** — `ingest.record()` is the single fixed-shape dict every adapter emits
@@ -211,9 +213,11 @@ agentic-job-offer-to-application-kit/
 The authoritative list of git-ignored, never-committed paths (so no PII is ever committed) — the
 single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 
-- `config/` — inputs you author (`seed.json`, optional `style.json` / `keywords.json`); git-ignored
+- `config/` — inputs you author (`seed.json`, optional `style.json`); git-ignored
   **except** the tracked, PII-free `config/default-seed.json` (the shipped, ToS-vetted default
-  source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)) and
+  source list of public board slugs; tiers per [ADR-0002](decisions/0002-source-tos-tiers.md)),
+  the tracked `config/keywords.json` (the canonical pre-filter vocabulary — generic terms only,
+  they become the published trend keys) and
   `config/lanes.json` (the canonical position lanes, #195). Your `config/seed.json` overrides the
   default-seed when present; absent it, ingest falls back to the default.
 - `results/` — everything generated and **PII-bearing** (`jobs-raw.json`, `corpus.json`,
