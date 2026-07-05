@@ -103,27 +103,32 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 ui-check: ## Headless-browser smoke for the dashboard (CSP/render/console); borrows POLYFETCH_DIR's patchright
 	uv run --directory "$${POLYFETCH_DIR:-../polyfetch-scrape}" python "$(CURDIR)/scripts/ui_check.py"
 
-trends-data: ## Push public-data/trends{,-daily}.ndjson to the `data` branch (real trends for the live dashboard)
+# The publishable aggregate trend files (#210 allowlist + #188 monthly): weekly is required (the
+# "did you run trend-snapshot" guard), the finer/coarser series are added when present. One
+# definition feeds the add loop, the boundary guard and the echo below — extend it here only.
+TRENDS_PUBLISH := public-data/trends.ndjson public-data/trends-daily.ndjson public-data/trends-monthly.ndjson
+
+trends-data: ## Push $(TRENDS_PUBLISH) to the `data` branch (real trends for the live dashboard)
 	test -f public-data/trends.ndjson || { echo "no public-data/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"; exit 2; }
 	# Aggregate trend files committed in a throwaway index (never touches the working tree), force-pushed
 	# to the data branch; the dashboard fetches them at runtime via raw.githubusercontent.com. Only the
-	# keyword-only {week,counts}/{date,counts} files are added — no JD content can ride along.
+	# keyword-only {week,counts}/{date,counts}/{month,counts} files are added — no JD content can ride along.
 	export GIT_INDEX_FILE="$$(mktemp -u)"
 	git read-tree --empty
-	git add -f public-data/trends.ndjson
-	test -f public-data/trends-daily.ndjson && git add -f public-data/trends-daily.ndjson || true
+	for f in $(TRENDS_PUBLISH); do test -f "$$f" && git add -f "$$f" || true; done
 	tree="$$(git write-tree)"
-	# Boundary guard (#210): the pushed tree may contain ONLY the two allowlisted aggregate files —
-	# abort before push if any other path slipped in (structural defense for the PII boundary).
+	# Boundary guard (#210): the pushed tree may contain ONLY the allowlisted aggregate files — abort
+	# before push if any other path slipped in (structural defense for the PII boundary). Fail-closed:
+	# an empty $(TRENDS_PUBLISH) matches nothing and refuses every path.
 	for f in $$(git ls-tree -r --name-only "$$tree"); do
-		case " public-data/trends.ndjson public-data/trends-daily.ndjson " in
+		case " $(TRENDS_PUBLISH) " in
 			*" $$f "*) ;;
 			*) echo "trends-data: refusing to push unexpected path: $$f"; exit 1 ;;
 		esac
 	done
 	commit="$$(git -c commit.gpgsign=false commit-tree "$$tree" -m "data: update trends")"
 	git push -f origin "$$commit:refs/heads/data"
-	echo "pushed trends.ndjson (+ trends-daily.ndjson if present) -> data branch ($$commit)"
+	echo "pushed $(TRENDS_PUBLISH) (where present) -> data branch ($$commit)"
 
 # MARK: Changelog & release
 

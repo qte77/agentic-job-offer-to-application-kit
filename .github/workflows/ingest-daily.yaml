@@ -84,10 +84,10 @@ jobs:
         run: |
           git fetch --depth=1 origin data 2>/dev/null || true
           mkdir -p public-data
-          # Restore both the weekly and daily aggregate series so trend-snapshot's per-bucket upsert
-          # ACCUMULATES (keeps already-published weeks/days, adds/updates this run's) rather than
-          # replacing. Atomic via a tmp file: only overwrite on a clean read.
-          for f in trends.ndjson trends-daily.ndjson; do
+          # Restore the weekly, daily and monthly aggregate series so trend-snapshot's per-bucket
+          # upsert ACCUMULATES (keeps already-published buckets, adds/updates this run's) rather
+          # than replacing. Atomic via a tmp file: only overwrite on a clean read.
+          for f in trends.ndjson trends-daily.ndjson trends-monthly.ndjson; do
             if git show "origin/data:public-data/$f" > "public-data/$f.tmp" 2>/dev/null; then
               mv "public-data/$f.tmp" "public-data/$f"
               echo "restored $(wc -l < "public-data/$f") lines -> public-data/$f"
