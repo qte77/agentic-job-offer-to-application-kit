@@ -45,10 +45,16 @@ def serve(directory: Path) -> socketserver.TCPServer:
     return httpd
 
 
+# 404s that are BY DESIGN: the #209 real-shortlist probe (only make preview's throwaway copy
+# carries the file; the published site and this bare-ui/ server 404 it -> demo fallback).
+ALLOWED_404_SUFFIXES = ("public/data/shortlist.json",)
+
+
 def check(url: str) -> list[str]:
     """Load `url` in headless Chromium; return a list of failure strings (empty = pass)."""
     console: list[str] = []
     page_errors: list[str] = []
+    not_found: list[str] = []
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
         page = browser.new_page()
@@ -57,6 +63,7 @@ def check(url: str) -> list[str]:
             lambda m: console.append(m.text) if m.type in ("error", "warning") else None,
         )
         page.on("pageerror", lambda e: page_errors.append(str(e)))
+        page.on("response", lambda r: not_found.append(r.url) if r.status == 404 else None)
         page.goto(url, wait_until="domcontentloaded", timeout=15000)
         page.wait_for_timeout(2500)  # let async init() + the dynamic marked import run
 
@@ -69,7 +76,16 @@ def check(url: str) -> list[str]:
         fonts = page.evaluate("document.fonts && document.fonts.size > 0")
         browser.close()
 
-    failures = [f"console: {c}" for c in console] + [f"pageerror: {e}" for e in page_errors]
+    # The generic "Failed to load resource ... 404" console line carries no URL; drop it only
+    # when every observed 404 is on the by-design allowlist — any other 404 still fails.
+    unexpected_404 = [u for u in not_found if not u.endswith(ALLOWED_404_SUFFIXES)]
+    if not unexpected_404:
+        console = [c for c in console if "the server responded with a status of 404" not in c]
+    failures = (
+        [f"console: {c}" for c in console]
+        + [f"pageerror: {e}" for e in page_errors]
+        + [f"unexpected 404: {u}" for u in unexpected_404]
+    )
     if not rows:
         failures.append("render: no shortlist rows")
     if not canvas:
