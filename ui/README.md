@@ -11,10 +11,12 @@ By default it renders the **synthetic** shortlist from [`public/data/demo.json`]
 same-origin `public/data/shortlist.json` that `app.js` (`loadRealShortlist`) loads over the demo set.
 That real shortlist is **never committed and never published** — `gh-pages.yaml` bundles none, so the
 deployed demo stays synthetic. The **market-trends** chart shows the *real* aggregate series
-(`{week, counts}`, non-PII) fetched at **runtime** from this deployment's own `data` branch
-(`raw.githubusercontent.com/<owner>/<repo>/data/public-data/trends.ndjson`, auto-derived from the Pages
-origin so every fork self-hosts; `?base=` overrides), **never bundled into `ui/`** — falling back to
-the synthetic trends on any miss. The *published* shortlist feed (pseudonymized) stays gated on the PII
+(`{week, counts}`, non-PII): the published site serves it **same-origin** from
+`public/data/trends.ndjson`, which `gh-pages.yaml` bundles from the `data` branch at deploy time
+(**never committed into the source `ui/`**). It falls back to fetching this deployment's own `data`
+branch at runtime (`raw.githubusercontent.com/<owner>/<repo>/data/public-data/trends.ndjson`,
+auto-derived from the Pages origin so every fork self-hosts; `?base=` overrides), then to the
+synthetic trends on any miss. The *published* shortlist feed (pseudonymized) stays gated on the PII
 helper ([issue #52][i52], [issue #11][i11]) per
 [ADR-0001](../docs/decisions/0001-backend-cli-ui-separation.md).
 

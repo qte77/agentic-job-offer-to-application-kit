@@ -104,6 +104,13 @@
   into `public-data/trends-monthly.ndjson` (`{month, counts}`, ~12 records/yr), published alongside
   weekly/daily (the `make trends-data` allowlist is now the single `TRENDS_PUBLISH` variable,
   fail-closed). The dashboard `Monthly` dropdown + same-origin bundle ride with #187 (Wave 3).
+- Internal refactor epic (#249): models consolidated into `models.py`; a `defaults.py` + tracked
+  `config/keywords.json` single source of truth; `ingest.py` split into `sources.py` / `normalize.py`;
+  a fail-closed `TRENDS_PUBLISH` allowlist + trends shrink guard; `app.js` split into an orchestrator
+  plus three ES modules — no behaviour change, all gates green.
+- Deploy reliability (#251/#252): the Pages deploy now re-triggers on every `data`-branch push — the
+  parentless `make trends-data` force-push defeated the old `paths:` filter, so the live same-origin
+  trends staled silently (#251); the cron heal (#252) restored the scheduled snapshot.
 
 ## Next
 
