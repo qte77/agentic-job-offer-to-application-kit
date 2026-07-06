@@ -76,6 +76,7 @@ Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tie
 | `AJOA_PUBLIC_DATA_DIR` | `public-data` | where PII-free publishable trends are written (the only data published, #210) |
 | `POLYFETCH_DIR` | `../polyfetch-scrape` | the `polyfetch-scrape` checkout `make ingest` / `probe` borrow |
 | `PORT` | `8000` | port for `make preview` |
+| `TRENDS_FORCE` | *(unset)* | `1` skips `make trends-data`'s shrink guard (which refuses a push that would drop bucket counts) for an intentional prune |
 
 ## Opening a PR
 
@@ -131,7 +132,9 @@ gh workflow run publish-release.yaml -f tag=v0.1.0
 ## Trends data branch
 
 The dashboard's real **market-trends** data lives only on the orphan **`data`** branch (never in
-`ui/` or `main`); the live site fetches it at runtime from
+`ui/` or `main`). On the published site the deploy bundles it **same-origin** — `gh-pages.yaml`
+copies it from the `data` branch at deploy time — so a `data`-branch push re-runs the deploy and
+refreshes the live charts. Local dev and forks fall back to fetching it at runtime from
 `raw.githubusercontent.com/<owner>/<repo>/data/public-data/trends.ndjson` (auto-derived from the Pages
 origin, so a fork self-hosts its own). To refresh it:
 
@@ -140,8 +143,10 @@ uv run ajoa-kit trend-snapshot   # -> public-data/trends{,-daily,-monthly}.ndjso
 make trends-data                 # force-push the $(TRENDS_PUBLISH) trend files -> the `data` branch
 ```
 
-The live dashboard picks it up on the next page load — no redeploy. CI can't generate this data
-itself: `trend-snapshot` needs the `polyfetch-scrape` stack, which isn't available in Actions.
+A `data`-branch push now re-triggers the Pages deploy, which re-bundles the fresh same-origin trends
+into the published site (Pages may serve the prior copy for up to ~10 min while its cache expires).
+CI can't generate this data itself: `trend-snapshot` needs the `polyfetch-scrape` stack, which isn't
+available in Actions.
 
 The dashboard auto-derives this URL from its own Pages origin (so a fork self-hosts); append
 `?base=<raw-githubusercontent-prefix>` to override it for local dev, a fork, or a custom domain.

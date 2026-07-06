@@ -8,8 +8,11 @@ name: Deploy Pages
 # runtime fetch (raw.githubusercontent is rate-limited / blocked on some networks).
 # The live *shortlist* stays gated on #52 (PII); aggregate trends are not.
 #
-# Re-runs on `data`-branch pushes too, so `make trends-data` refreshes the live
-# trends automatically (the deploy always checks out the default branch's ui/).
+# Deploys on every push to main/data (no `paths:` filter): `make trends-data`
+# force-pushes a PARENTLESS commit to the `data` branch, so GitHub has no parent
+# to diff against and a `paths:` filter would never match — the trends refresh
+# would silently never redeploy. The job is fast (~20 s) and idempotent, so
+# running it on every push is cheaper than the staleness bug (#251).
 #
 # Why a branch push instead of actions/upload-pages-artifact + deploy-pages:
 # the repo enforces `sha_pinning_required`, and upload-pages-artifact internally
@@ -19,10 +22,6 @@ name: Deploy Pages
 on:
   push:
     branches: [main, data]
-    paths:
-      - 'ui/**'
-      - '.github/workflows/gh-pages.yaml'
-      - 'public-data/trends.ndjson'  # the `data` branch's only file → redeploy on trends refresh
   workflow_dispatch:
 
 permissions: {}
