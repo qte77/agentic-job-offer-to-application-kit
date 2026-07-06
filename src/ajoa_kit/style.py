@@ -23,9 +23,9 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from ajoa_kit.models import StyleBrief
 from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
@@ -33,15 +33,6 @@ if TYPE_CHECKING:
 
 SAMPLE_CAP = 6000  # chars of a writing sample passed to the agent (bounds prompt size)
 STYLE_FILE = "style.json"
-
-
-@dataclass
-class StyleBrief:
-    """Resolved writing-style inputs; empty strings mean nothing was configured."""
-
-    tone: str = ""
-    cv_sample: str = ""
-    cover_letter_sample: str = ""
 
 
 def _read_sample(config_dir: Path, rel: str) -> str:

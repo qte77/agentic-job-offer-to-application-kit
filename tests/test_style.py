@@ -58,6 +58,36 @@ def test_sample_text_is_capped(tmp_path: Path) -> None:
     assert len(brief.cv_sample) == style.SAMPLE_CAP
 
 
+def test_main_json_pins_the_workflow_style_arg(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Byte-for-byte contract for the JS seam: `cc-workflow-tailor-offer.js` consumes this stdout as
+    # the workflow `style` arg. Pins key order (cv, coverLetter), indent=2, no sort_keys, and
+    # ensure_ascii=False (the em dash stays literal, not —) — so a StyleBrief refactor cannot
+    # drift the emitted JSON. Sample-over-tone precedence is exercised too (cv sample, cover tone).
+    (tmp_path / "style").mkdir()
+    (tmp_path / "style" / "cv.md").write_text("MY_CV_VOICE")
+    (tmp_path / "style.json").write_text(
+        json.dumps({"tone": "Direct — no buzzwords.", "cv_sample": "style/cv.md"})
+    )
+    style.main(tmp_path, as_json=True)
+    out = capsys.readouterr().out
+    expected = (
+        json.dumps(
+            {
+                "cv": "Match the candidate's own writing style, shown verbatim in this "
+                "sample:\n\nMY_CV_VOICE",
+                "coverLetter": "Write in this tone: Direct — no buzzwords.",
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
+    assert out == expected
+    assert out.index('"cv"') < out.index('"coverLetter"')  # key order pinned independent of dumps
+
+
 class TestDirectiveProperties:
     # Reason: pure precedence logic over generated briefs; deadline off.
     @given(
