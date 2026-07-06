@@ -3,7 +3,8 @@
 Two seam families today: parse-on-read at the JS→Python boundary (the relevance workflow result —
 JSON-Schema-validated JS-side but read back from a human-supplied path: :class:`ScoredItem`,
 :class:`Lane`), and the publishable trend-series contracts (:class:`WeekCounts` /
-:class:`DayCounts` / :class:`MonthCounts`, written as NDJSON to ``public-data/``). A ``JobRecord``
+:class:`DayCounts` / :class:`MonthCounts`, written as NDJSON to ``public-data/``). The Stage-3
+tailor pass's resolved writing-style inputs (:class:`StyleBrief`) live here too. A ``JobRecord``
 for the JD record stays a follow-up — Python-produced and Python-consumed, so always well-formed.
 ``AppSettings`` is config, not a data contract, and stays in :mod:`ajoa_kit.settings`.
 """
@@ -90,3 +91,16 @@ class MonthCounts(BaseModel):
 
     month: str
     counts: dict[str, int]
+
+
+class StyleBrief(BaseModel):
+    """Resolved writing-style inputs for the Stage-3 tailor pass (#16).
+
+    Empty strings mean nothing was configured. Loaded from ``config/style.json`` by
+    :func:`ajoa_kit.style.load_style` and rendered to the workflow ``style`` arg by
+    :func:`ajoa_kit.style.as_directives`.
+    """
+
+    tone: str = ""
+    cv_sample: str = ""
+    cover_letter_sample: str = ""

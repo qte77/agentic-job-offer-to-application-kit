@@ -105,9 +105,9 @@ built).
 | Evidence library `LIB` | `cc-workflow-evidence-library.js` | JSON-Schema (JS) | Stage 1 → relevance / tailor | `results/evidence-library.json` |
 | App settings | `settings.AppSettings` | **pydantic-settings** | every entry point | — (env / cwd) |
 | Position lanes | `ingest.load_lanes` / `models.Lane` | **pydantic** | human → relevance / evidence (`cfg.lanes`) | `config/lanes.json` |
-| seed / keywords / style | `sources.load_sources` / `ingest.load_keywords`, `style.StyleBrief` | untyped / `@dataclass` | human → ingest / tailor | `config/*.json` |
+| seed / keywords / style | `sources.load_sources` / `ingest.load_keywords`, `models.StyleBrief` | untyped / **pydantic** | human → ingest / tailor | `config/*.json` |
 
-**Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` (config). **JS-schema'd at the `agent()`
+**Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` (config), `StyleBrief` (tailor). **JS-schema'd at the `agent()`
 boundary but untyped on Python re-read:** shortlist, offer pack, `must_haves`, evidence library.
 **Untyped:** the JD/corpus records (the highest-volume boundary), batches, and the remaining config
 files. ADR-0003 ranks the hardening: `JobRecord` → `ScoredResult` (+ lane-membership check) → shared
