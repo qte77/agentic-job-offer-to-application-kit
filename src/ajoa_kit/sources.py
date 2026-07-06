@@ -25,8 +25,19 @@ if TYPE_CHECKING:
     from typing import Any
 
 
+def _is_http(url: str) -> bool:
+    """True only for http(s) URLs — the sole schemes these fetchers may hand to polyfetch."""
+    return url.lower().startswith(("http://", "https://"))
+
+
 def get_json(url: str) -> tuple[Any, str]:
-    """Fetch ``url`` as JSON; return (parsed_json, polyfetch_backend)."""
+    """Fetch ``url`` as JSON; return (parsed_json, polyfetch_backend).
+
+    Raises ``ValueError`` for a non-http(s) scheme (a hostile seed/config URL like
+    ``file:///…`` must never reach ``polyfetch.fetch`` — SSRF / local-file read, #256).
+    """
+    if not _is_http(url):
+        raise ValueError(f"refusing non-http(s) URL: {url!r}")
     # lazy: keep pure logic importable w/o polyfetch
     from polyfetch_scrape import FetchError, fetch  # pyright: ignore[reportMissingImports]
 
@@ -37,7 +48,12 @@ def get_json(url: str) -> tuple[Any, str]:
 
 
 def get_bytes(url: str) -> tuple[bytes, str]:
-    """Fetch ``url`` as raw bytes; return (body, polyfetch_backend)."""
+    """Fetch ``url`` as raw bytes; return (body, polyfetch_backend).
+
+    Raises ``ValueError`` for a non-http(s) scheme (see :func:`get_json`).
+    """
+    if not _is_http(url):
+        raise ValueError(f"refusing non-http(s) URL: {url!r}")
     # lazy: keep pure logic importable w/o polyfetch
     from polyfetch_scrape import FetchError, fetch  # pyright: ignore[reportMissingImports]
 

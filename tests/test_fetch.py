@@ -74,3 +74,19 @@ def test_get_bytes_raises_fetcherror_on_non_200(monkeypatch: pytest.MonkeyPatch)
     fetch_error, _ = _install(monkeypatch, _Resp(500, b"", "httpx"))
     with pytest.raises(fetch_error, match=r"500"):
         sources.get_bytes("https://api.example/feed.xml")
+
+
+def test_get_json_rejects_non_http_scheme_before_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A hostile config URL (e.g. file:///…) must be refused with a plain ValueError *before* the
+    # fetch backend is touched — never handed to polyfetch.fetch (SSRF / local-file read, #256).
+    _, calls = _install(monkeypatch, _Resp(200, b'{"jobs": []}', "curl_cffi"))
+    with pytest.raises(ValueError, match="http"):
+        sources.get_json("file:///etc/passwd")
+    assert calls == {}  # rejected up front; the fake fetch was never reached
+
+
+def test_get_bytes_rejects_non_http_scheme_before_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
+    _, calls = _install(monkeypatch, _Resp(200, b"<xml/>", "curl_cffi"))
+    with pytest.raises(ValueError, match="http"):
+        sources.get_bytes("javascript:alert(1)")
+    assert calls == {}
