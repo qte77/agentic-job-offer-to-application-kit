@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write   # `make trends-data` force-pushes public-data/trends.ndjson to the `data` branch
-      actions: read     # `gh run download` fetches the prior run's corpus artifact
+      actions: write    # `gh run download` (read) + `gh workflow run gh-pages.yaml` dispatch (write)
     env:
       AJOA_CONFIG_DIR: ${{ github.workspace }}/config
       AJOA_RESULTS_DIR: ${{ github.workspace }}/results
@@ -119,3 +119,14 @@ jobs:
           # stopgap for the corpus's durability; the fuller fix is tracked (see issue).
           retention-days: 90
           if-no-files-found: error
+
+      # A push made with GITHUB_TOKEN does not fire push-triggered workflows (GitHub loop
+      # prevention), so gh-pages.yaml's `on: push: [data]` never runs for this cron — the live
+      # same-origin trends would stale despite the fresh `data` push (#251). Dispatch the deploy
+      # explicitly (workflow_dispatch is the documented exception). Local/human `data` pushes and
+      # `main` pushes still self-trigger, so they need no dispatch. Kept last: a dispatch hiccup
+      # must never cost the corpus artifact above.
+      - name: Trigger the Pages deploy (GITHUB_TOKEN pushes don't fire push events)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run gh-pages.yaml

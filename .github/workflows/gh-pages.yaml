@@ -14,6 +14,11 @@ name: Deploy Pages
 # would silently never redeploy. The job is fast (~20 s) and idempotent, so
 # running it on every push is cheaper than the staleness bug (#251).
 #
+# NOTE: the nightly `ingest-daily.yaml` cron pushes to `data` with GITHUB_TOKEN,
+# and a GITHUB_TOKEN push does NOT fire push-triggered workflows (loop prevention).
+# So the cron dispatches this workflow explicitly (workflow_dispatch) after its
+# push; only local/human `data` pushes and `main` pushes self-trigger here (#251).
+#
 # Why a branch push instead of actions/upload-pages-artifact + deploy-pages:
 # the repo enforces `sha_pinning_required`, and upload-pages-artifact internally
 # calls actions/upload-artifact@v4 by tag (un-pinnable from here), which the
