@@ -108,9 +108,11 @@
   `config/keywords.json` single source of truth; `ingest.py` split into `sources.py` / `normalize.py`;
   a fail-closed `TRENDS_PUBLISH` allowlist + trends shrink guard; `app.js` split into an orchestrator
   plus three ES modules — no behaviour change, all gates green.
-- Deploy reliability (#251/#252): the Pages deploy now re-triggers on every `data`-branch push — the
-  parentless `make trends-data` force-push defeated the old `paths:` filter, so the live same-origin
-  trends staled silently (#251); the cron heal (#252) restored the scheduled snapshot.
+- Deploy reliability (#251/#252): dropping the `paths:` filter (defeated by the parentless
+  `make trends-data` force-push) lets `main` and local `data` pushes redeploy the live same-origin
+  trends directly, while the nightly cron **dispatches** the deploy after its push (a `GITHUB_TOKEN`
+  push can't self-trigger one) — ending the silent staling (#251); the cron heal (#252) restored the
+  scheduled snapshot.
 
 ## Next
 

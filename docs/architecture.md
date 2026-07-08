@@ -253,8 +253,8 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   Tab B); the reusable `run-with-keywords` workflow (#79); `ajoa-kit refresh` shortlist liveness sweep
   (#214 — corpus-delisted + URL re-probe, flag-`stale`-or-`--delete`); baseline gates (ruff, pyright,
   complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
-- **Built (dashboard UX + CI):** trends bundled **same-origin** at deploy (Pages re-deploys on
-  `data`-branch pushes — no cross-origin fetch); expandable shortlist rows → tailored CV + cover
+- **Built (dashboard UX + CI):** trends bundled **same-origin** at deploy (the ingest cron dispatches
+  a redeploy after each `data` push — no cross-origin fetch); expandable shortlist rows → tailored CV + cover
   letter; **`make preview` shows your real local shortlist** (#209 — aggregated from
   `results/<lane>/shortlist.json`, same-origin, never published); a market-trends time-frame picker;
   Repo/Issues header links; `make preview` serves a throwaway copy keeping real data out of the source `ui/`; AI issue-triage CI (`issue-triage.yaml`,
