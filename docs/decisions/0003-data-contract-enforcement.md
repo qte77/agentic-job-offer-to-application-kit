@@ -30,8 +30,8 @@ typed contracts only at a few spots. A map of the current surfaces:
   `RESULT` guarantee is **lost the moment the file is read back** in Python.
 - The tailor pack entering Python (`persist_offer`) — hand-rolled string-presence checks in
   `render()`; `must_haves` is JS-schema'd but Python-untyped (`coverage.py` uses `.get()`).
-- `config/{seed,keywords,style}.json` — raw `json.loads` + `.get()`; `style` even uses a
-  `@dataclass`, not pydantic.
+- `config/{seed,keywords,style}.json` — raw `json.loads` + `.get()`; `style` even used a
+  `@dataclass`, not pydantic (since resolved — `models.StyleBrief` is pydantic, #257).
 - **Lane keys live in three places** (`cc-workflow-evidence-library.js` objects,
   `cc-workflow-relevance.js` keys, `persist_scored.py` `best_lane` directory) with no shared
   contract; Python never checks `best_lane` against a canonical set.
@@ -76,10 +76,10 @@ A direction, not an implementation — each item below is a future slice (ranked
      `ScoredItem` model) so the JS guarantee survives the file hop; also check `best_lane` ∈ lanes.
   3. **A shared `must_haves` model** for the tailor result + `coverage.py` (today JS-schema'd,
      Python-untyped).
-  4. **Config-entry models** for `seed` / `keywords` / `style` (replacing the `style` `@dataclass`
-     and the raw `.get()` loads).
+  4. **Config-entry models** for `seed` / `keywords` / `style` (the raw `.get()` loads). `style` is
+     done — `models.StyleBrief` is pydantic (#257); `seed` / `keywords` parse-on-read remain.
   5. **Lanes single source** (`config/lanes.json` + pydantic + `args.lanes`) — resolves the 3-place
-     duplication and the "configurable lanes" wording in `architecture.md`.
+     duplication and the "configurable lanes" wording in `architecture.md`. **Shipped (#195).**
 - No new runtime dependency (pydantic already present; JSON Schema is just data).
 - Gives the "JD parse (per record) — wrap-continue, hardening tracked in issues" line in
   [architecture.md §Boundary failure policy](../architecture.md#boundary-failure-policy) a concrete

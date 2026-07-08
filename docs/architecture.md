@@ -84,8 +84,8 @@ into actually applying (see [research.md §Delivery](research.md#delivery)).
 
 ## Data contracts
 
-What crosses each boundary, and whether it is validated. Only `AppSettings` and the trends contracts
-(`WeekCounts` / `DayCounts`) are pydantic today; the L3 workflows validate `agent()` outputs with inline JSON Schema, but that guarantee
+What crosses each boundary, and whether it is validated. Only a handful are pydantic today (see
+**Typed today** below); the L3 workflows validate `agent()` outputs with inline JSON Schema, but that guarantee
 is **lost when Python reads the result file back**. The future direction — pydantic parse-on-read at
 every cross-layer boundary — is [ADR-0003](decisions/0003-data-contract-enforcement.md) (designed, not
 built).
