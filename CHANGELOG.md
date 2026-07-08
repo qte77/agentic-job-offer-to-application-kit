@@ -16,6 +16,33 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.6.1] - 2026-07-08
+
+### Changed
+
+- `StyleBrief` is now a pydantic model in `ajoa_kit.models` (was the last `@dataclass`), consolidating
+  every data contract in one module per ADR-0003; `ajoa-kit style --json` output is byte-for-byte
+  unchanged (#257).
+
+### Fixed
+
+- The live dashboard's market-trends charts no longer stale silently: the Pages deploy now
+  re-triggers on every `data`-branch push (the parentless `make trends-data` force-push defeated the
+  old `paths:` filter, so trends refreshes never redeployed) (#251).
+
+- The nightly trends cron now actually refreshes the live dashboard: `ingest-daily.yaml` dispatches
+  the Pages deploy after pushing to the `data` branch. Its push uses `GITHUB_TOKEN`, which can't
+  self-trigger `gh-pages.yaml`'s `on: push` (GitHub loop prevention) — so dropping the `paths:`
+  filter alone (#262) left the cron path stale. Completes #251.
+
+### Security
+
+- `sources.get_json` / `get_bytes` now reject any non-http(s) URL with a `ValueError` before
+  reaching the fetch backend, so a hostile seed/config URL (e.g. `file:///…`) can't trigger a
+  local-file read or SSRF (#256).
+- The `gh-pages` deploy pushes via a lazy git credential helper instead of embedding the token in
+  the remote URL, keeping `GITHUB_TOKEN` out of process argv and stored `.git/config` (#256).
+
 ## [0.6.0] - 2026-07-05
 
 ### Added
