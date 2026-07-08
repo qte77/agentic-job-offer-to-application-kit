@@ -66,7 +66,15 @@ jobs:
           run_id="$(gh run list --workflow ingest-daily.yaml --status success \
             --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
           if [ -n "$run_id" ]; then
-            gh run download "$run_id" --name corpus --dir results || echo "no corpus artifact on last run"
+            gh run download "$run_id" --name corpus --dir results || echo "corpus artifact download failed"
+            # Fail-loud guard (#191): a prior successful run exists, so its corpus SHOULD restore. If
+            # it doesn't (artifact expired past retention / a >90-day lapse), do NOT silently start
+            # from empty — that re-stamps every JD's first_seen and silently wipes the trend history.
+            # Halt so a human decides (restore a backup, or intentionally re-seed).
+            if [ ! -f results/corpus.json ]; then
+              echo "::error::prior run $run_id found but its corpus artifact is missing — refusing to reseed (would reset first_seen); see #191." >&2
+              exit 1
+            fi
           else
             echo "first run — starting from an empty corpus"
           fi
