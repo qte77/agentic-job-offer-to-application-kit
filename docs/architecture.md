@@ -47,6 +47,13 @@ aggregate keyword-only `public-data/trends.ndjson` (per ISO week) **and** `publi
 day). Weekly is **rolled up from the daily buckets** (`weekly_from_daily`), so the two series can't
 disagree; counts are the config-driven vocabulary — no JD content.
 
+> **Trend-history caveat (#191).** Buckets are keyed by `first_seen`, which lives only in the running
+> `results/corpus.json` (a time-limited GHA artifact). The **first** run — and any run after a cron
+> lapse longer than the artifact retention — stamps every JD with the run date, producing a one-off
+> **backfill spike** that dwarfs real daily inflow (e.g. the 2026-06-27 seed and 2026-07-01). Such
+> spikes and any gap days (e.g. 2026-07-04, a failed cron) are **baked in**: the true first-seen
+> history can't be reconstructed from the aggregate series. A durable corpus store is the fix (#191).
+
 **Two-stage trim (cost model):** cheap deterministic pre-filter → LLM relevance screen →
 expensive tailoring only on the shortlist.
 
