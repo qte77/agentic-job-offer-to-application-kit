@@ -109,7 +109,7 @@ built).
 | Trends day | `models.DayCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#187) | `public-data/trends-daily.ndjson` |
 | Trends month | `models.MonthCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#188) | `public-data/trends-monthly.ndjson` |
 | Batches + manifest | `chunk.main` | dict — untyped | chunk → relevance | `results/batches/*.json` |
-| Shortlist | relevance.js schema / `persist_scored` / `refresh` | JSON-Schema (JS) → dict (Py) + `stale`/`last_checked` (#214) | relevance → persist → refresh → dashboard | `results/LANE/shortlist.json` / `.md` |
+| Shortlist | relevance.js schema / `persist_scored` / `refresh` | JSON-Schema (JS) → **pydantic** `ScoredItem` parse-on-read (persist + merge/refresh re-reads) + `stale`/`last_checked` (#214) + `deadline`/`deal_breaker` (#271) | relevance → persist → refresh → dashboard | `results/LANE/shortlist.json` / `.md` |
 | Offer pack | tailor.js schema / `persist_offer` | JSON-Schema (JS) → dict (Py) | tailor → persist | `results/offers/SLUG/*.md` |
 | `must_haves` | tailor.js / `coverage.py` | JSON-Schema (JS) → dict (Py) | tailor → coverage | `coverage-report.md` |
 | Evidence library `LIB` | `cc-workflow-evidence-library.js` | JSON-Schema (JS) | Stage 1 → relevance / tailor | `results/evidence-library.json` |
@@ -117,13 +117,15 @@ built).
 | Position lanes | `ingest.load_lanes` / `models.Lane` | **pydantic** | human → relevance / evidence (`cfg.lanes`) | `config/lanes.json` |
 | seed / keywords / style | `sources.load_sources` / `ingest.load_keywords`, `models.StyleBrief` | untyped / **pydantic** | human → ingest / tailor | `config/*.json` |
 
-**Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` (config), `StyleBrief` (tailor). **JS-schema'd at the `agent()`
-boundary but untyped on Python re-read:** shortlist, offer pack, `must_haves`, evidence library.
+**Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` (config), `StyleBrief` (tailor), and the
+shortlist items (`ScoredItem`, parse-on-read through persist + merge/refresh, #271). **JS-schema'd at the `agent()`
+boundary but untyped on Python re-read:** offer pack, `must_haves`, evidence library.
 **Untyped:** the JD/corpus records (the highest-volume boundary), batches, and the remaining config
-files. ADR-0003 ranks the hardening: `JobRecord` → `ScoredResult` (+ lane-membership check) → shared
+files. ADR-0003 ranks the hardening: `JobRecord` → `ScoredResult` envelope → shared
 `must_haves` model → config-entry models. The single `config/lanes.json` lane source shipped (#195 —
-pydantic `Lane` + `load_lanes`) and the `persist_scored` lane-membership check against it now ships too
-(a hallucinated `best_lane` is blanked to `unsorted/`); `JobRecord` typing remains the next ADR-0003 item.
+pydantic `Lane` + `load_lanes`), the `persist_scored` lane-membership check against it ships too
+(a hallucinated `best_lane` is blanked to `unsorted/`), and the shortlist items are now typed
+`ScoredItem` end-to-end (#271); `JobRecord` typing remains the next ADR-0003 item.
 
 ## Patterns
 

@@ -27,7 +27,9 @@ typed contracts only at a few spots. A map of the current surfaces:
 - `jobs-raw.json` read by `chunk` / `trend_snapshot`; `results/batches/manifest.json` (hand-built;
   `batchCount` passed by hand).
 - The relevance result entering Python (`persist_scored.load_result` / `write_shortlists`) — the JS
-  `RESULT` guarantee is **lost the moment the file is read back** in Python.
+  `RESULT` guarantee is **lost the moment the file is read back** in Python (largely resolved — items
+  are typed `ScoredItem` parse-on-read through persist + merge/refresh, #271; a `ScoredResult`
+  envelope for the top-level result remains).
 - The tailor pack entering Python (`persist_offer`) — hand-rolled string-presence checks in
   `render()`; `must_haves` is JS-schema'd but Python-untyped (`coverage.py` uses `.get()`).
 - `config/{seed,keywords,style}.json` — raw `json.loads` + `.get()`; `style` even used a
@@ -74,6 +76,9 @@ A direction, not an implementation — each item below is a future slice (ranked
      returns it (`.model_dump()` to serialize); `chunk` + `trend_snapshot` parse-on-read.
   2. **Re-validate the relevance `RESULT`** in `persist_scored.load_result` (a `ScoredResult` /
      `ScoredItem` model) so the JS guarantee survives the file hop; also check `best_lane` ∈ lanes.
+     **Largely shipped:** items are typed `ScoredItem` parse-on-read (#197) and carried end-to-end
+     through persist + the merge/refresh re-reads (#271); the `best_lane` ∈ lanes check landed (#195).
+     A `ScoredResult` wrapper for the top-level envelope (`dropped_count` etc.) remains.
   3. **A shared `must_haves` model** for the tailor result + `coverage.py` (today JS-schema'd,
      Python-untyped).
   4. **Config-entry models** for `seed` / `keywords` / `style` (the raw `.get()` loads). `style` is
