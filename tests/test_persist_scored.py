@@ -192,7 +192,9 @@ def test_deadline_and_deal_breaker_render_in_shortlist_md(
         monkeypatch,
         {
             "relevant": [
-                _item("a", "engineering", 5, deadline="2026-07-31", deal_breaker="on-site NYC only"),
+                _item(
+                    "a", "engineering", 5, deadline="2026-07-31", deal_breaker="on-site NYC only"
+                ),
                 _item("b", "engineering", 4),  # neither flag set
             ]
         },
@@ -214,7 +216,9 @@ def test_deadline_and_deal_breaker_round_trip(
         monkeypatch,
         {
             "relevant": [
-                _item("a", "engineering", 4, deadline="2026-07-31", deal_breaker="clearance required")
+                _item(
+                    "a", "engineering", 4, deadline="2026-07-31", deal_breaker="clearance required"
+                )
             ]
         },
     )

@@ -65,12 +65,11 @@ def parse_relevant(data: dict) -> tuple[list[ScoredItem], int]:
 
 
 def load_shortlist(path: Path) -> list[ScoredItem]:
-    """Validate a per-lane ``shortlist.json`` off disk into :class:`ScoredItem`\\ s (fail-loud).
+    """Validate a per-lane ``shortlist.json`` off disk into ``ScoredItem`` models (fail-loud).
 
-    These files are Python-written from already-validated models (unlike the human-supplied result
-    path :func:`parse_relevant` guards), so a row that fails validation means corruption or
-    hand-tampering — surfacing it beats silently dropping an entry from the audit trail. Round-trips
-    :func:`write_lane`'s ``model_dump`` output; reused by the merge sweep and :mod:`ajoa_kit.refresh`.
+    These files are Python-written from validated models (unlike the human-supplied result path
+    :func:`parse_relevant` guards), so a failed row means corruption — surfacing it beats silently
+    dropping an audit-trail entry. Reused by the merge sweep and :mod:`ajoa_kit.refresh`.
     """
     return [ScoredItem.model_validate(r) for r in json.loads(path.read_text())]
 
@@ -163,8 +162,9 @@ def merge_shortlists(rel: list[ScoredItem], results_dir: Path) -> dict[str, int]
 
 
 def _load_prior_relevant(scored: Path) -> list[ScoredItem]:
-    """Validate the prior ``jobs-scored.json`` ``relevant`` array into models for a --merge union."""
-    return [ScoredItem.model_validate(r) for r in json.loads(scored.read_text()).get("relevant", [])]
+    """Validate the prior ``jobs-scored.json`` relevant array into models for the merge union."""
+    prior = json.loads(scored.read_text()).get("relevant", [])
+    return [ScoredItem.model_validate(r) for r in prior]
 
 
 def main(src: Path | None = None, *, merge: bool = False) -> None:
@@ -192,10 +192,7 @@ def main(src: Path | None = None, *, merge: bool = False) -> None:
             invalid += 1
     results.mkdir(parents=True, exist_ok=True)
     scored = results / "jobs-scored.json"
-    if merge and scored.is_file():
-        merged = _union_by_id(_load_prior_relevant(scored), rel)
-    else:
-        merged = rel
+    merged = _union_by_id(_load_prior_relevant(scored), rel) if merge and scored.is_file() else rel
     data["relevant"] = [m.model_dump() for m in merged]
     scored.write_text(json.dumps(data, indent=2, ensure_ascii=False))
     by_lane = merge_shortlists(rel, results) if merge else write_shortlists(rel, results)

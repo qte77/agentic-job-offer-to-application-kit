@@ -26,7 +26,6 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 from ajoa_kit.ingest import load_lanes
-from ajoa_kit.models import ScoredItem
 from ajoa_kit.persist_scored import load_shortlist, write_lane
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.slug_probe import fetch_status
@@ -34,6 +33,8 @@ from ajoa_kit.slug_probe import fetch_status
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
     from pathlib import Path
+
+    from ajoa_kit.models import ScoredItem
 
 
 def is_delisted(corpus_rec: dict | None, latest_pull: str) -> bool:
