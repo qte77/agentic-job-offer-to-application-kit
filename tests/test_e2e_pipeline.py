@@ -50,6 +50,8 @@ RELEVANCE_RESULT = {
             "title": "AI Engineer, Agentic Systems",
             "url": "https://example.com/acme-ai/jobs/101",
             "rationale": "Direct fit on agentic LLM workflows.",
+            "deadline": "2026-07-31",
+            "deal_breaker": "",
         },
     ],
 }
@@ -87,7 +89,9 @@ def test_offline_pipeline_chain(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     persist_scored.main(src=rel_src)
     shortlist = json.loads((results / "engineering" / "shortlist.json").read_text())
     assert [j["id"] for j in shortlist] == ["ashby:acme-ai:101"]
-    assert "AI Engineer, Agentic Systems" in (results / "engineering" / "shortlist.md").read_text()
+    md = (results / "engineering" / "shortlist.md").read_text()
+    assert "AI Engineer, Agentic Systems" in md
+    assert "due 2026-07-31" in md  # #271 deadline flag rides through the deterministic chain
 
     # persist_offer: canned tailor pack → the 5 human-review artifacts.
     pack_src = tmp_path / "tailor.json"
