@@ -40,8 +40,8 @@ class ScoredItem(BaseModel):
     """
 
     # extra="allow" keeps unknown workflow fields through model_dump(), so persist's re-write of
-    # jobs-scored.json round-trips any field the relevance schema grows beyond the 10 below (#197).
-    # The first 8 are the relevance RESULT schema; `stale`/`last_checked` come from refresh (#214).
+    # jobs-scored.json round-trips any field the relevance schema grows beyond the 12 below (#197).
+    # The first 10 are the relevance RESULT schema; `stale`/`last_checked` come from refresh (#214).
     model_config = ConfigDict(extra="allow")
 
     id: str = ""
@@ -52,6 +52,11 @@ class ScoredItem(BaseModel):
     verdict: str = ""
     rationale: str = ""
     url: str = ""
+    # Human-actionable GATE-2 flags (#271): the JD's stated application deadline and a one-phrase
+    # hard concern; "" = none. Optional in the JS RESULT schema, typed here (not left as extras) so
+    # they survive the model pipeline (persist -> merge -> refresh) and surface in shortlist.md.
+    deadline: str = ""
+    deal_breaker: str = ""
     # Liveness (#214): the refresh sweep flags an offer that is filled/closed (corpus-delisted or a
     # dead URL re-probe) and stamps when last checked. Typed (not a dropped extra) so the flag
     # survives a persist round-trip and the dashboard can hide stale rows.

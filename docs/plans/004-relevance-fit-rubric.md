@@ -1,6 +1,7 @@
 # Plan 004 — #271 relevance fit rubric (LEAN): explainable rationale + deadline & deal-breaker flags
 
-**Status:** approved (lean scope, 2026-07-08); not implemented. Single small PR. Handoff:
+**Status:** approved 2026-07-08 (lean); scope expanded 2026-07-09 to type `deadline`/`deal_breaker` on
+`ScoredItem` + carry `ScoredItem` end-to-end (ADR-0003); implemented in #271. Handoff:
 [docs/handoffs/004-relevance-fit-rubric.md](../handoffs/004-relevance-fit-rubric.md). A cloud
 (Ultraplan) session may further refine this — if so, reconcile against the owner-approved version
 before executing; otherwise this lean plan is canonical.
@@ -19,7 +20,7 @@ from scope:** the 5 numeric sub-scores (display-only until a consumer/tuning exi
 config-driven tunability. Purely **additive annotations** — the `score`, verdict, and drop behaviour
 are **unchanged**. `ScoredItem` needs **no change** (`extra="allow"`, #197, round-trips the two fields).
 
-## Changes (L3 workflow glue + L2 render; no model change)
+## Changes (L3 workflow glue + L2 render + typed `ScoredItem` pipeline)
 
 1. **`.claude/workflows/cc-workflow-relevance.js`** (glue — verified live, no JS tests):
    - `RESULT.items.properties` (schema at lines 57–81): add `deadline: { type: 'string' }` and
@@ -34,7 +35,10 @@ are **unchanged**. `ScoredItem` needs **no change** (`extra="allow"`, #197, roun
    - append to the `tag`: `· due <deadline>` and `· deal-breaker` when set;
    - add a `- deal-breaker: <text>` bullet when set. Keep the function ≤10 complexity (extract a tiny
      `_flags(item) -> str` helper if needed).
-3. **`src/ajoa_kit/models.py::ScoredItem`** — **unchanged** (deferred: typing these is an ADR-0003 step).
+3. **`src/ajoa_kit/models.py::ScoredItem`** — add typed `deadline`/`deal_breaker` (`str = ""`); the
+   persist/merge/refresh pipeline now carries `ScoredItem` end-to-end (attribute access, `model_dump`
+   only at the JSON write), with a shared `load_shortlist` validating on-disk re-reads. `extra="allow"`
+   stays (#197). Pulls forward part of ADR-0003 backlog item 2.
 
 ## Source map (verified via Explore 2026-07-08 — re-verify before editing)
 

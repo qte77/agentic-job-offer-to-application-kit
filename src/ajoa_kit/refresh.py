@@ -26,13 +26,15 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 from ajoa_kit.ingest import load_lanes
-from ajoa_kit.persist_scored import write_lane
+from ajoa_kit.persist_scored import load_shortlist, write_lane
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.slug_probe import fetch_status
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
     from pathlib import Path
+
+    from ajoa_kit.models import ScoredItem
 
 
 def is_delisted(corpus_rec: dict | None, latest_pull: str) -> bool:
@@ -54,12 +56,12 @@ def classify(corpus_delisted: bool, status: int | None) -> bool:
 
 
 def mark(
-    items: list[dict],
+    items: list[ScoredItem],
     corpus_by_id: dict[str, dict],
     latest_pull: str,
     probe: Callable[[str], int | None],
     today: str,
-) -> tuple[list[dict], int]:
+) -> tuple[list[ScoredItem], int]:
     """Annotate each shortlist entry with ``stale`` + ``last_checked``; return (items, stale count).
 
     Skips the URL re-probe for entries the corpus already marks delisted (they're stale regardless),
@@ -67,11 +69,11 @@ def mark(
     """
     n_stale = 0
     for it in items:
-        delisted = is_delisted(corpus_by_id.get(it.get("id", "")), latest_pull)
-        status = None if delisted else probe(it.get("url", ""))
+        delisted = is_delisted(corpus_by_id.get(it.id), latest_pull)
+        status = None if delisted else probe(it.url)
         stale = classify(delisted, status)
-        it["stale"] = stale
-        it["last_checked"] = today
+        it.stale = stale
+        it.last_checked = today
         if stale:
             n_stale += 1
     return items, n_stale
@@ -92,9 +94,9 @@ def refresh_lane(
     path = results_dir / lane / "shortlist.json"
     if not path.is_file():
         return {"lane": lane, "live": 0, "stale": 0, "missing": True}
-    items = json.loads(path.read_text())
+    items = load_shortlist(path)
     items, n_stale = mark(items, corpus_by_id, latest_pull, probe, today)
-    out = [it for it in items if not it["stale"]] if delete else items
+    out = [it for it in items if not it.stale] if delete else items
     if not dry_run:
         write_lane(lane, out, results_dir)
     return {"lane": lane, "live": len(items) - n_stale, "stale": n_stale, "missing": False}

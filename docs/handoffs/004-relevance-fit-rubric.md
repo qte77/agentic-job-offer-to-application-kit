@@ -1,6 +1,6 @@
 # Handoff 004 — #271 relevance fit rubric (LEAN)
 
-**State:** `main` clean at `e8238d7`, synced. **Nothing implemented yet** — one small PR. Plan (approved,
+**State:** `main` clean at `e8238d7`, synced. **Implemented in #271** (scope expanded 2026-07-09 — typed `ScoredItem` end-to-end, see plan). Plan (approved,
 lean scope, with full symbol-level source map):
 [docs/plans/004-relevance-fit-rubric.md](../plans/004-relevance-fit-rubric.md) — **read it; don't
 re-map the codebase**, the source map is there.
@@ -14,8 +14,9 @@ Make the relevance screen's output **explainable** for the human at GATE 2. Two 
 behaviour change to scoring/dropping: (1) the L3 workflow `cc-workflow-relevance.js` enriches its
 `rationale` to name the fit dimensions (skill / experience / culture-location / progression /
 motivation) in prose and emits two optional structured fields — `deadline` and `deal_breaker`; (2)
-`persist_scored.write_lane` surfaces those two flags in `shortlist.md`. `ScoredItem` is **untouched**
-(`extra="allow"`, #197, round-trips them). The 5 numeric sub-scores and config-driven tunability were
+`persist_scored.write_lane` surfaces those two flags in `shortlist.md`. Scope was expanded 2026-07-09:
+`ScoredItem` gains typed `deadline`/`deal_breaker` and the persist/refresh pipeline now carries
+`list[ScoredItem]` end-to-end (`extra="allow"` stays, #197). The 5 numeric sub-scores and config-driven tunability were
 **deliberately deferred** (YAGNI) — see the plan's Out-of-scope.
 
 ## How to execute (per-slice recipe)
@@ -51,7 +52,7 @@ motivation) in prose and emits two optional structured fields — `deadline` and
 |---|---|
 | `.claude/workflows/cc-workflow-relevance.js` | `RESULT` item schema has `id/title/company/best_lane/score/verdict/rationale/url` (no `deadline`/`deal_breaker`); `gatePrompt` scoring line enumerates the returned fields. |
 | `src/ajoa_kit/persist_scored.py` | `write_lane` renders `shortlist.md` with an explicit `tag` (`score/verdict` + `· stale`) + title@company / url / rationale bullets — no flag surfacing yet. |
-| `src/ajoa_kit/models.py` | `ScoredItem` has `extra="allow"` (#197) — new fields ride through; **leave unchanged**. |
+| `src/ajoa_kit/models.py` | `ScoredItem` gains typed `deadline`/`deal_breaker` (#271); persist/merge/refresh carry `ScoredItem` end-to-end, `extra="allow"` stays (#197). |
 | `tests/test_persist_scored.py` | has `_item`/`_run` helpers + `test_unknown_result_field_survives_round_trip` (the template); no `deadline`/`deal_breaker` test yet. |
 | `changelog.d/` | empty after the v0.6.1 release — `mkdir -p changelog.d` before `make changelog_new`. |
 

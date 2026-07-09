@@ -180,3 +180,49 @@ def test_persist_routes_hallucinated_lane_to_unsorted(
     assert [j["id"] for j in unsorted] == ["b"]  # the bogus-lane JD kept, routed to unsorted
     assert (results / "engineering" / "shortlist.json").is_file()  # valid lane still buckets
     assert "invalid-lane" in capsys.readouterr().out  # tallied in the summary line
+
+
+def test_deadline_and_deal_breaker_render_in_shortlist_md(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # #271: the two GATE-2 flags surface in shortlist.md — deadline + a deal-breaker marker in the
+    # row tag, plus a full deal-breaker bullet — and render nothing when unset.
+    results = _run(
+        tmp_path,
+        monkeypatch,
+        {
+            "relevant": [
+                _item(
+                    "a", "engineering", 5, deadline="2026-07-31", deal_breaker="on-site NYC only"
+                ),
+                _item("b", "engineering", 4),  # neither flag set
+            ]
+        },
+    )
+    md = (results / "engineering" / "shortlist.md").read_text()
+    assert "· due 2026-07-31 · deal-breaker]" in md  # flagged row's tag
+    assert "  - deal-breaker: on-site NYC only" in md  # flagged row's detail bullet
+    # 'b' adds neither: 'due ' appears once (a's tag), 'deal-breaker' twice (a's tag word + bullet)
+    assert md.count("due ") == 1
+    assert md.count("deal-breaker") == 2
+
+
+def test_deadline_and_deal_breaker_round_trip(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The two typed fields survive persist into jobs-scored.json and the per-lane shortlist.json.
+    results = _run(
+        tmp_path,
+        monkeypatch,
+        {
+            "relevant": [
+                _item(
+                    "a", "engineering", 4, deadline="2026-07-31", deal_breaker="clearance required"
+                )
+            ]
+        },
+    )
+    scored = json.loads((results / "jobs-scored.json").read_text())["relevant"][0]
+    assert (scored["deadline"], scored["deal_breaker"]) == ("2026-07-31", "clearance required")
+    eng = json.loads((results / "engineering" / "shortlist.json").read_text())[0]
+    assert (eng["deadline"], eng["deal_breaker"]) == ("2026-07-31", "clearance required")

@@ -70,6 +70,8 @@ const RESULT = {
           verdict: { type: 'string', enum: ['shortlist', 'maybe'] },
           rationale: { type: 'string' },
           url: { type: 'string' },
+          deadline: { type: 'string' },
+          deal_breaker: { type: 'string' },
         },
         required: ['id', 'best_lane', 'score', 'verdict', 'rationale'],
       },
@@ -92,7 +94,7 @@ Judge on REAL requirement overlap, NOT keyword presence; be strict and honest ab
 
 DROP (do not return) any JD that: is a non-engineering function (sales, marketing, recruiting, legal, finance, support, people/HR, pure visual design); is junior/intern; hard-requires years of people-management or large-team leadership; hard-requires deep cloud-infra-at-scale (AWS/GCP/Azure/Kubernetes/Terraform) or production-at-scale ops as a must-have; or has no genuine overlap with any lane.
 
-For each KEPT JD return: id, title, company, url, best_lane (single best fit), score 0-5 (5 = strong fit, 3 = plausible stretch, <3 = drop), verdict ("shortlist" for score>=4, "maybe" for 3), and a one-line rationale naming the fit AND the main gap. Only return JDs scoring >=3. Also return dropped_count (how many you dropped) and dropped_reason_sample (one short phrase of why the bulk were dropped).`
+For each KEPT JD return: id, title, company, url, best_lane (single best fit), score 0-5 (5 = strong fit, 3 = plausible stretch, <3 = drop), verdict ("shortlist" for score>=4, "maybe" for 3), and a one-line rationale that names, in prose, the fit across skill, experience, culture/location, career progression, and motivation AND the main gap. Also set deadline to the JD's stated application deadline verbatim if one is given (else ""), and deal_breaker to one short phrase for a hard concern the human must weigh — e.g. on-site-only location, security clearance, mandated stack (else ""). Only return JDs scoring >=3. Also return dropped_count (how many you dropped) and dropped_reason_sample (one short phrase of why the bulk were dropped).`
 }
 
 phase('Screen')
