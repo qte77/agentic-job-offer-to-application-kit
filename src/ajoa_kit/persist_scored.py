@@ -75,6 +75,14 @@ def load_shortlist(path: Path) -> list[ScoredItem]:
     return [ScoredItem.model_validate(r) for r in json.loads(path.read_text())]
 
 
+def _flags(item: ScoredItem) -> tuple[str, str]:
+    """Render the #271 human-flag annotations: (tag suffix, deal-breaker bullet; "" when unset)."""
+    deadline, breaker = item.deadline.strip(), item.deal_breaker.strip()
+    suffix = (f" · due {deadline}" if deadline else "") + (" · deal-breaker" if breaker else "")
+    bullet = f"  - deal-breaker: {breaker}" if breaker else ""
+    return suffix, bullet
+
+
 def write_lane(lane: str, items: list[ScoredItem], results_dir: Path) -> None:
     """Write one lane's ``shortlist.{json,md}`` — score desc, stale rows (#214) sunk last + tagged.
 
@@ -90,10 +98,13 @@ def write_lane(lane: str, items: list[ScoredItem], results_dir: Path) -> None:
     )
     lines = [f'---\ntitle: "{lane} — shortlist ({len(items)})"\n---', ""]
     for j in items:
-        tag = f"{j.score}/{j.verdict}" + (" · stale" if j.stale else "")
+        suffix, bullet = _flags(j)
+        tag = f"{j.score}/{j.verdict}" + (" · stale" if j.stale else "") + suffix
         lines.append(f"- [{tag}] {j.title} @ {j.company}")
         lines.append(f"  - {j.url}")
         lines.append(f"  - {j.rationale}")
+        if bullet:
+            lines.append(bullet)
     (d / "shortlist.md").write_text("\n".join(lines) + "\n")
 
 
