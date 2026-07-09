@@ -11,6 +11,7 @@ import json
 from typing import TYPE_CHECKING
 
 import pytest
+from pydantic import ValidationError
 
 from ajoa_kit import refresh
 
@@ -43,7 +44,7 @@ def test_refresh_lane_flags_stale_keeps_rows(tmp_path: Path) -> None:
     _bucket(
         tmp_path,
         [
-            {"id": "a", "url": "https://x/a", "score": 5},  # 200 -> live
+            {"id": "a", "url": "https://x/a", "score": 5, "confidence": 0.9},  # 200 -> live
             {"id": "b", "url": "https://x/b", "score": 4},  # 404 -> stale
             {"id": "c", "url": "https://x/c", "score": 3},  # corpus-delisted -> stale (not probed)
             {"id": "d", "url": "https://x/d", "score": 2},  # unreachable (None) -> stays live
@@ -66,6 +67,7 @@ def test_refresh_lane_flags_stale_keeps_rows(tmp_path: Path) -> None:
     assert by_id["c"]["stale"] is True
     assert all(it["last_checked"] == "2026-06-30" for it in written)
     assert [it["id"] for it in written] == ["a", "d", "b", "c"]  # live (by score) above stale
+    assert by_id["a"]["confidence"] == 0.9  # extra="allow" fields survive the model round-trip
 
 
 def test_refresh_lane_delete_drops_stale(tmp_path: Path) -> None:
@@ -93,6 +95,20 @@ def test_refresh_lane_dry_run_leaves_files_untouched(tmp_path: Path) -> None:
     )
     assert rep["stale"] == 1
     assert (d / "shortlist.json").read_text() == before  # reported, not written
+
+
+def test_refresh_lane_fails_loud_on_wrong_typed_row(tmp_path: Path) -> None:
+    # #271 model pipeline: refresh validates on-disk rows, so a corrupt (wrong-typed score) row
+    # surfaces loudly instead of silently rendering through.
+    _bucket(tmp_path, [{"id": "x", "url": "https://x/x", "score": "high"}])
+
+    def probe(_url: str) -> int | None:
+        return 200
+
+    with pytest.raises(ValidationError):
+        refresh.refresh_lane(
+            "ml", tmp_path, {}, "2026-06-30", probe, "2026-06-30", delete=False, dry_run=False
+        )
 
 
 def test_targets_validates_lane_and_globs_existing_buckets(tmp_path: Path) -> None:
