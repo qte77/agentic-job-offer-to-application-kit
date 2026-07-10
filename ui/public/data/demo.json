@@ -17,6 +17,7 @@
       "best_lane": "founding",
       "score": 5,
       "verdict": "shortlist",
+      "deadline": "2026-08-15",
       "rationale": "0->1 product surface, ships end-to-end solo; breadth maps directly to the founding lane.",
       "cv": "# Alexis Doe — Founding Engineer\n\n## Summary\nGeneralist builder who ships 0->1 products end-to-end, from data ingestion to UI. Comfortable owning the whole surface area solo and setting the early engineering culture.\n\n## Selected experience\n- Shipped an agentic job-application pipeline (ingest -> score -> tailor) as a single maintainer, including CLI, workflows, and a static dashboard.\n- Took three side products from empty repo to deployed in under two weeks each.\n- Set up CI, release automation, and docs conventions that later scaled to outside contributors.\n\n## Skills\nPython, TypeScript, LLM/agent workflows, GitHub Actions, pydantic, vanilla web, rapid prototyping.",
       "cover_letter": "Dear Acme AI team,\n\nFounding Engineer is the role I optimize for: a 0->1 surface where one person ships the whole thing and the early decisions compound. Your posting reads like the work I already do for fun.\n\nMy recent agentic kit spans ingestion, LLM scoring, application tailoring, and a published dashboard, built and maintained solo. That breadth is exactly what an unshaped product needs before it specializes.\n\nI would love to be employee-early at Acme AI and help set the bar.\n\nBest,\nAlexis Doe"
@@ -65,6 +66,7 @@
       "best_lane": "cloud",
       "score": 3,
       "verdict": "maybe",
+      "deal_breaker": "requires full-time on-site, no remote",
       "rationale": "Reusable CI actions and containerization match; thin on provider infra at scale.",
       "cv": "# Alexis Doe — Platform / DevOps Engineer\n\n## Summary\nAutomates the path from commit to deploy: reusable CI, containerized builds, and reproducible environments.\n\n## Selected experience\n- Authored SHA-pinned, least-privilege GitHub Actions workflows and reusable CI building blocks.\n- Containerized builds and standardized dev environments for reproducibility.\n- Automated releases (versioning, changelog, tagging) end-to-end.\n\n## Skills\nGitHub Actions, CI/CD, containers, release automation, bash, reproducible builds.",
       "cover_letter": "Dear Nimbus Cloud team,\n\nI enjoy making delivery boring: reusable CI, pinned actions, and reproducible builds so shipping is a non-event.\n\nMy CI and release automation are the strongest part of my recent work; where I would ramp is provider infrastructure at scale, which Nimbus would let me deepen. I am applying knowing that is the growth edge.\n\nThanks for considering me.\n\nBest,\nAlexis Doe"

@@ -90,6 +90,8 @@ export function renderShortlist(items, laneLabel, filter = "") {
         <td>
           <div class="role-title"><a href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener noreferrer">${esc(it.title)}</a></div>
           <div class="rationale">${esc(it.rationale)}</div>
+          ${it.deadline ? `<span class="due">due ${esc(it.deadline)}</span>` : ""}
+          ${it.deal_breaker ? `<span class="deal-breaker">deal-breaker: ${esc(it.deal_breaker)}</span>` : ""}
         </td>
         <td><span class="lane">${esc(laneLabel[it.best_lane] || it.best_lane)}</span></td>
         <td class="num"><span class="score ${scoreClass(it.score)}">${esc(it.score)}</span></td>

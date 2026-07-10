@@ -338,6 +338,20 @@ td.empty-state {
   white-space: nowrap;
 }
 
+/* Offer flags (#283) — outlined pills in the Role cell, mirroring .lane: a soft deadline (caution)
+   and a hard deal-breaker (negative). Rendered only when the ScoredItem field is present. */
+.due,
+.deal-breaker {
+  display: inline-block;
+  margin: 0.3rem 0.35rem 0 0;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+.due { border-color: var(--data-caution); color: var(--data-caution); white-space: nowrap; }
+.deal-breaker { border-color: var(--data-negative); color: var(--data-negative); }
+
 /* Score chip — data-arc by band: >=4 positive, 3 caution, <=2 negative. */
 .score {
   display: inline-block;
