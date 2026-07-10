@@ -74,6 +74,10 @@ def check(url: str) -> list[str]:
         page.wait_for_timeout(2500)  # let async init() + the dynamic marked import run
 
         rows = page.eval_on_selector_all("tr.offer-row", "els => els.length")
+        # Offer flags (#283): the demo shortlist seeds one deadline + one deal-breaker, so both
+        # badges must render in the Role cell.
+        due = page.eval_on_selector_all(".due", "els => els.length")
+        deal = page.eval_on_selector_all(".deal-breaker", "els => els.length")
         page.click("#tab-trends")  # charts defer while the panel is hidden
         page.wait_for_timeout(1500)
         canvas = 0
@@ -105,18 +109,22 @@ def check(url: str) -> list[str]:
         + [f"pageerror: {e}" for e in page_errors]
         + [f"unexpected 404: {u}" for u in unexpected_404]
     )
-    if not rows:
-        failures.append("render: no shortlist rows")
-    if not canvas:
-        failures.append("render: trends chart not sized")
+    # Each (value, message) that's falsy is a render failure — data-driven so adding a check doesn't
+    # grow the branch count.
+    required = [
+        (rows, "no shortlist rows"),
+        (due, "no .due deadline badge"),
+        (deal, "no .deal-breaker badge"),
+        (canvas, "trends chart not sized"),
+        (fonts, "no fonts loaded"),
+        *((w, f"{g} trends chart not sized") for g, w in gran_widths.items()),
+    ]
+    failures += [f"render: {msg}" for value, msg in required if not value]
     if gran_opts != ["week", "day", "month"]:
         failures.append(f"trends: granularity options {gran_opts} != [week, day, month]")
-    for g, w in gran_widths.items():
-        if not w:
-            failures.append(f"render: {g} trends chart not sized")
-    if not fonts:
-        failures.append("render: no fonts loaded")
-    print(f"rows={rows} chart_width={canvas} gran={gran_widths} fonts={fonts}")
+    print(
+        f"rows={rows} due={due} deal={deal} chart_width={canvas} gran={gran_widths} fonts={fonts}"
+    )
     return failures
 
 
