@@ -5,6 +5,8 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.6.1-blue)](CHANGELOG.md)
+[![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25-blue)](pyproject.toml)
+[![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![CodeQL](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml)
 [![CodeFactor](https://www.codefactor.io/repository/github/qte77/agentic-job-offer-to-application-kit/badge)](https://www.codefactor.io/repository/github/qte77/agentic-job-offer-to-application-kit)
 [![CI](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/ci.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/ci.yaml)
@@ -51,6 +53,12 @@ Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
 
 </details>
 
+## Why
+
+Job search is noisy: hundreds of postings, each needing a tailored CV and cover letter with an
+honest framing of gaps. This kit aligns one portfolio to many offers — screen for fit, then
+tailor — using only public, no-auth data and keeping a human in the loop for submission.
+
 ## How
 
 Try the **[live demo](https://qte77.github.io/agentic-job-offer-to-application-kit/)** (synthetic
@@ -92,12 +100,6 @@ is the dev/release command reference (the Makefile is the source of truth).
 **Constraints:** no automated submission, no scraping — public no-auth GET only, with a
 human-reviewed prefill pack (see [docs/research.md §Delivery](docs/research.md#delivery)); no PII in
 the repo (see [docs/architecture.md §Data layout](docs/architecture.md#data-layout)).
-
-## Why
-
-Job search is noisy: hundreds of postings, each needing a tailored CV and cover letter with an
-honest framing of gaps. This kit aligns one portfolio to many offers — screen for fit, then
-tailor — using only public, no-auth data and keeping a human in the loop for submission.
 
 ## Refs
 

@@ -113,6 +113,9 @@
   trends directly, while the nightly cron **dispatches** the deploy after its push (a `GITHUB_TOKEN`
   push can't self-trigger one) — ending the silent staling (#251); the cron heal (#252) restored the
   scheduled snapshot.
+- Relevance fit rubric (#271): the relevance pass now emits an explainable per-offer rationale plus
+  `deadline` / `deal_breaker` fields, and `ScoredItem` is typed end-to-end — through persist + the
+  merge/refresh re-reads — closing the relevance boundary of ADR-0003.
 
 ## Next
 
@@ -122,8 +125,8 @@
 ## Later — hardening & reach
 
 - #71 Vite not adopted — the dashboard stays no-build.
-- Data-contract typing (per ADR-0003): a `JobRecord` model + parse-on-read at the JD / relevance /
-  tailor boundaries, and config-entry models (the `config/lanes.json` lane source and its
+- Data-contract typing (per ADR-0003): a `JobRecord` model + parse-on-read at the JD / tailor
+  boundaries, and config-entry models (the `config/lanes.json` lane source and its
   `persist_scored` membership check both shipped, #195). Backlog ranked in the ADR.
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
 - Broaden ingest reach: more JSON aggregators as their robots/ToS clear (jobicy/himalayas/remotive

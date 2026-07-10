@@ -2,6 +2,8 @@
 
 Behavioural rules for AI coding agents working in this repo. A rulebook, not a knowledge
 base — operational recipes and machine-specific quirks belong in local memory, not here.
+Recurring mistakes and their promoted fixes are logged in
+[AGENT_LEARNINGS.md](AGENT_LEARNINGS.md) (the compound-learning log).
 
 ## Principles
 
