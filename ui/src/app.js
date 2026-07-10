@@ -19,6 +19,7 @@ import { invalidateTrends, loadRealTrends, renderTrends, trendsPainted } from ".
 let data = null;
 let laneLabel = {};
 let trendsRange = "13"; // default time-frame window: 3mo (13 ISO weeks); "all" or a trailing-week count
+let trendsGran = "week"; // default trend granularity: week | day | month (#187/#188)
 
 // ── Tabs (WAI-ARIA tabs pattern: roving tabindex + arrow keys) ──
 function initTabs() {
@@ -65,7 +66,7 @@ async function init() {
   data = await fetch("public/data/demo.json").then((r) => r.json());
   // Trends are aggregate {week,counts} (non-PII), so the real backfilled series can be shown when
   // present; the shortlist stays synthetic/local. Any miss keeps demo.json's synthetic trends.
-  const realTrends = await loadRealTrends();
+  const realTrends = await loadRealTrends(trendsGran);
   if (realTrends) data.trends = realTrends;
   // A real shortlist (results/<lane>/shortlist.json, aggregated into the throwaway copy by
   // `make preview`) overrides the synthetic demo set LOCALLY; never present on gh-pages (PII).
@@ -91,6 +92,21 @@ async function init() {
   document.getElementById("trends-range").addEventListener("change", (e) => {
     trendsRange = e.target.value;
     if (data) renderTrends(data.trends, trendsRange);
+  });
+
+  // Granularity picker (#187/#188): swap the trend series (week|day|month) — each is a separate
+  // published NDJSON. On a miss (a granularity whose series isn't reachable) keep the current view
+  // and revert the control, so the charts never render against a mismatched label key.
+  document.getElementById("trends-gran").addEventListener("change", async (e) => {
+    const next = e.target.value;
+    const records = await loadRealTrends(next);
+    if (records) {
+      trendsGran = next;
+      data.trends = records;
+      renderTrends(data.trends, trendsRange);
+    } else {
+      e.target.value = trendsGran;
+    }
   });
 
   initTabs();

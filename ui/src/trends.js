@@ -20,6 +20,20 @@ const DATA_BASE_URL = (
   new URLSearchParams(location.search).get("base") ?? defaultDataBase()
 ).replace(/\/$/, "");
 
+// Trend granularities (#187/#188): each maps to its published NDJSON (same list as the Makefile
+// TRENDS_PUBLISH allowlist), the per-record label key, and a label→Date parser so the time-window
+// filter works uniformly across all three. Weekly is the default (and the synthetic-fallback shape).
+// `isoWeekToDate` is a hoisted function declaration below, so it's already bound here.
+const GRANULARITIES = {
+  week: { file: "trends.ndjson", key: "week", toDate: isoWeekToDate },
+  day: { file: "trends-daily.ndjson", key: "date", toDate: (d) => new Date(`${d}T00:00:00Z`) },
+  month: { file: "trends-monthly.ndjson", key: "month", toDate: (m) => new Date(`${m}-01T00:00:00Z`) },
+};
+// The active granularity's config; set by loadRealTrends(gran), read by pivot/windowRecords/
+// renderTrends so the label-key access stays in one place (DRY). Kept in lockstep with the records
+// the orchestrator holds — loadRealTrends only commits it once the matching series has loaded.
+let activeGran = GRANULARITIES.week;
+
 /** @type {any} Chart.js instances (rebuilt on theme flip to re-read tokens). */
 let lineChart = null;
 let barChart = null;
@@ -45,10 +59,11 @@ const chartPalette = () => [
   cssVar("--data-negative"),
 ];
 
-// Pivot the {week,counts}[] log into chart shapes. `keys` is the union of keywords across weeks,
-// ordered by latest-week volume (desc) so each keyword keeps one stable color across all three charts.
+// Pivot the {<label>,counts}[] log into chart shapes (label = week/date/month per activeGran). `keys`
+// is the union of keywords across buckets, ordered by latest-bucket volume (desc) so each keyword
+// keeps one stable color across all three charts.
 function pivot(records) {
-  const labels = records.map((r) => r.week);
+  const labels = records.map((r) => r[activeGran.key]);
   const latest = records.length ? records[records.length - 1].counts : {};
   const keys = [...new Set(records.flatMap((r) => Object.keys(r.counts)))].sort(
     (a, b) => (latest[b] || 0) - (latest[a] || 0) || a.localeCompare(b),
@@ -56,7 +71,7 @@ function pivot(records) {
   return { labels, latest, keys };
 }
 
-// Fetch one trends source (NDJSON of {week,counts}). Returns the parsed records, or null on any miss
+// Fetch one trends source (NDJSON of {<label>,counts}). Returns the parsed records, or null on any miss
 // (absent / non-200 / bad line / network error) so the caller can try the next source.
 async function fetchTrends(url) {
   try {
@@ -77,15 +92,21 @@ async function fetchTrends(url) {
 // extensions block (a CORS failure that otherwise drops the dashboard silently to synthetic data).
 // Falls back to the `data` branch over raw.githubusercontent (freshest; the local-dev / fork path),
 // then to null so the caller uses the synthetic set. An explicit `?base=` is honored first.
-export async function loadRealTrends() {
-  const sameOrigin = "public/data/trends.ndjson";
-  const dataBranch = `${DATA_BASE_URL}/public-data/trends.ndjson`;
+export async function loadRealTrends(gran = "week") {
+  const g = GRANULARITIES[gran] ?? GRANULARITIES.week;
+  const sameOrigin = `public/data/${g.file}`;
+  const dataBranch = `${DATA_BASE_URL}/public-data/${g.file}`;
   const order = new URLSearchParams(location.search).has("base")
     ? [dataBranch, sameOrigin]
     : [sameOrigin, dataBranch];
   for (const url of order) {
     const records = await fetchTrends(url);
-    if (records) return records;
+    // Commit the granularity only once its series is in hand, so activeGran never drifts from the
+    // records the orchestrator is about to render (a miss leaves the current view untouched).
+    if (records) {
+      activeGran = g;
+      return records;
+    }
   }
   return null;
 }
@@ -166,22 +187,24 @@ function isoWeekToDate(week) {
   return d;
 }
 
-// Keep only the trailing window of the sorted series (value = # of ISO weeks back from the latest,
-// or "all"). Filters by date so sparse weeks aren't miscounted.
+// Keep only the trailing calendar window of the sorted series. `value` is the time frame as a
+// trailing ISO-week count (the dropdown labels: 3mo=13, 1y=52, …), applied uniformly to every
+// granularity by converting each bucket's label to a Date — so "3mo" trims weekly, daily and monthly
+// to the same ~91-day span. "all" keeps everything.
 function windowRecords(sorted, value) {
   if (value === "all" || sorted.length === 0) return sorted;
-  const cutoff =
-    isoWeekToDate(sorted[sorted.length - 1].week).getTime() -
-    (Number(value) - 1) * 7 * 86400000;
-  return sorted.filter((r) => isoWeekToDate(r.week).getTime() >= cutoff);
+  const toMs = (r) => activeGran.toDate(r[activeGran.key]).getTime();
+  const cutoff = toMs(sorted[sorted.length - 1]) - (Number(value) - 1) * 7 * 86400000;
+  return sorted.filter((r) => toMs(r) >= cutoff);
 }
 
 export function renderTrends(trendRecords, range) {
   if (!trendRecords) return;
   // Sort once here (not in pivot) so the line/bar datasets, which map over this same array, stay
-  // aligned with the labels. Real trends.ndjson is upsert-appended so it may not be in order;
-  // ISO-week strings ("YYYY-Www", zero-padded) sort chronologically as plain strings.
-  const sorted = [...trendRecords].sort((a, b) => a.week.localeCompare(b.week));
+  // aligned with the labels. The NDJSON is upsert-appended so it may not be in order; every label
+  // format ("YYYY-Www" / "YYYY-MM-DD" / "YYYY-MM", zero-padded) sorts chronologically as a string.
+  const key = activeGran.key;
+  const sorted = [...trendRecords].sort((a, b) => String(a[key]).localeCompare(String(b[key])));
   const records = windowRecords(sorted, range);
   renderLine(records);
   renderBar(records);
