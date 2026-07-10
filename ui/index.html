@@ -121,6 +121,14 @@
         <div class="section-head">
           <h2 id="trends-h">Job-market keyword trends</h2>
           <label class="range-picker">
+            <span class="sr-only">Granularity</span>
+            <select id="trends-gran" aria-label="Granularity">
+              <option value="week" selected>Weekly</option>
+              <option value="day">Daily</option>
+              <option value="month">Monthly</option>
+            </select>
+          </label>
+          <label class="range-picker">
             <span class="sr-only">Time frame</span>
             <select id="trends-range" aria-label="Time frame">
               <option value="all">All</option>
@@ -134,14 +142,14 @@
               <option value="1">1w</option>
             </select>
           </label>
-          <span class="count">aggregate keyword counts per ISO week · click legend to toggle</span>
+          <span class="count">aggregate keyword counts per bucket · click legend to toggle</span>
         </div>
         <div class="chart-block">
           <h3 class="chart-title">Keyword frequency over time</h3>
           <div class="chart-wrap"><canvas id="trends-line"></canvas></div>
         </div>
         <div class="chart-block">
-          <h3 class="chart-title">Keyword volume per week</h3>
+          <h3 class="chart-title">Keyword volume per bucket</h3>
           <div class="chart-wrap"><canvas id="trends-bar"></canvas></div>
         </div>
       </section>

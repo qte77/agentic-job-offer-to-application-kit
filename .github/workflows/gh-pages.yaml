@@ -55,22 +55,35 @@ jobs:
       - name: Publish ui/ to gh-pages branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # The bundled weekly series (single point of edit for this step, #249 slice D).
-          TRENDS_FILE: public-data/trends.ndjson
+          # The bundled aggregate trend series — weekly + daily + monthly (#187/#188). Mirrors the
+          # Makefile TRENDS_PUBLISH allowlist; weekly is the load default, the finer/coarser series
+          # back the dashboard granularity dropdown. Single point of edit for this step.
+          TRENDS_FILES: >-
+            public-data/trends.ndjson
+            public-data/trends-daily.ndjson
+            public-data/trends-monthly.ndjson
         run: |
           set -euo pipefail
           site="$(mktemp -d)"
           cp -r ui/. "$site/"
-          # Bundle the latest PII-free aggregate trends ({week,counts}) from the `data` branch so the
+          # Bundle the latest PII-free aggregate trends ({<label>,counts}) from the `data` branch so the
           # dashboard loads them SAME-ORIGIN — no cross-origin runtime fetch to raw.githubusercontent
-          # (rate-limited / blocked by some networks & extensions -> silent synthetic fallback).
-          dst="$site/public/data/$(basename "$TRENDS_FILE")"
-          if git fetch --depth=1 origin data 2>/dev/null \
-            && git show "origin/data:$TRENDS_FILE" > "$dst" 2>/dev/null; then
-            echo "bundled $(wc -l < "$dst") trend records from the data branch"
+          # (rate-limited / blocked by some networks & extensions -> silent synthetic fallback). Each
+          # series present on the branch is copied; a missing one is skipped (that granularity then
+          # falls back to the runtime fetch / synthetic).
+          if git fetch --depth=1 origin data 2>/dev/null; then
+            # shellcheck disable=SC2086  # intentional word-split over the space-separated file list
+            for f in $TRENDS_FILES; do
+              dst="$site/public/data/$(basename "$f")"
+              if git show "origin/data:$f" > "$dst" 2>/dev/null; then
+                echo "bundled $(wc -l < "$dst") records from $f"
+              else
+                rm -f "$dst"
+                echo "no $f on the data branch (skipped)"
+              fi
+            done
           else
-            rm -f "$dst"
-            echo "no data-branch trends; dashboard falls back to runtime fetch / synthetic"
+            echo "no data branch; dashboard falls back to runtime fetch / synthetic"
           fi
           # Stamp the real deploy date into the published copy (no-build; the committed
           # #gen-date value is only the local-preview default).

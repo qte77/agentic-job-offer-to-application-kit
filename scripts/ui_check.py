@@ -46,8 +46,14 @@ def serve(directory: Path) -> socketserver.TCPServer:
 
 
 # 404s that are BY DESIGN: the #209 real-shortlist probe (only make preview's throwaway copy
-# carries the file; the published site and this bare-ui/ server 404 it -> demo fallback).
-ALLOWED_404_SUFFIXES = ("public/data/shortlist.json",)
+# carries the file; the published site and this bare-ui/ server 404 it -> demo fallback), plus the
+# finer/coarser trend series (#187/#188) — their same-origin copies exist only in the gh-pages
+# bundle, so a data-branch miss at test time hits these paths, which 404 here by design.
+ALLOWED_404_SUFFIXES = (
+    "public/data/shortlist.json",
+    "public/data/trends-daily.ndjson",
+    "public/data/trends-monthly.ndjson",
+)
 
 
 def check(url: str) -> list[str]:
@@ -73,6 +79,19 @@ def check(url: str) -> list[str]:
         canvas = 0
         if page.query_selector("#trends-line"):
             canvas = page.eval_on_selector("#trends-line", "c => c.width")
+        # Granularity dropdown (#187/#188): switch week -> day -> month and confirm each re-renders
+        # (the line chart stays sized) without a console/page error. A series unreachable at test
+        # time reverts the control via loadRealTrends, so the chart stays weekly-sized either way.
+        gran_opts = page.eval_on_selector_all("#trends-gran option", "els => els.map(o => o.value)")
+        gran_widths: dict[str, int] = {}
+        for g in ("day", "month", "week"):
+            page.select_option("#trends-gran", g)
+            page.wait_for_timeout(1200)
+            gran_widths[g] = (
+                page.eval_on_selector("#trends-line", "c => c.width")
+                if page.query_selector("#trends-line")
+                else 0
+            )
         fonts = page.evaluate("document.fonts && document.fonts.size > 0")
         browser.close()
 
@@ -90,9 +109,14 @@ def check(url: str) -> list[str]:
         failures.append("render: no shortlist rows")
     if not canvas:
         failures.append("render: trends chart not sized")
+    if gran_opts != ["week", "day", "month"]:
+        failures.append(f"trends: granularity options {gran_opts} != [week, day, month]")
+    for g, w in gran_widths.items():
+        if not w:
+            failures.append(f"render: {g} trends chart not sized")
     if not fonts:
         failures.append("render: no fonts loaded")
-    print(f"rows={rows} chart_width={canvas} fonts={fonts}")
+    print(f"rows={rows} chart_width={canvas} gran={gran_widths} fonts={fonts}")
     return failures
 
 
