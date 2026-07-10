@@ -77,6 +77,7 @@ Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tie
 | `POLYFETCH_DIR` | `../polyfetch-scrape` | the `polyfetch-scrape` checkout `make ingest` / `probe` borrow |
 | `PORT` | `8000` | port for `make preview` |
 | `TRENDS_FORCE` | *(unset)* | `1` skips `make trends-data`'s shrink guard (which refuses a push that would drop bucket counts) for an intentional prune |
+| `.env` file | *(none)* | optional dotenv (`AppSettings.env_file`, `src/ajoa_kit/settings.py`) that sets any `AJOA_*` override above; git-ignored — keep private paths out of the repo |
 
 ## Opening a PR
 

@@ -21,3 +21,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .coverage
+.complexipy_cache/
+.hypothesis/
+
+# Local dotenv override read by AppSettings (env_file) — keep private AJOA_* paths out of git
+.env
