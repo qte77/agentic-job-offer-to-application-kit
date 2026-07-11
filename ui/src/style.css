@@ -171,9 +171,11 @@ h2 {
 }
 #filter:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 
-/* Trends time-frame picker — sits right of the heading; the caption is pushed to the far right. */
+/* Trends granularity + time-frame pickers — both `.range-picker` selects share one look (the
+   styling targets the class, not an id, so #trends-gran and #trends-range match). */
 .range-picker { display: inline-flex; align-items: center; }
-#trends-range {
+.range-picker + .range-picker { margin-left: 0.4rem; }
+.range-picker select {
   padding: 0.3rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -183,7 +185,7 @@ h2 {
   font-size: 0.8125rem;
   cursor: pointer;
 }
-#trends-range:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.range-picker select:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .section-head .count { margin-left: auto; }
 
 /* ── Shortlist table ── */
