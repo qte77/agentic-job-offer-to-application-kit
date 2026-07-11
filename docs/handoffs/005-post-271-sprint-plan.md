@@ -1,6 +1,8 @@
 # Handoff 005 — post-#271 sprint (docs hygiene · trends-UI · flags · market-intel)
 
-**State:** `main` clean at `508a62e` (#271 merged), synced. **Nothing implemented yet.** Plan (approved,
+**State (2026-07-11):** `main` green at `e98de56`. **Sprint 1 SHIPPED** (#282/#285/#286, fixes #287/#289/#290);
+`complexipy` pinned `<6` (#288 — **must stay <6**). Deep `posted_at` trends published to `data`
+(171/545/58). Open: **#284** tracker (resume here), **#292** discovery sources. Plan (approved,
 with full symbol-level source map — **read it; don't re-map the codebase**):
 [docs/plans/005-post-271-sprint-plan.md](../plans/005-post-271-sprint-plan.md).
 
