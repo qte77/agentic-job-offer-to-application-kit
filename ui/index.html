@@ -88,6 +88,9 @@
       <div class="tabs" role="tablist" aria-label="Dashboard views">
         <button id="tab-shortlist" class="tab" type="button" role="tab" aria-selected="true" aria-controls="shortlist-section" tabindex="0">Shortlist</button>
         <button id="tab-trends" class="tab" type="button" role="tab" aria-selected="false" aria-controls="trends-section" tabindex="-1">Market trends</button>
+        <!-- Local-only (#284): revealed by app.js only when `make preview` bundled companies.json;
+             stays hidden on the published site (no company data is ever published). -->
+        <button id="tab-companies" class="tab" type="button" role="tab" aria-selected="false" aria-controls="companies-section" tabindex="-1" hidden>Companies hiring</button>
       </div>
 
       <section id="shortlist-section" role="tabpanel" aria-labelledby="tab-shortlist" tabindex="0">
@@ -151,6 +154,27 @@
         <div class="chart-block">
           <h3 class="chart-title">Keyword volume per bucket</h3>
           <div class="chart-wrap"><canvas id="trends-bar"></canvas></div>
+        </div>
+      </section>
+
+      <section id="companies-section" role="tabpanel" aria-labelledby="tab-companies" tabindex="0" hidden>
+        <div class="section-head">
+          <h2 id="companies-h">Companies hiring — by location &amp; field</h2>
+          <span class="count"><span id="companies-count">0</span> rows · local snapshot of active roles</span>
+        </div>
+        <div class="table-wrap">
+          <table id="companies-table">
+            <thead>
+              <tr>
+                <th scope="col">Company</th>
+                <th scope="col">Location</th>
+                <th scope="col">Field</th>
+                <th scope="col" class="num">Open roles</th>
+                <th scope="col">Momentum</th>
+              </tr>
+            </thead>
+            <tbody id="companies-body"></tbody>
+          </table>
         </div>
       </section>
     </main>

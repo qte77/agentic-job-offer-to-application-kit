@@ -111,6 +111,10 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 	# Real shortlist (PII) -> aggregate the per-lane results/<lane>/shortlist.json into the throwaway
 	# copy ONLY; never written to source ui/, never bundled by gh-pages.yaml (published stays synthetic).
 	uv run python scripts/build_ui_shortlist.py "$$site/public/data/shortlist.json"
+	# Local-only company-hiring snapshot (#284): aggregate results/corpus.json into the throwaway copy
+	# ONLY. Business data — never written to source ui/, never on the data branch (boundary guard);
+	# gh-pages bundles none, so the dashboard's Companies tab stays hidden on the published site.
+	uv run python scripts/build_ui_companies.py "$$site/public/data/companies.json"
 	echo "serving $$site -> http://localhost:$${PORT:-8000}/"
 	uv run python -m http.server "$${PORT:-8000}" --directory "$$site"
 

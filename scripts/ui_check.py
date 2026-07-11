@@ -51,6 +51,7 @@ def serve(directory: Path) -> socketserver.TCPServer:
 # bundle, so a data-branch miss at test time hits these paths, which 404 here by design.
 ALLOWED_404_SUFFIXES = (
     "public/data/shortlist.json",
+    "public/data/companies.json",
     "public/data/trends-daily.ndjson",
     "public/data/trends-monthly.ndjson",
 )
@@ -97,6 +98,9 @@ def check(url: str) -> list[str]:
                 else 0
             )
         fonts = page.evaluate("document.fonts && document.fonts.size > 0")
+        # Companies tab (#284) is local-only: with no bundled companies.json (this bare-ui/ server),
+        # it must stay hidden — the UI guarantee that company data never shows when unpublished.
+        companies_hidden = page.eval_on_selector("#tab-companies", "el => el.hidden")
         browser.close()
 
     # The generic "Failed to load resource ... 404" console line carries no URL; drop it only
@@ -117,6 +121,7 @@ def check(url: str) -> list[str]:
         (deal, "no .deal-breaker badge"),
         (canvas, "trends chart not sized"),
         (fonts, "no fonts loaded"),
+        (companies_hidden, "companies tab not hidden without local data"),
         *((w, f"{g} trends chart not sized") for g, w in gran_widths.items()),
     ]
     failures += [f"render: {msg}" for value, msg in required if not value]

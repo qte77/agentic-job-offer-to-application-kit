@@ -14,6 +14,7 @@ import {
   renderShortlist,
 } from "./shortlist.js";
 import { invalidateTrends, loadRealTrends, renderTrends, trendsPainted } from "./trends.js";
+import { loadRealCompanies, renderCompanies } from "./companies.js";
 
 /** @type {{lanes:{key:string,label:string}[], shortlist:any[], trends:{week:string,counts:Record<string,number>}[], generated:string}|null} */
 let data = null;
@@ -23,7 +24,9 @@ let trendsGran = "week"; // default trend granularity: week | day | month (#187/
 
 // ── Tabs (WAI-ARIA tabs pattern: roving tabindex + arrow keys) ──
 function initTabs() {
-  const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+  // Skip hidden tabs (the local-only Companies tab stays hidden on the published site) so arrow-key
+  // roving and selection never land on an invisible tab.
+  const tabs = Array.from(document.querySelectorAll('[role="tab"]')).filter((t) => !t.hidden);
   function select(tab) {
     tabs.forEach((t) => {
       const on = t === tab;
@@ -108,6 +111,14 @@ async function init() {
       e.target.value = trendsGran;
     }
   });
+
+  // A real LOCAL company-hiring snapshot (results/corpus.json aggregated by `make preview`) reveals
+  // the Companies tab; absent on gh-pages (business data, never published) so the tab stays hidden.
+  const realCompanies = await loadRealCompanies();
+  if (realCompanies) {
+    document.getElementById("tab-companies").hidden = false;
+    renderCompanies(realCompanies);
+  }
 
   initTabs();
 }
