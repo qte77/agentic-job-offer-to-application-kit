@@ -71,7 +71,11 @@ export function renderShortlist(items, laneLabel, filter = "") {
     .sort((a, b) => b.score - a.score);
 
   // Lazy copy source, rebuilt each render so the indices stay aligned with the rows below.
-  tailorPacks = rows.map((it) => ({ cv: it.cv, cover_letter: it.cover_letter }));
+  tailorPacks = rows.map((it) => ({
+    cv: it.cv,
+    cover_letter: it.cover_letter,
+    prefill_pack: it.prefill_pack,
+  }));
 
   document.getElementById("shortlist-count").textContent = String(rows.length);
 
@@ -102,6 +106,7 @@ export function renderShortlist(items, laneLabel, filter = "") {
           <div class="tailor-pack">
             ${tailorDoc("Tailored CV", it.cv, idx, "cv")}
             ${tailorDoc("Cover letter", it.cover_letter, idx, "cover_letter")}
+            ${it.prefill_pack ? tailorDoc("Prefill pack (copy fields into the form by hand)", it.prefill_pack, idx, "prefill_pack") : ""}
           </div>
         </td>
       </tr>`,

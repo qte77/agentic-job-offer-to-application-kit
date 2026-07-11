@@ -138,8 +138,11 @@ def strip_frontmatter(md: str) -> str:
     return md
 
 
-# The two artifacts the dashboard expand shows; filenames sourced from ARTIFACTS (single source).
-_JOIN_DOCS = {key: filename for key, filename, _ in ARTIFACTS if key in {"cv", "cover_letter"}}
+# The artifacts the dashboard expand shows (cv, cover letter, prefill pack); filenames sourced from
+# ARTIFACTS (single source). The prefill pack is the human-review field list — a local Copy target
+# for manual paste, never auto-submitted (research.md §Delivery).
+_JOIN_KEYS = {"cv", "cover_letter", "prefill_pack"}
+_JOIN_DOCS = {key: filename for key, filename, _ in ARTIFACTS if key in _JOIN_KEYS}
 
 
 def _load_offer_index(results_dir: Path) -> dict[str, Path]:
@@ -156,7 +159,7 @@ def _load_offer_index(results_dir: Path) -> dict[str, Path]:
 
 
 def _read_offer_docs(offer_dir: Path) -> dict[str, str]:
-    """Read + strip the join docs present in ``offer_dir`` -> ``{cv/cover_letter: body}``."""
+    """Read + strip the ``offer_dir`` join docs (cv / cover_letter / prefill_pack bodies)."""
     docs: dict[str, str] = {}
     for key, filename in _JOIN_DOCS.items():
         doc = offer_dir / filename
@@ -166,7 +169,7 @@ def _read_offer_docs(offer_dir: Path) -> dict[str, str]:
 
 
 def attach_tailor_docs(rows: list[dict], results_dir: Path) -> list[dict]:
-    """Attach each row's tailored ``cv``/``cover_letter`` from its offer pack, joined by id (#209).
+    """Attach each row's cv / cover_letter / prefill_pack from its offer pack, joined by id (#209).
 
     Uses :func:`_load_offer_index` (id -> offer dir) + :func:`_read_offer_docs`; rows without a
     tailored pack stay untouched.
