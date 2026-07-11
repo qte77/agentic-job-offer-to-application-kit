@@ -1,11 +1,12 @@
 # Plan 005 — post-#271 sprint: docs hygiene + trends-UI + dashboard flags + market-intel tracker
 
-**Status: Sprint 1 SHIPPED (2026-07-11)** — docs hygiene #282 · trends-granularity UI #285 · dashboard
+**Status: Sprints 1–2 SHIPPED (2026-07-11)** — docs hygiene #282 · trends-granularity UI #285 · dashboard
 flags #286; follow-on fixes #287 (picker styling) #289 (`make preview` bundles daily/monthly) #290
 (picker order). `complexipy` pinned `<6` (#288 — 6.0 breaks the ≤10 gate; adopting 6.x = a deliberate
 refactor of `persist_scored.main`/`refresh.main`). Deep `posted_at` trends (171w/545d/58m) published to
 the `data` branch (#191 commented; live series now a posted_at/first_seen hybrid, semantics on #269).
-**Next: S2 = #284** (company tracker), fed by **#292** (discovery). #187/#188 closed. Handoff:
+**Sprint 2 SHIPPED:** company tracker #284 (#294) · prefill paste-helper #295 (#296). **Next: #292**
+(discovery) + **#269** (posted_at backfill). #187/#188 closed. Handoff:
 [docs/handoffs/005-post-271-sprint-plan.md](../handoffs/005-post-271-sprint-plan.md) — read it first.
 This plan carries the full symbol-level source map so a resuming session **does not re-map the
 codebase**.
@@ -28,7 +29,8 @@ corpus artifact (deemed not worth it — KISS).
 | **S1** | Trends-granularity UI (#187 daily + #188 monthly) | High | viz |
 | **S1** | Dashboard `deadline`/`deal_breaker` flags | Med | viz |
 | **S1** | #260 deploy-on-every-push filter eval (chore) | Med | reliability |
-| **S2** | Company-hiring tracker MVP (local, geo × field, heating-up/cooling-off) | High* | market-intel |
+| **S2 ✅** | Company-hiring tracker MVP (local, geo × field, heating/cooling) — **shipped #294** | High* | market-intel |
+| **S2 ✅** | Prefill paste-helper — dashboard per-doc Copy of the prefill pack — **shipped #296** | Med | app-quality |
 | **S2** | #269 posted_at backfill (bootstraps the tracker's delta) | Med | viz |
 | **S3** | #272 tailor critique loop · #273 outcome tracker | Med(strategic-H) | app-quality |
 | **backlog** | #217 source freshness · #193 reusable release workflows · #274 · #275 | Med/low | — |
@@ -121,7 +123,11 @@ post-reset); ship the snapshot now, the delta accrues over ~4–8 weeks (+ #269 
 
 ---
 
-## S2 slice — company-hiring tracker MVP (local-only)  → file a NEW issue
+## S2 slice — company-hiring tracker MVP (local-only) — **SHIPPED #294**
+
+Delivered as `ajoa_kit.companies` (TDD'd: `parse_geo` lossless city-merge + `aggregate_companies`) +
+`scripts/build_ui_companies.py` + a local-only Companies tab. The design notes below are retained as
+the as-built record.
 
 - **Data source:** `results/corpus.json` records (from `corpus.merge_corpus`, corpus.py:49–81) —
   fields `company`, `company_slug`, `location`, `best_lane`/`lane_hint`, `first_seen`, `last_seen`,

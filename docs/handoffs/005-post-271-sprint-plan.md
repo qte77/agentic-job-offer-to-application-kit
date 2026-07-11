@@ -1,8 +1,9 @@
 # Handoff 005 — post-#271 sprint (docs hygiene · trends-UI · flags · market-intel)
 
-**State (2026-07-11):** `main` green at `e98de56`. **Sprint 1 SHIPPED** (#282/#285/#286, fixes #287/#289/#290);
+**State (2026-07-11):** `main` green at `2e835b1`. **Sprint 1 SHIPPED** (#282/#285/#286, fixes #287/#289/#290);
 `complexipy` pinned `<6` (#288 — **must stay <6**). Deep `posted_at` trends published to `data`
-(171/545/58). Open: **#284** tracker (resume here), **#292** discovery sources. Plan (approved,
+(171/545/58). **Sprint 2 SHIPPED:** company tracker #284 (#294) · prefill paste-helper #295 (#296).
+Open: **#292** discovery sources, **#269** posted_at backfill (resume here). Plan (approved,
 with full symbol-level source map — **read it; don't re-map the codebase**):
 [docs/plans/005-post-271-sprint-plan.md](../plans/005-post-271-sprint-plan.md).
 
@@ -18,24 +19,21 @@ backlog are issue-tracked in the plan. Two NEW issues to open (dashboard flags �
 
 ## Done
 
-Nothing yet — this handoff + plan are the first artifacts. Context already gathered (in the plan's
-source map): the trends-loss diagnosis, the UI/switch/README/root audit, and the tracker feasibility.
+- **Sprint 1** — docs hygiene (#282), trends-granularity UI (#285), dashboard flags (#286) + fixes
+  #287/#289/#290; #260 eval closed "keep it"; #187/#188 closed.
+- **Sprint 2** — company-hiring tracker (#284 → #294): `ajoa_kit.companies` (TDD'd) +
+  `scripts/build_ui_companies.py` + a local-only Companies tab. Prefill paste-helper (#295 → #296):
+  the offer expand now Copy-surfaces the prefill pack (clipboard only, human submits — no auto-apply).
 
-## Resume here (in order)
+## Resume here
 
-1. **Slice 1 — docs/hygiene closeout** (branch `docs/audit-hygiene`, changelog-EXEMPT): `.gitignore`
-   `.env`+cache dirs · `CONTRIBUTING` `.env` env-row · `roadmap.md` #271 bullet + trim stale "relevance"
-   line · `README` move `## Why` up + coverage/python badges · `AGENTS.md` pointer to `AGENT_LEARNINGS.md`.
-2. **Slice 5 — issue comments** (no branch, `gh`): #191 (trend-loss + keep-stopgap), #187/#188
-   (published-but-unwired). Do early so the context is captured.
-3. **Slice 2 — trends-granularity UI** (`feat/trends-granularity`, needs a changelog fragment): add a
-   week|day|month `<select>`; thread the `.week`/`.date`/`.month` label-key through `pivot`/`renderTrends`/
-   `windowRecords`. Verify `make ui-check` + e2e.
-4. **Slice 3 — dashboard flags** (`feat/ui-shortlist-flags`, fragment): badges in the Role cell + `.due`/
-   `.deal-breaker` pills + demo.json rows.
-5. **Slice 4 — #260 eval** (chore): may end "leave it"; document on #260.
-6. **Sprint 2 — company tracker MVP**: open the issue first (with the ToU/PII notes); then the build
-   script (a module → **TDD it**) + a local-only preview view.
+Sprints 1–2 are shipped (see **Done**). Remaining post-#271 backlog, in priority order:
+
+1. **#292 — curated startup-discovery sources** (aggregate company signal, ToU-tiered per ADR-0002) →
+   feeds the #284 tracker's company breadth.
+2. **#269 — posted_at backfill** (bootstraps the tracker's heating/cooling momentum earlier; the live
+   corpus spans only ~2 weeks post-reset, so momentum currently ships dormant).
+3. **S3+** (issue-tracked in the plan): #272 tailor critique loop · #273 outcome tracker · #274 · #275.
 
 ## Per-slice recipe
 
@@ -57,7 +55,7 @@ gitignore → none; the S2 build script → yes) → implement → mutators (`ru
 - Company tracker stays **local-only** (the `data`-branch boundary guard forbids company/PII data); a
   published version needs an ADR-0002 ToU review + PII scrub first.
 
-## Touch points (current state — verify, don't re-map; line-level detail is in the plan)
+## Touch points (pre-sprint snapshot — Sprints 1–2 now shipped; verify against `main` before relying)
 
 | File | Current state |
 |---|---|
