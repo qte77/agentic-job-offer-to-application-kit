@@ -1,8 +1,9 @@
 ---
 name: Ingest Daily
 
-# Daily incremental ingest (#164): re-pull JDs, dedup-merge into the running corpus (kept as a
-# private artifact across runs — no JD/PII content on any branch), refresh the keyword-trends
+# Daily incremental ingest (#164): re-pull JDs, dedup-merge into the running corpus (carried across
+# runs as a GHA artifact — PUBLIC-repo artifacts are downloadable by anyone, so it is NOT private;
+# the JD data is public job-postings and is never committed to a branch), refresh the keyword-trends
 # series, and push the aggregate (keyword-only) trends to the `data` branch. Runs against the live
 # network by design — distinct from the offline `make check` PR gate — so it is NOT exercised by PR
 # CI. Validate changes via `workflow_dispatch` and read the run logs.
@@ -118,13 +119,15 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           make trends-data
 
-      - name: Upload the corpus (private cross-run store)
+      - name: Upload the corpus (cross-run artifact store — NOT private on a public repo)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: corpus
           path: results/corpus.json
           # 90d (the artifact cap) buys headroom against a cron lapse resetting every first_seen — a
-          # stopgap for the corpus's durability; the fuller fix is tracked (see issue).
+          # stopgap for the corpus's durability; the fuller fix is tracked (see issue). This repo is
+          # PUBLIC, so this artifact is downloadable by anyone — it is NOT private. Accepted for now:
+          # the records (company/title/url/description) are public job-postings, kept off all branches.
           retention-days: 90
           if-no-files-found: error
 
