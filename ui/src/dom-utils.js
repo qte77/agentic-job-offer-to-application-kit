@@ -21,13 +21,16 @@ export const safeUrl = (u) => (/^https?:\/\//i.test(String(u)) ? String(u) : "#"
 const TAILOR_TAGS = new Set([
   "H1", "H2", "H3", "H4", "H5", "H6", "P", "UL", "OL", "LI",
   "STRONG", "EM", "B", "I", "CODE", "PRE", "BR", "A", "BLOCKQUOTE", "HR",
+  // Tables render the prefill pack's field/value lists (and any CV/cover-letter tables). Structural
+  // only — the attribute loop below still strips every attribute, so no active content survives.
+  "TABLE", "THEAD", "TBODY", "TR", "TH", "TD",
 ]);
 export function sanitizeHtml(html) {
   const tpl = document.createElement("template");
   tpl.innerHTML = html;
   for (const el of tpl.content.querySelectorAll("*")) {
     if (!TAILOR_TAGS.has(el.tagName)) {
-      el.replaceWith(...el.childNodes); // unwrap anything off-list (scripts/img/tables) to plain text
+      el.replaceWith(...el.childNodes); // unwrap anything off-list (scripts/img/iframes) to plain text
       continue;
     }
     // getAttributeNames() is a static snapshot, so removing during iteration is safe (a live
