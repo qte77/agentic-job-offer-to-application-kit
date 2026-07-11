@@ -98,6 +98,28 @@ class MonthCounts(BaseModel):
     counts: dict[str, int]
 
 
+class CompanyRow(BaseModel):
+    """One aggregated company-hiring row for the LOCAL market-intel tracker (#284).
+
+    ``{city, region, field, company, count, momentum}`` — who's hiring, by geo x field, with a
+    per-company active-role ``count`` and an optional ``heating``/``cooling``/``steady`` tag
+    (``None`` until history is deep enough). ``city`` is the canonical group key (duplicate
+    spellings merged); ``region`` keeps the source's state/country qualifier for display (``""``
+    when absent) — nothing is dropped from the corpus.
+
+    LOCAL-ONLY: built by ``scripts/build_ui_companies.py`` for ``make preview``, NEVER published.
+    Company + geo + counts are business data the ``data``-branch boundary guard forbids (a published
+    version needs an ADR-0002 ToU review first). No recruiter names/emails here.
+    """
+
+    city: str
+    region: str = ""
+    field: str
+    company: str
+    count: int
+    momentum: str | None = None
+
+
 class StyleBrief(BaseModel):
     """Resolved writing-style inputs for the Stage-3 tailor pass (#16).
 

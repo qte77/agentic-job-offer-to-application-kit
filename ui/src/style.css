@@ -372,6 +372,13 @@ td.empty-state {
 .verdict { font-size: 0.8125rem; color: var(--text-muted); text-transform: capitalize; }
 .verdict.is-shortlist { color: var(--data-positive); font-weight: 500; }
 
+/* Momentum tag (#284) — the company-hiring tracker's heating/cooling/steady signal. Heating = a
+   growth signal (positive), cooling = slowing (caution), steady = muted. Zero-blue, like the rest. */
+.momentum { display: inline-block; font-size: 0.75rem; white-space: nowrap; }
+.momentum.is-heating { color: var(--data-positive); font-weight: 600; }
+.momentum.is-cooling { color: var(--data-caution); }
+.momentum.is-steady { color: var(--text-muted); }
+
 /* ── Trends charts ── */
 .chart-wrap { position: relative; height: 300px; }
 .chart-block + .chart-block { margin-top: 1.5rem; }
