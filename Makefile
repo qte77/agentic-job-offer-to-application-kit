@@ -94,6 +94,20 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 		rm -f "$$dst"
 		echo "preview: no real trends available -> synthetic fallback"
 	fi
+	# Also bundle daily + monthly so the granularity picker works locally (#187/#188) rather than
+	# reverting to weekly: local public-data/ first, else the data branch; a missing series just
+	# falls back to synthetic for that granularity.
+	for f in trends-daily.ndjson trends-monthly.ndjson; do
+		d="$$site/public/data/$$f"
+		if [ -f "public-data/$$f" ]; then
+			cp "public-data/$$f" "$$d"
+			echo "preview: local public-data/$$f ($$(wc -l < "$$d") records)"
+		elif git show "data:public-data/$$f" > "$$d" 2>/dev/null || git show "origin/data:public-data/$$f" > "$$d" 2>/dev/null; then
+			echo "preview: data-branch $$f ($$(wc -l < "$$d") records)"
+		else
+			rm -f "$$d"
+		fi
+	done
 	# Real shortlist (PII) -> aggregate the per-lane results/<lane>/shortlist.json into the throwaway
 	# copy ONLY; never written to source ui/, never bundled by gh-pages.yaml (published stays synthetic).
 	uv run python scripts/build_ui_shortlist.py "$$site/public/data/shortlist.json"
