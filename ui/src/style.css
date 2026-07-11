@@ -229,7 +229,7 @@ td.empty-state {
   padding: 2rem 1rem;
 }
 
-/* ── Expandable offer rows — click/Enter/Space reveals the tailored CV + cover letter ── */
+/* ── Expandable offer rows — click/Enter/Space reveals the tailored CV + cover letter + prefill pack ── */
 .offer-row { cursor: pointer; }
 .offer-row:hover td { background: var(--surface); }
 .offer-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
@@ -245,13 +245,14 @@ td.empty-state {
 
 .offer-detail[hidden] { display: none; }
 .offer-detail > td { background: var(--bg); }
+/* One consistent layout: each doc (CV / cover letter / prefill pack) is a full-width pane, stacked in
+   a single column, each bounded to the same `.tailor-md`/`.tailor-pre` max-height with internal scroll.
+   Uniform width + height regardless of doc count or content size (a wide CV no longer squeezes a
+   side-by-side cover letter into an unreadable sliver — the old 1fr 1fr grid's min-content overflow). */
 .tailor-pack {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-}
-@media (min-width: 720px) {
-  .tailor-pack { grid-template-columns: 1fr 1fr; }
 }
 /* Pane head: the section title on the left, a Copy-raw-markdown button on the right. */
 .tailor-doc-head {
