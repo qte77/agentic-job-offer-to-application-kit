@@ -1,6 +1,11 @@
 # Plan 005 — post-#271 sprint: docs hygiene + trends-UI + dashboard flags + market-intel tracker
 
-**Status:** approved 2026-07-10; not implemented. Multi-slice sprint, each slice its own PR. Handoff:
+**Status: Sprint 1 SHIPPED (2026-07-11)** — docs hygiene #282 · trends-granularity UI #285 · dashboard
+flags #286; follow-on fixes #287 (picker styling) #289 (`make preview` bundles daily/monthly) #290
+(picker order). `complexipy` pinned `<6` (#288 — 6.0 breaks the ≤10 gate; adopting 6.x = a deliberate
+refactor of `persist_scored.main`/`refresh.main`). Deep `posted_at` trends (171w/545d/58m) published to
+the `data` branch (#191 commented; live series now a posted_at/first_seen hybrid, semantics on #269).
+**Next: S2 = #284** (company tracker), fed by **#292** (discovery). #187/#188 closed. Handoff:
 [docs/handoffs/005-post-271-sprint-plan.md](../handoffs/005-post-271-sprint-plan.md) — read it first.
 This plan carries the full symbol-level source map so a resuming session **does not re-map the
 codebase**.
