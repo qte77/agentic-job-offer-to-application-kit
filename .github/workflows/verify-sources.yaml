@@ -76,7 +76,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add config/default-seed.json
+          # -f: config/ is gitignored and the shipped default-seed.json is a force-tracked exception,
+          # so a plain `git add` refuses it ("paths are ignored") even though it is tracked + modified.
+          git add -f config/default-seed.json
           git commit -m "chore(sources): monthly _date_verified refresh + dead-slug triage (#217)"
           git push origin "HEAD:refs/heads/${branch}"
           {
