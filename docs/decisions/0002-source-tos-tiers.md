@@ -87,9 +87,10 @@ verbatim JD text is not, which is why the public dashboard ships only aggregate 
   (previously only `_blocked` / `_deferred` did), and it is **expected on new `feeds` / `ats`
   entries**. `ajoa-kit verify-sources [--dry-run]` re-probes them read-only (no auth) and re-stamps the
   live ones — feeds by a 2xx/3xx GET, ats boards by a live role count via `slug_probe.PROBES` — while
-  reporting the rest for manual triage; a one-pass backfill dated all 142 sources (2026-07-04). Running
-  it on a schedule is **deferred** (low-stakes: a normal `ingest` run already lists dead sources in its
-  summary), so the verb is run by hand for now.
+  reporting the rest for manual triage; a one-pass backfill dated all 142 sources (2026-07-04). It now
+  runs **monthly** via `.github/workflows/verify-sources.yaml` (`schedule` + `workflow_dispatch`): the
+  cron re-stamps the live ones and, when the seed changes, opens a review PR listing any
+  dead/unconfirmed slugs to drop or triage. It can still be run by hand for an ad-hoc check.
 - #94 shipped the **arbeitnow** adapter (loaded `aggregators` key); attribution is recorded in
   config/ADR — the published dashboard emits only aggregate facts, not arbeitnow content, so no
   on-page backlink. jobicy / himalayas / remotive stay `_deferred` pending the robots/ToS resolutions
