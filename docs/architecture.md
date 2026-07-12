@@ -244,6 +244,17 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 - `library/`, `input/` — additional generated/working directories; git-ignored.
 - `examples/alexis-doe/` — a committed, self-contained example mirroring `config/` + `results/`.
 
+**Corpus durability — accepted limitation (#191).** `results/corpus.json` — the source of every JD's
+`first_seen`, which the digest (#175) and the keyword/hiring trend series bucket by — persists **only**
+as a private GitHub Actions artifact (90-day retention), restored each `ingest-daily` run. The
+*aggregate* series on the `data` branch are durable; the corpus itself is not. If the daily cron lapses
+longer than the retention window (repo dormant, Actions disabled, billing), the next restore finds
+nothing → the corpus rebuilds from empty → every JD is re-stamped `first_seen = run date`: a one-off
+backfill spike, and the real first-seen history is **permanently lost** (it cannot be reconstructed
+from the aggregate public trends). Mitigated by `retention-days: 90`; a robust durable backup (a private
+store via a secret) is **deferred while the cron runs daily** (YAGNI) — and the corpus can never go to a
+public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
+
 ## Boundary failure policy
 
 | Boundary | Policy |
