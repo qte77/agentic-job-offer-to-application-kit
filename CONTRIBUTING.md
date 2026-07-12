@@ -15,13 +15,13 @@ documents them; the rest of the docs link here instead of repeating commands.
 ```bash
 make install     # sync the dev environment (uv)
 make check       # ruff + format-check + pyright + complexipy + offline pytest + coverage (CI parity)
-make docs-lint   # markdownlint + lychee link check
+make docs_lint   # markdownlint + lychee link check
 make ui_check    # fast headless dashboard smoke (CSP/render/console)
 make ui_e2e      # full dashboard e2e — local + remote, viewports/device/themes/interactions
 make ui_shots    # regenerate the README screencast GIFs (light + dark)
 ```
 
-`make docs-lint` needs two tools `uv sync` does **not** install —
+`make docs_lint` needs two tools `uv sync` does **not** install —
 [`markdownlint-cli2`](https://github.com/DavidAnson/markdownlint-cli2) (npm) and
 [`lychee`](https://github.com/lycheeverse/lychee) (cargo) — run `make install_docs_tools` once
 (needs `npm` + `cargo` on `PATH`). The `ui_*` targets borrow the sibling `polyfetch-scrape`
@@ -83,13 +83,13 @@ Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tie
 | `AJOA_PUBLIC_DATA_DIR` | `public-data` | where PII-free publishable trends are written (the only data published, #210) |
 | `POLYFETCH_DIR` | `../polyfetch-scrape` | the `polyfetch-scrape` checkout `make ingest` / `probe` borrow |
 | `PORT` | `8000` | port for `make preview` |
-| `TRENDS_FORCE` | *(unset)* | `1` skips `make trends-data`'s shrink guard (which refuses a push that would drop bucket counts) for an intentional prune |
+| `TRENDS_FORCE` | *(unset)* | `1` skips `make trends_data`'s shrink guard (which refuses a push that would drop bucket counts) for an intentional prune |
 | `.env` file | *(none)* | optional dotenv (`AppSettings.env_file`, `src/ajoa_kit/settings.py`) that sets any `AJOA_*` override above; git-ignored — keep private paths out of the repo |
 
 ## Opening a PR
 
 1. Branch off `main` — one topic branch per slice (`feat/…`, `docs/…`, `ci/…`).
-2. Commit by topic; keep `make check` and `make docs-lint` green before pushing.
+2. Commit by topic; keep `make check` and `make docs_lint` green before pushing.
 3. Add a changelog fragment (below).
 4. Open the PR against `main`; wait for CI (`gh pr checks <n> --watch`).
 5. Squash-merge once green.
@@ -152,10 +152,10 @@ in git-ignored `results/hiring-companies.ndjson`, never published. To refresh th
 ```bash
 uv run ajoa-kit trend-snapshot      # -> public-data/trends{,-daily,-monthly}.ndjson (needs the polyfetch venv; not run in CI)
 uv run ajoa-kit companies-snapshot  # -> public-data/hiring-{weekly,daily,monthly}.ndjson (geo-by-field) + local results/hiring-companies.ndjson
-make trends-data                    # force-push the $(TRENDS_PUBLISH) files -> the `data` branch
+make trends_data                    # force-push the $(TRENDS_PUBLISH) files -> the `data` branch
 ```
 
-A **local** `make trends-data` push re-triggers the Pages deploy directly, which re-bundles the fresh
+A **local** `make trends_data` push re-triggers the Pages deploy directly, which re-bundles the fresh
 same-origin trends (Pages may serve the prior copy for up to ~10 min while its cache expires). The
 nightly `ingest-daily.yaml` cron pushes with `GITHUB_TOKEN`, and a `GITHUB_TOKEN` push can't
 self-trigger a workflow (GitHub loop prevention), so the cron **dispatches** `gh-pages.yaml`

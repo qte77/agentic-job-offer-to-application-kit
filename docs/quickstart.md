@@ -11,7 +11,7 @@ Prerequisite: [uv](https://docs.astral.sh/uv/) (it provisions Python ≥ 3.11). 
 ```bash
 git clone https://github.com/qte77/agentic-job-offer-to-application-kit
 cd agentic-job-offer-to-application-kit
-make install-uv   # install uv (skip if already installed)
+make install_uv   # install uv (skip if already installed)
 make install      # sync the dev environment (uv)
 make preview      # serve the dashboard at http://localhost:8000 (override: PORT=9000 make preview)
 ```

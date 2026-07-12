@@ -165,7 +165,7 @@ daily `ingest-daily` cron); the orphan `data` branch; gh-pages (the dashboard).
   names companies/titles and is never uploaded or pushed.
 - `results/` is **exclusively PII**; the publishable keyword-only `week + counts` trends live in a
   separate git-ignored, PII-free **`public-data/`** dir (#210). Only those reach the **`data` branch**
-  — `make trends-data` builds the tree from `public-data/` and a **tree-allowlist guard** aborts the
+  — `make trends_data` builds the tree from `public-data/` and a **tree-allowlist guard** aborts the
   push unless it contains only `public-data/trends{,-daily}.ndjson`, so nothing else can ride along.
 - **No automated submission** — the pipeline ends at a human-reviewed prefill pack; there is no
   auto-submit path.
@@ -240,7 +240,7 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
 - `public-data/` — the **PII-free** publishable aggregates only (`trends{,-daily,-monthly}.ndjson`,
   keyword `{week,counts}`; `hiring-{weekly,daily,monthly}.ndjson`, geo-by-field hiring `{week,counts}`
   with **no company names**); git-ignored, generated (#210). The one place anything crosses to the
-  `data` branch (via `git add -f`, guarded by `make trends-data`'s tree allowlist).
+  `data` branch (via `git add -f`, guarded by `make trends_data`'s tree allowlist).
 - `library/`, `input/` — additional generated/working directories; git-ignored.
 - `examples/alexis-doe/` — a committed, self-contained example mirroring `config/` + `results/`.
 
