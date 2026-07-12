@@ -233,12 +233,14 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   `config/lanes.json` (the canonical position lanes, #195). Your `config/seed.json` overrides the
   default-seed when present; absent it, ingest falls back to the default.
 - `results/` — everything generated and **PII-bearing** (`jobs-raw.json`, `corpus.json`,
-  `daily-summary.md`, `<lane>/shortlist.*`, `offers/<slug>/`); git-ignored (dir kept via `.gitkeep`),
-  **never published**. The `daily-summary.md` digest (#175) names companies/titles → **local-only**,
-  never a CI artifact or branch.
-- `public-data/` — the **PII-free** publishable aggregates only (`trends.ndjson` / `trends-daily.ndjson`,
-  keyword `{week,counts}`); git-ignored, generated (#210). The one place anything crosses to the `data`
-  branch (via `git add -f`, guarded by `make trends-data`'s tree allowlist).
+  `daily-summary.md`, `<lane>/shortlist.*`, `offers/<slug>/`, `hiring-companies.ndjson`); git-ignored
+  (dir kept via `.gitkeep`), **never published**. The `daily-summary.md` digest (#175) names
+  companies/titles → **local-only**; the per-company `hiring-companies.ndjson` series is likewise
+  business data, never a CI artifact or branch.
+- `public-data/` — the **PII-free** publishable aggregates only (`trends{,-daily,-monthly}.ndjson`,
+  keyword `{week,counts}`; `hiring-{weekly,daily,monthly}.ndjson`, geo-by-field hiring `{week,counts}`
+  with **no company names**); git-ignored, generated (#210). The one place anything crosses to the
+  `data` branch (via `git add -f`, guarded by `make trends-data`'s tree allowlist).
 - `library/`, `input/` — additional generated/working directories; git-ignored.
 - `examples/alexis-doe/` — a committed, self-contained example mirroring `config/` + `results/`.
 
@@ -263,7 +265,9 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   catalog (#10) with ToS/ToU tiers (ADR-0002, #95); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
   `ajoa-kit trend-snapshot` → keyword-only `public-data/trends.ndjson` (#11 PR-A) rendered by the two-tab
   no-build `ui/` dashboard (#11 PR-B, vendored Chart.js — synthetic Tab A + aggregate `{week,counts}`
-  Tab B); the reusable `run-with-keywords` workflow (#79); `ajoa-kit refresh` shortlist liveness sweep
+  Tab B); `ajoa-kit companies-snapshot` → geo-by-field hiring `public-data/hiring-*.ndjson` (aggregate,
+  no company names) + local per-company `results/hiring-companies.ndjson` (plan 006);
+  the reusable `run-with-keywords` workflow (#79); `ajoa-kit refresh` shortlist liveness sweep
   (#214 — corpus-delisted + URL re-probe, flag-`stale`-or-`--delete`); baseline gates (ruff, pyright,
   complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
 - **Built (dashboard UX + CI):** trends bundled **same-origin** at deploy (the ingest cron dispatches

@@ -116,6 +116,11 @@
 - Relevance fit rubric (#271): the relevance pass now emits an explainable per-offer rationale plus
   `deadline` / `deal_breaker` fields, and `ScoredItem` is typed end-to-end — through persist + the
   merge/refresh re-reads — closing the relevance boundary of ADR-0003.
+- Company-hiring trend series (plan 006): `ajoa-kit companies-snapshot` builds a hiring timeline from
+  the corpus by `first_seen` — a publishable **geo-by-field** series (`public-data/hiring-*.ndjson`,
+  aggregate `{week,counts}`, no company names, on the `data` branch like the keyword trends) plus a
+  **local per-company** series (`results/hiring-companies.ndjson`, never published), wired into the
+  ingest cron. The local Companies tab also gained a snapshot "as of" date + click-to-sort columns.
 
 ## Next
 

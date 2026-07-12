@@ -63,6 +63,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `prefill-fields` | `--ats <name> --slug <board> --job-id <id>` (Greenhouse schema lookup) |
 | `probe` | — (probe candidate slugs across ATS platforms) |
 | `trend-snapshot` | — (see [§Trends data branch](#trends-data-branch)) |
+| `companies-snapshot` | — company-hiring series: publishable geo-by-field + local per-company (see [§Trends data branch](#trends-data-branch)) |
 | `status` | `<slug>` — set/read a local application-outcome status per offer · `--stage <applied/responded/interview/offer/rejected>` `--date <YYYY-MM-DD>` `--notes <text>` (#273) |
 
 Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tiered per
@@ -138,11 +139,15 @@ The dashboard's real **market-trends** data lives only on the orphan **`data`** 
 copies it from the `data` branch at deploy time — so the live charts refresh whenever the site
 redeploys (trigger details below). Local dev and forks fall back to fetching it at runtime from
 `raw.githubusercontent.com/<owner>/<repo>/data/public-data/trends.ndjson` (auto-derived from the Pages
-origin, so a fork self-hosts its own). To refresh it:
+origin, so a fork self-hosts its own). The geo-by-field **company-hiring** series
+(`hiring-{weekly,daily,monthly}.ndjson`) rides the same branch and same-origin bundling — aggregate,
+**no company names** (same category as the keyword counts); the per-company breakdown stays **local**
+in git-ignored `results/hiring-companies.ndjson`, never published. To refresh them:
 
 ```bash
-uv run ajoa-kit trend-snapshot   # -> public-data/trends{,-daily,-monthly}.ndjson (needs the polyfetch venv; not run in CI)
-make trends-data                 # force-push the $(TRENDS_PUBLISH) trend files -> the `data` branch
+uv run ajoa-kit trend-snapshot      # -> public-data/trends{,-daily,-monthly}.ndjson (needs the polyfetch venv; not run in CI)
+uv run ajoa-kit companies-snapshot  # -> public-data/hiring-{weekly,daily,monthly}.ndjson (geo-by-field) + local results/hiring-companies.ndjson
+make trends-data                    # force-push the $(TRENDS_PUBLISH) files -> the `data` branch
 ```
 
 A **local** `make trends-data` push re-triggers the Pages deploy directly, which re-bundles the fresh

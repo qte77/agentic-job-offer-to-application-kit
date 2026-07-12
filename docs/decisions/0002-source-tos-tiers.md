@@ -71,9 +71,10 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
 ### Legal backbone
 
 Reading a public, no-auth endpoint is not "unauthorized access" under the US CFAA (Van Buren, 2021;
-hiQ v. LinkedIn, 9th Cir. 2022). Aggregate keyword counts are non-copyrightable facts (Feist) —
-verbatim JD text is not, which is why the public dashboard ships only aggregate `{week, counts}` data
-(ADR-0001 PII gate + #11). Full citations and the submit-side boundary live in
+hiQ v. LinkedIn, 9th Cir. 2022). Aggregate keyword counts — and the geo-by-field hiring counts
+(plan 006) — are non-copyrightable facts (Feist); verbatim JD text and per-company breakdowns are
+not, which is why the public dashboard ships only aggregate `{week, counts}` data (the per-company
+hiring series stays local; ADR-0001 PII gate + #11). Full citations and the submit-side boundary live in
 [research.md §Delivery](../research.md#delivery); this ADR does not restate them.
 
 ## Consequences

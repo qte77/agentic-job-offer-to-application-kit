@@ -96,10 +96,12 @@ jobs:
         run: |
           git fetch --depth=1 origin data 2>/dev/null || true
           mkdir -p public-data
-          # Restore the weekly, daily and monthly aggregate series so trend-snapshot's per-bucket
-          # upsert ACCUMULATES (keeps already-published buckets, adds/updates this run's) rather
-          # than replacing. Atomic via a tmp file: only overwrite on a clean read.
-          for f in trends.ndjson trends-daily.ndjson trends-monthly.ndjson; do
+          # Restore both aggregate series — keyword trends{,-daily,-monthly} and geo×field
+          # hiring-{weekly,daily,monthly} — so each snapshot's per-bucket upsert ACCUMULATES (keeps
+          # already-published buckets, adds/updates this run's) rather than replacing; without this
+          # the shrink guard in `make trends-data` would refuse the (apparently shrinking) push.
+          # Atomic via a tmp file: only overwrite on a clean read.
+          for f in trends.ndjson trends-daily.ndjson trends-monthly.ndjson hiring-weekly.ndjson hiring-daily.ndjson hiring-monthly.ndjson; do
             if git show "origin/data:public-data/$f" > "public-data/$f.tmp" 2>/dev/null; then
               mv "public-data/$f.tmp" "public-data/$f"
               echo "restored $(wc -l < "public-data/$f") lines -> public-data/$f"
@@ -112,6 +114,10 @@ jobs:
       - name: Keyword-trend snapshot (buckets by first_seen)
         working-directory: polyfetch-scrape
         run: uv run --with pydantic --with pydantic-settings --with defusedxml python -m ajoa_kit trend-snapshot
+
+      - name: Company-hiring snapshot (geo×field public + local per-company, by first_seen)
+        working-directory: polyfetch-scrape
+        run: uv run --with pydantic --with pydantic-settings --with defusedxml python -m ajoa_kit companies-snapshot
 
       - name: Push aggregate trends to the data branch
         run: |
