@@ -54,6 +54,14 @@ ALLOWED_404_SUFFIXES = (
     "public/data/companies.json",
     "public/data/trends-daily.ndjson",
     "public/data/trends-monthly.ndjson",
+    # Hiring series (plan 006): same-origin copies exist only in the gh-pages bundle, and the `data`
+    # branch has none until the cron's first companies-snapshot — so a bare-ui/ run 404s both paths.
+    "public/data/hiring-weekly.ndjson",
+    "public/data/hiring-daily.ndjson",
+    "public/data/hiring-monthly.ndjson",
+    "public-data/hiring-weekly.ndjson",
+    "public-data/hiring-daily.ndjson",
+    "public-data/hiring-monthly.ndjson",
 )
 
 

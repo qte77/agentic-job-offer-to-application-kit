@@ -77,23 +77,34 @@ COMPANY_ROWS = [
 ]
 
 
-def _trends(key: str, labels: list[str]) -> str:
+def _ndjson(key: str, labels: list[str], keys: list[str]) -> str:
     return "\n".join(
-        json.dumps({key: lb, "counts": {"python": 10 + i, "rust": 20 - i}})
+        json.dumps({key: lb, "counts": {k: 5 + i + 2 * j for j, k in enumerate(keys)}})
         for i, lb in enumerate(labels)
     )
 
 
+# Geo-by-field keys (publishable hiring) and company keys (local hiring), mirroring real shapes.
+GEO_KEYS = ["Berlin, DE · backend", "Remote · ml", "Munich, Bayern · frontend", "SF · engineering"]
+COMPANY_KEYS = ["Acme", "Bolt", "Zeta", "Nova"]
+
+
 def seed_local(dst: Path) -> None:
-    """Copy ui/ into dst and seed the local-only data so all three tabs and both charts render."""
+    """Copy ui/ into dst and seed the local-only data so all tabs + all four charts render."""
     shutil.copytree(UI_DIR, dst)
     data = dst / "public" / "data"
+    weeks = [f"2026-W{n:02d}" for n in range(10, 24)]
+    days = [f"2026-06-{d:02d}" for d in range(1, 15)]
+    months = ["2026-04", "2026-05", "2026-06"]
+    kw = ["python", "rust"]
     (data / "companies.json").write_text(json.dumps({"snapshot": SNAPSHOT, "rows": COMPANY_ROWS}))
-    (data / "trends.ndjson").write_text(_trends("week", [f"2026-W{n:02d}" for n in range(10, 24)]))
-    (data / "trends-daily.ndjson").write_text(
-        _trends("date", [f"2026-06-{d:02d}" for d in range(1, 15)])
-    )
-    (data / "trends-monthly.ndjson").write_text(_trends("month", ["2026-04", "2026-05", "2026-06"]))
+    (data / "trends.ndjson").write_text(_ndjson("week", weeks, kw))
+    (data / "trends-daily.ndjson").write_text(_ndjson("date", days, kw))
+    (data / "trends-monthly.ndjson").write_text(_ndjson("month", months, kw))
+    (data / "hiring-weekly.ndjson").write_text(_ndjson("week", weeks, GEO_KEYS))
+    (data / "hiring-daily.ndjson").write_text(_ndjson("date", days, GEO_KEYS))
+    (data / "hiring-monthly.ndjson").write_text(_ndjson("month", months, GEO_KEYS))
+    (data / "hiring-companies.ndjson").write_text(_ndjson("week", weeks, COMPANY_KEYS))
 
 
 def serve(directory: Path) -> socketserver.TCPServer:
@@ -115,6 +126,13 @@ def _body_bg(page) -> str:
 
 def _overflows(page) -> bool:
     return page.evaluate("document.documentElement.scrollWidth > window.innerWidth + 2")
+
+
+def _visible(page, sel: str) -> bool:
+    """True iff `sel` matches AND is not [hidden]. Tolerates a page lacking the element (e.g. the
+    remote site before this deploys) — a missing node skips the check rather than throwing."""
+    js = "(s) => { const e = document.querySelector(s); return !!e && !e.hidden; }"
+    return page.evaluate(js, sel)
 
 
 def _companies_col(page) -> list[str]:
@@ -151,6 +169,12 @@ def _check_trends(page, tag: str, fails: list[str]) -> None:
         page.eval_on_selector("#trends-line", "c => c.width") == 0
     ):
         fails.append(f"[{tag}] trends chart lost size after dropdowns")
+    # Publishable geo-by-field hiring chart shares this tab; assert it rendered when revealed (its
+    # block is hidden when no hiring series is reachable, e.g. remote before the cron's first run).
+    if _visible(page, "#hiring-block") and (
+        page.eval_on_selector("#hiring-line", "c => c.width") == 0
+    ):
+        fails.append(f"[{tag}] hiring geo-by-field chart not sized")
 
 
 def _check_companies(page, local: bool, fails: list[str]) -> None:
@@ -181,6 +205,11 @@ def _check_companies(page, local: bool, fails: list[str]) -> None:
     )
     if aria != "descending":
         fails.append(f"[local] aria-sort={aria!r} after 2 clicks, expected descending")
+    # Local per-company hiring chart lives in this tab (preview bundle only); assert it rendered.
+    if _visible(page, "#hiring-companies-block") and (
+        page.eval_on_selector("#hiring-companies-line", "c => c.width") == 0
+    ):
+        fails.append("[local] per-company hiring chart not sized")
 
 
 def drive_interactions(page, local: bool, fails: list[str]) -> None:

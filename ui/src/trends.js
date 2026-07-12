@@ -72,8 +72,10 @@ function pivot(records) {
 }
 
 // Fetch one trends source (NDJSON of {<label>,counts}). Returns the parsed records, or null on any miss
-// (absent / non-200 / bad line / network error) so the caller can try the next source.
-async function fetchTrends(url) {
+// (absent / non-200 / bad line / network error) so the caller can try the next source. Exported so the
+// hiring charts (hiring.js) reuse the identical NDJSON parse — including the same-origin-only path for
+// the LOCAL per-company series (which must never fall back cross-origin).
+export async function fetchTrends(url) {
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
@@ -92,21 +94,31 @@ async function fetchTrends(url) {
 // extensions block (a CORS failure that otherwise drops the dashboard silently to synthetic data).
 // Falls back to the `data` branch over raw.githubusercontent (freshest; the local-dev / fork path),
 // then to null so the caller uses the synthetic set. An explicit `?base=` is honored first.
-export async function loadRealTrends(gran = "week") {
-  const g = GRANULARITIES[gran] ?? GRANULARITIES.week;
-  const sameOrigin = `public/data/${g.file}`;
-  const dataBranch = `${DATA_BASE_URL}/public-data/${g.file}`;
+// Load one publishable NDJSON series by filename, preferring the SAME-ORIGIN deploy copy, then the
+// `data` branch over raw.githubusercontent (honoring an explicit `?base=`), then null. Shared by the
+// keyword loader below and hiring.js's publishable geo-by-field loader — one place owns the fallback
+// order so `?base=` behaves identically for both.
+export async function loadSeries(file) {
+  const sameOrigin = `public/data/${file}`;
+  const dataBranch = `${DATA_BASE_URL}/public-data/${file}`;
   const order = new URLSearchParams(location.search).has("base")
     ? [dataBranch, sameOrigin]
     : [sameOrigin, dataBranch];
   for (const url of order) {
     const records = await fetchTrends(url);
-    // Commit the granularity only once its series is in hand, so activeGran never drifts from the
-    // records the orchestrator is about to render (a miss leaves the current view untouched).
-    if (records) {
-      activeGran = g;
-      return records;
-    }
+    if (records) return records;
+  }
+  return null;
+}
+
+export async function loadRealTrends(gran = "week") {
+  const g = GRANULARITIES[gran] ?? GRANULARITIES.week;
+  const records = await loadSeries(g.file);
+  // Commit the granularity only once its series is in hand, so activeGran never drifts from the
+  // records the orchestrator is about to render (a miss leaves the current view untouched).
+  if (records) {
+    activeGran = g;
+    return records;
   }
   return null;
 }
@@ -176,8 +188,9 @@ function renderBar(records) {
 }
 
 // Monday (UTC) of an ISO week "YYYY-Www" — Jan 4 is always in ISO week 1. Lets the (sparse) series
-// be windowed by calendar time rather than record count.
-function isoWeekToDate(week) {
+// be windowed by calendar time rather than record count. Exported so hiring.js windows its weekly
+// series with the identical calendar math.
+export function isoWeekToDate(week) {
   const [y, w] = week.split("-W").map(Number);
   const jan4 = new Date(Date.UTC(y, 0, 4));
   const mondayW1 = new Date(jan4);
