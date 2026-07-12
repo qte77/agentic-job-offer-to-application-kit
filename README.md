@@ -30,25 +30,13 @@ applied-AI/ML · forward-deployed/solutions · cloud/DevOps/platform · architec
 Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
 
 <details>
-<summary>Screenshot — shortlist (first offer expanded to its tailored CV + cover letter)</summary>
+<summary>Screencast — the dashboard end to end: shortlist (an offer expanded to its tailored CV + cover letter), market keyword trends + geo-by-field hiring, and the Companies tab (snapshot date + click-to-sort columns)</summary>
 
 <br />
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/images/dashboard-shortlist-dark.png" />
-  <img alt="ajoa-kit dashboard — shortlist with the first offer expanded to its tailored CV and cover letter" src="assets/images/dashboard-shortlist-light.png" />
-</picture>
-
-</details>
-
-<details>
-<summary>Screenshot — market keyword trends (default 3-month window)</summary>
-
-<br />
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/images/dashboard-market-dark.png" />
-  <img alt="ajoa-kit dashboard — job-market keyword trends over the default 3-month window" src="assets/images/dashboard-market-light.png" />
+  <source media="(prefers-color-scheme: dark)" srcset="assets/images/usage-dark.gif" />
+  <img alt="ajoa-kit dashboard walkthrough — shortlist with an offer expanded, market keyword + hiring trends, and the Companies tab with sortable columns" src="assets/images/usage-light.gif" />
 </picture>
 
 </details>
