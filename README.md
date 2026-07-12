@@ -29,6 +29,10 @@ applied-AI/ML · forward-deployed/solutions · cloud/DevOps/platform · architec
 `config/lanes.json` — see [docs/architecture.md §Position lanes](docs/architecture.md#position-lanes).
 Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
 
+A no-build **dashboard** (screencast below) surfaces the tailored shortlist, the published job-market
+trends (keyword frequency + geo-by-field hiring), and a local Companies-hiring view with a snapshot
+date and click-to-sort columns.
+
 <details>
 <summary>Screencast — the dashboard end to end: shortlist (an offer expanded to its tailored CV + cover letter), market keyword trends + geo-by-field hiring, and the Companies tab (snapshot date + click-to-sort columns)</summary>
 
