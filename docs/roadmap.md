@@ -123,6 +123,9 @@
   ingest cron. The local Companies tab also gained a snapshot "as of" date + click-to-sort columns,
   and the dashboard renders both series (geo-by-field top-10 in Market-trends, per-company top-10 in
   the Companies tab) — verified end-to-end by a new `make ui-e2e` (local + remote) harness.
+- Location noise-folding (#309): `parse_geo` strips trailing org suffixes (`Office`/`HQ`/`Hub`) and
+  maps placeholder junk (`LOCATION`/`N/A`) to `Unknown`, so same-place variants stop splitting the
+  Companies-tab ranking and the geo-by-field hiring keys.
 
 ## Next
 
@@ -140,7 +143,8 @@
   — #94 deferred follow-ups). Outlook (#109): slug-discovery from public board directories, and
   keyed aggregators (e.g. Jooble) — both outside the current no-auth/no-key model.
 - Trends file growth: aggregated trends are the durable store (on the `data` branch); the JD corpus
-  stays git-ignored / ephemeral **by design** (#191). The two trend files grow linearly (~23 KB/yr
+  stays git-ignored / ephemeral **by design** (#191, accepted limitation — **closed**; recorded in
+  architecture.md §Data layout). The two trend files grow linearly (~23 KB/yr
   weekly, ~130 KB/yr daily) — fine for years (cheap O(n) upsert + whole-file dashboard fetch). If they
   ever get too large, split by month/year (e.g. `trends-YYYY.ndjson`) and have the dashboard fetch the
   needed range.
