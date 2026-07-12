@@ -14,7 +14,7 @@
 	install-uv install install_docs_tools \
 	check lint format check_types check_complexity docs-lint \
 	ingest chunk persist probe \
-	preview trends-data ui-check \
+	preview trends-data ui-check ui-e2e \
 	changelog_new changelog_preview changelog_release
 
 # MARK: Help
@@ -120,6 +120,9 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 
 ui-check: ## Headless-browser smoke for the dashboard (CSP/render/console); borrows POLYFETCH_DIR's patchright
 	uv run --directory "$${POLYFETCH_DIR:-../polyfetch-scrape}" python "$(CURDIR)/scripts/ui_check.py"
+
+ui-e2e: ## Full dashboard e2e (local hard gate + remote best-effort; viewports/device/themes/clicks); borrows POLYFETCH_DIR's patchright
+	uv run --directory "$${POLYFETCH_DIR:-../polyfetch-scrape}" python "$(CURDIR)/scripts/ui_e2e.py"
 
 # The publishable aggregate series (#210 allowlist + #188 monthly + plan-006 hiring): keyword
 # trends/{,-daily,-monthly} and geo×field hiring-{weekly,daily,monthly} — all aggregate, no PII, no
