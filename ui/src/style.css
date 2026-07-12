@@ -393,6 +393,9 @@ td.empty-state {
 /* ── Trends charts ── */
 .chart-wrap { position: relative; height: 300px; }
 .chart-block + .chart-block { margin-top: 1.5rem; }
+/* The per-company hiring chart follows the companies TABLE (not another chart-block), so the
+   adjacent-sibling rule above wouldn't give it a top margin. */
+#hiring-companies-block { margin-top: 1.5rem; }
 .chart-title {
   font-size: 0.8125rem;
   font-weight: 600;

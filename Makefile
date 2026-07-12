@@ -97,7 +97,7 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 	# Also bundle daily + monthly so the granularity picker works locally (#187/#188) rather than
 	# reverting to weekly: local public-data/ first, else the data branch; a missing series just
 	# falls back to synthetic for that granularity.
-	for f in trends-daily.ndjson trends-monthly.ndjson; do
+	for f in trends-daily.ndjson trends-monthly.ndjson hiring-weekly.ndjson hiring-daily.ndjson hiring-monthly.ndjson; do
 		d="$$site/public/data/$$f"
 		if [ -f "public-data/$$f" ]; then
 			cp "public-data/$$f" "$$d"
@@ -115,6 +115,14 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 	# ONLY. Business data — never written to source ui/, never on the data branch (boundary guard);
 	# gh-pages bundles none, so the dashboard's Companies tab stays hidden on the published site.
 	uv run python scripts/build_ui_companies.py "$$site/public/data/companies.json"
+	# Local per-company hiring detail (plan 006): copy the git-ignored results/ series into the
+	# throwaway bundle ONLY (business data; gh-pages never bundles it, boundary guard forbids the branch).
+	if [ -f results/hiring-companies.ndjson ]; then
+		cp results/hiring-companies.ndjson "$$site/public/data/hiring-companies.ndjson"
+		echo "preview: bundled local per-company hiring ($$(wc -l < results/hiring-companies.ndjson) weeks)"
+	else
+		echo "preview: no results/hiring-companies.ndjson (run: uv run ajoa-kit companies-snapshot)"
+	fi
 	echo "serving $$site -> http://localhost:$${PORT:-8000}/"
 	uv run python -m http.server "$${PORT:-8000}" --directory "$$site"
 

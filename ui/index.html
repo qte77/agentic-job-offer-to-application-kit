@@ -155,6 +155,13 @@
           <h3 class="chart-title">Keyword volume per bucket</h3>
           <div class="chart-wrap"><canvas id="trends-bar"></canvas></div>
         </div>
+        <!-- Publishable geo-by-field hiring series (plan 006): aggregate {week,counts}, no company
+             names — shown alongside the keyword trends. Revealed by app.js only when the series is
+             reachable (same-origin bundle or the data branch). -->
+        <div class="chart-block" id="hiring-block" hidden>
+          <h3 class="chart-title">Hiring by location &amp; field — top 10 (new roles per bucket)</h3>
+          <div class="chart-wrap"><canvas id="hiring-line"></canvas></div>
+        </div>
       </section>
 
       <section id="companies-section" role="tabpanel" aria-labelledby="tab-companies" tabindex="0" hidden>
@@ -177,6 +184,12 @@
             </thead>
             <tbody id="companies-body"></tbody>
           </table>
+        </div>
+        <!-- LOCAL per-company hiring detail (plan 006): business data, bundled only by make preview,
+             never published. Revealed by app.js only when results/hiring-companies.ndjson is bundled. -->
+        <div class="chart-block" id="hiring-companies-block" hidden>
+          <h3 class="chart-title">Hiring by company — top 10 (new roles per week, local)</h3>
+          <div class="chart-wrap"><canvas id="hiring-companies-line"></canvas></div>
         </div>
       </section>
     </main>

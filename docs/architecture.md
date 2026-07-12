@@ -274,7 +274,8 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   a redeploy after each `data` push — no cross-origin fetch); expandable shortlist rows → tailored CV + cover
   letter; **`make preview` shows your real local shortlist** (#209 — aggregated from
   `results/<lane>/shortlist.json`, same-origin, never published); a market-trends time-frame picker;
-  Repo/Issues header links; `make preview` serves a throwaway copy keeping real data out of the source `ui/`; AI issue-triage CI (`issue-triage.yaml`,
+  hiring charts (plan 006 — a publishable geo-by-field top-10 in Market-trends + a local per-company
+  top-10 in the Companies tab); a `make ui-e2e` local+remote headless e2e; Repo/Issues header links; `make preview` serves a throwaway copy keeping real data out of the source `ui/`; AI issue-triage CI (`issue-triage.yaml`,
   SHA-pinned, GitHub Models, zero-secret).
 - **Designed:** #71 Vite intentionally not adopted (no-build).
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks, locale-aware document conventions (#12, not planned); a multi-column

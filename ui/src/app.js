@@ -15,12 +15,23 @@ import {
 } from "./shortlist.js";
 import { invalidateTrends, loadRealTrends, renderTrends, trendsPainted } from "./trends.js";
 import { loadRealCompanies, renderCompanies } from "./companies.js";
+import {
+  hiringPainted,
+  invalidateHiring,
+  loadLocalHiring,
+  loadRealHiring,
+  localHiringPainted,
+  renderHiring,
+  renderLocalHiring,
+} from "./hiring.js";
 
 /** @type {{lanes:{key:string,label:string}[], shortlist:any[], trends:{week:string,counts:Record<string,number>}[], generated:string}|null} */
 let data = null;
 let laneLabel = {};
 let trendsRange = "13"; // default time-frame window: 3mo (13 ISO weeks); "all" or a trailing-week count
 let trendsGran = "week"; // default trend granularity: week | day | month (#187/#188)
+let hiringData = null; // publishable geo-by-field {records, gran} — Market-trends tab (plan 006)
+let localHiringData = null; // local per-company {records, gran} — Companies tab, preview-only
 
 // ── Tabs (WAI-ARIA tabs pattern: roving tabindex + arrow keys) ──
 function initTabs() {
@@ -35,9 +46,14 @@ function initTabs() {
       const panel = document.getElementById(t.getAttribute("aria-controls"));
       if (panel) panel.hidden = !on;
     });
-    // Charts in a hidden panel render at 0 size — (re)render on first reveal of the trends tab.
-    if (tab.getAttribute("aria-controls") === "trends-section" && !trendsPainted()) {
-      renderTrends(data?.trends, trendsRange);
+    // Charts in a hidden panel render at 0 size — (re)render on first reveal of each tab.
+    const panelId = tab.getAttribute("aria-controls");
+    if (panelId === "trends-section") {
+      if (!trendsPainted()) renderTrends(data?.trends, trendsRange);
+      if (hiringData && !hiringPainted()) renderHiring(hiringData, trendsRange);
+    }
+    if (panelId === "companies-section" && localHiringData && !localHiringPainted()) {
+      renderLocalHiring(localHiringData, trendsRange);
     }
   }
   tabs.forEach((tab) => {
@@ -63,7 +79,14 @@ async function init() {
   document.addEventListener("themechange", () => {
     if (!data) return;
     invalidateTrends();
-    if (!document.getElementById("trends-section").hidden) renderTrends(data.trends, trendsRange);
+    invalidateHiring();
+    if (!document.getElementById("trends-section").hidden) {
+      renderTrends(data.trends, trendsRange);
+      if (hiringData) renderHiring(hiringData, trendsRange);
+    }
+    if (localHiringData && !document.getElementById("companies-section").hidden) {
+      renderLocalHiring(localHiringData, trendsRange);
+    }
   });
 
   data = await fetch("public/data/demo.json").then((r) => r.json());
@@ -71,6 +94,10 @@ async function init() {
   // present; the shortlist stays synthetic/local. Any miss keeps demo.json's synthetic trends.
   const realTrends = await loadRealTrends(trendsGran);
   if (realTrends) data.trends = realTrends;
+  // Publishable geo-by-field hiring series (aggregate, no company names) — same load path as the
+  // keyword trends; reveal its chart block when reachable, render it on the trends-tab reveal.
+  hiringData = await loadRealHiring(trendsGran);
+  if (hiringData) document.getElementById("hiring-block").hidden = false;
   // A real shortlist (results/<lane>/shortlist.json, aggregated into the throwaway copy by
   // `make preview`) overrides the synthetic demo set LOCALLY; never present on gh-pages (PII).
   const realShortlist = await loadRealShortlist();
@@ -95,6 +122,8 @@ async function init() {
   document.getElementById("trends-range").addEventListener("change", (e) => {
     trendsRange = e.target.value;
     if (data) renderTrends(data.trends, trendsRange);
+    // The picker lives in the (visible) trends panel, so the hiring chart can re-window immediately.
+    if (hiringData) renderHiring(hiringData, trendsRange);
   });
 
   // Granularity picker (#187/#188): swap the trend series (week|day|month) — each is a separate
@@ -110,6 +139,15 @@ async function init() {
     } else {
       e.target.value = trendsGran;
     }
+    // Swap the hiring series to the effective granularity too (each accrues independently, so a miss
+    // just leaves the current hiring chart untouched).
+    if (hiringData) {
+      const h = await loadRealHiring(e.target.value);
+      if (h) {
+        hiringData = h;
+        renderHiring(hiringData, trendsRange);
+      }
+    }
   });
 
   // A real LOCAL company-hiring snapshot (results/corpus.json aggregated by `make preview`) reveals
@@ -118,6 +156,10 @@ async function init() {
   if (realCompanies) {
     document.getElementById("tab-companies").hidden = false;
     renderCompanies(realCompanies);
+    // Local per-company hiring detail (business data, make-preview bundle only) — reveal its block;
+    // it renders on the Companies-tab reveal (a chart in a hidden panel would size to 0).
+    localHiringData = await loadLocalHiring();
+    if (localHiringData) document.getElementById("hiring-companies-block").hidden = false;
   }
 
   initTabs();

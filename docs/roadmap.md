@@ -120,7 +120,9 @@
   the corpus by `first_seen` — a publishable **geo-by-field** series (`public-data/hiring-*.ndjson`,
   aggregate `{week,counts}`, no company names, on the `data` branch like the keyword trends) plus a
   **local per-company** series (`results/hiring-companies.ndjson`, never published), wired into the
-  ingest cron. The local Companies tab also gained a snapshot "as of" date + click-to-sort columns.
+  ingest cron. The local Companies tab also gained a snapshot "as of" date + click-to-sort columns,
+  and the dashboard renders both series (geo-by-field top-10 in Market-trends, per-company top-10 in
+  the Companies tab) — verified end-to-end by a new `make ui-e2e` (local + remote) harness.
 
 ## Next
 
