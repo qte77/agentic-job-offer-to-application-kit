@@ -14,6 +14,7 @@ Usage::
     ajoa-kit prefill-fields [--ats greenhouse --slug S --job-id ID]
     ajoa-kit probe
     ajoa-kit trend-snapshot
+    ajoa-kit status <slug> [--stage S] [--date D] [--notes N]
 
 Each subcommand delegates to the corresponding L1 module's ``main()`` via its ``func``
 default, without reimplementing any logic. ``polyfetch_scrape`` is imported lazily inside
@@ -53,6 +54,13 @@ def _persist_offer(args: argparse.Namespace) -> None:
     from ajoa_kit.persist_offer import main as run
 
     run(src=Path(args.file), slug=args.slug)
+
+
+def _status(args: argparse.Namespace) -> None:
+    """Set or read a local offer's application-outcome status (#273)."""
+    from ajoa_kit.status import main as run
+
+    run(offer=args.offer, stage=args.stage, date=args.date, notes=args.notes)
 
 
 def _ats_check(args: argparse.Namespace) -> None:
@@ -167,6 +175,17 @@ def main() -> None:
     offer_p.add_argument("file", metavar="FILE", help="Path to workflow-result.json.")
     offer_p.add_argument("--slug", default=None, help="Offer slug (default: pack slug/id).")
     offer_p.set_defaults(func=_persist_offer)
+
+    status_p = sub.add_parser(
+        "status", help="Set/read a local application-outcome status per offer (#273)."
+    )
+    status_p.add_argument("offer", help="Offer slug (the results/offers/<slug>/ dir).")
+    status_p.add_argument(
+        "--stage", default=None, help="applied | responded | interview | offer | rejected."
+    )
+    status_p.add_argument("--date", default=None, help="Application/update date (YYYY-MM-DD).")
+    status_p.add_argument("--notes", default=None, help="Free-text note.")
+    status_p.set_defaults(func=_status)
 
     refresh_p = sub.add_parser(
         "refresh",

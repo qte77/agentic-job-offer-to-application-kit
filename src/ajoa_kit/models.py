@@ -131,3 +131,16 @@ class StyleBrief(BaseModel):
     tone: str = ""
     cv_sample: str = ""
     cover_letter_sample: str = ""
+
+
+class OfferStatus(BaseModel):
+    """One offer's local application-outcome status (#273) — set by hand via ``ajoa-kit status``.
+
+    ``stage`` advances applied -> responded -> interview -> offer/rejected; ``date`` is the last
+    update, ``notes`` a free-text memo. LOCAL-ONLY: written to ``results/offers/<slug>/status.json``
+    (git-ignored PII), never published — like the offer pack it sits beside.
+    """
+
+    stage: str = ""
+    date: str = ""
+    notes: str = ""
