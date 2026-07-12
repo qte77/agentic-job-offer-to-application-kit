@@ -31,8 +31,16 @@ _CITY_ALIASES = {
     "münchen": "Munich",
     "köln": "Cologne",
     "usa": "United States",
+    # Placeholder junk for a missing location -> Unknown via the same lookup (no extra branch).
+    "location": "Unknown",
+    "n/a": "Unknown",
+    "na": "Unknown",
+    "please update office field": "Unknown",
 }
 _MULTI = re.compile(r"[|•]")  # separators between *distinct* locations (not city/qualifier)
+# Trailing org suffix ("San Francisco Office/HQ") -> stripped so the variants merge. The leading \s
+# means only a trailing *word* is removed, never a mid-name substring.
+_ORG_SUFFIX = re.compile(r"\s+(?:hq|offices?|hub)$", re.IGNORECASE)
 
 _Key = tuple[str, str, str]  # (city, field, company)
 
@@ -45,17 +53,19 @@ def _is_remote(location: str, remote: object) -> bool:
 def parse_geo(location: str, remote: object = None) -> tuple[str, str]:
     """Parse a free-text ``location`` into a canonical ``(city, region)`` — lossless by design.
 
-    ``city`` is the group key (duplicate spellings collapse via :data:`_CITY_ALIASES`); ``region``
-    keeps the source's verbatim next qualifier (state/country), ``""`` when absent. ``remote`` is
-    the record's flag: an empty location with it set is the ``Remote`` bucket, a fully empty
-    location is ``Unknown``. Multi-location strings (``|`` / ``•``) take the primary location.
+    ``city`` is the group key: a trailing org suffix (``Office``/``HQ``/``Hub``) is stripped, then
+    duplicate spellings and placeholder junk (``LOCATION``/``N/A`` -> ``Unknown``) collapse via
+    :data:`_CITY_ALIASES`. ``region`` keeps the source's verbatim next qualifier (state/country),
+    ``""`` when absent. ``remote`` is the record's flag: an empty location with it set is the
+    ``Remote`` bucket, a fully empty location is ``Unknown``. Multi-location strings (``|`` / ``•``)
+    take the primary location.
     """
     loc = location or ""
     if _is_remote(loc, remote):
         return "Remote", ""
     primary = _MULTI.split(loc)[0]
     parts = [p.strip() for p in primary.split(",")]
-    city = parts[0]
+    city = _ORG_SUFFIX.sub("", parts[0]).strip()  # strip trailing Office/HQ/Hub first
     if not city:
         return "Unknown", ""
     region = parts[1] if len(parts) > 1 and parts[1] else ""

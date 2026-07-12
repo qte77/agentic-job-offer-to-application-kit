@@ -70,6 +70,24 @@ def test_parse_geo_multi_location_takes_the_primary_segment() -> None:
     assert companies.parse_geo("Berlin • Munich")[0] == "Berlin"
 
 
+def test_parse_geo_maps_placeholder_junk_to_unknown() -> None:
+    # Scraped placeholder strings aren't real cities -> Unknown (folded into _CITY_ALIASES).
+    for loc in ("LOCATION", "N/A", "na", "Please Update Office Field"):
+        assert companies.parse_geo(loc) == ("Unknown", ""), loc
+
+
+def test_parse_geo_strips_trailing_org_suffix_keeping_region() -> None:
+    # "<city> Office/HQ/Hub" is the same place -> strip the trailing org suffix, keep the qualifier.
+    assert companies.parse_geo("San Francisco Office") == ("San Francisco", "")
+    assert companies.parse_geo("San Francisco HQ, CA") == ("San Francisco", "CA")
+    assert companies.parse_geo("London Hub")[0] == "London"
+
+
+def test_parse_geo_suffix_strip_composes_with_city_alias() -> None:
+    # Strip runs before the alias lookup: "New York City Office" -> "New York City" -> "New York".
+    assert companies.parse_geo("New York City Office")[0] == "New York"
+
+
 # --- aggregate_companies ---------------------------------------------------------------
 
 
