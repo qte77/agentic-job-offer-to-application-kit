@@ -258,7 +258,8 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; `cc-workflow-tailor-offer.js` Stage-3
   tailor pack (match/CV/cover-letter/gap-report/prefill-pack + optional coverage-report on JD
   must-have coverage, #55); `ajoa-kit ats-check` parse-safety (#9);
-  style/tone tailoring (#16); cited delivery safety note (research.md §Delivery, #8); structured board
+  style/tone tailoring (#16); `ajoa-kit status` local application-outcome tracker (#273);
+  cited delivery safety note (research.md §Delivery, #8); structured board
   catalog (#10) with ToS/ToU tiers (ADR-0002, #95); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);
   `ajoa-kit trend-snapshot` → keyword-only `public-data/trends.ndjson` (#11 PR-A) rendered by the two-tab
   no-build `ui/` dashboard (#11 PR-B, vendored Chart.js — synthetic Tab A + aggregate `{week,counts}`
