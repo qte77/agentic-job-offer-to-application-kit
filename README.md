@@ -88,7 +88,8 @@ Workflow tool (`Workflow({…})`), so you'll need Claude Code installed as well 
 - **Run your own search.** Author your sources in `config/seed.json` and build your evidence library,
   then run the pipeline against real, public, no-auth JDs: ingest → chunk → relevance → tailor →
   ats-check. For recurring runs, `ajoa-kit ingest --merge` folds each pull into a running
-  `results/corpus.json` (the scheduled `ingest-daily.yaml` cron) so keyword trends accrue over time;
+  `results/corpus.json` (the scheduled `ingest-daily.yaml` cron) so the keyword and geo-by-field
+  company-hiring trends accrue over time;
   `ajoa-kit chunk --new` → `persist --merge` re-screens only the newly-seen offers into your shortlist,
   and `ajoa-kit refresh` flags filled/closed offers (or removes them with `--delete`);
   `ajoa-kit verify-sources` re-probes the seed and re-stamps `_date_verified` on the sources still live.

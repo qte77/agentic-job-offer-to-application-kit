@@ -121,10 +121,13 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 ui-check: ## Headless-browser smoke for the dashboard (CSP/render/console); borrows POLYFETCH_DIR's patchright
 	uv run --directory "$${POLYFETCH_DIR:-../polyfetch-scrape}" python "$(CURDIR)/scripts/ui_check.py"
 
-# The publishable aggregate trend files (#210 allowlist + #188 monthly): weekly is required (the
-# "did you run trend-snapshot" guard), the finer/coarser series are added when present. One
-# definition feeds the add loop, the boundary guard and the echo below — extend it here only.
-TRENDS_PUBLISH := public-data/trends.ndjson public-data/trends-daily.ndjson public-data/trends-monthly.ndjson
+# The publishable aggregate series (#210 allowlist + #188 monthly + plan-006 hiring): keyword
+# trends/{,-daily,-monthly} and geo×field hiring-{weekly,daily,monthly} — all aggregate, no PII, no
+# company names. Weekly keyword trends are required (the "did you run trend-snapshot" guard); every
+# other file is added only when present. One definition feeds the add loop, the shrink guard, the
+# fail-closed boundary guard and the echo below — extend it here only. NEVER add a company-named
+# file: results/hiring-companies.ndjson stays local (the boundary guard would refuse it anyway).
+TRENDS_PUBLISH := public-data/trends.ndjson public-data/trends-daily.ndjson public-data/trends-monthly.ndjson public-data/hiring-weekly.ndjson public-data/hiring-daily.ndjson public-data/hiring-monthly.ndjson
 
 trends-data: ## Push $(TRENDS_PUBLISH) to the `data` branch (real trends for the live dashboard)
 	test -f public-data/trends.ndjson || { echo "no public-data/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"; exit 2; }

@@ -115,6 +115,13 @@ def _trend_snapshot(_args: argparse.Namespace) -> None:
     run()
 
 
+def _companies_snapshot(_args: argparse.Namespace) -> None:
+    """Snapshot company-hiring trends (geo-x-field public + local per-company) from the corpus."""
+    from ajoa_kit.companies_trend import main as run
+
+    run()
+
+
 def _refresh(args: argparse.Namespace) -> None:
     """Reconcile per-lane shortlists: flag (or --delete) filled/closed offers (#214)."""
     from ajoa_kit.refresh import main as run
@@ -254,6 +261,15 @@ def main() -> None:
         "trend-snapshot",
         help="Snapshot keyword-only trends into public-data/trends{,-daily,-monthly}.ndjson.",
     ).set_defaults(func=_trend_snapshot)
+
+    sub.add_parser(
+        "companies-snapshot",
+        help=(
+            "Snapshot company-hiring trends: geo-by-field into "
+            "public-data/hiring-{weekly,daily,monthly}.ndjson + local per-company into "
+            "results/hiring-companies.ndjson."
+        ),
+    ).set_defaults(func=_companies_snapshot)
 
     args = parser.parse_args()
     args.func(args)

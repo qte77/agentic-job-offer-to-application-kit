@@ -55,13 +55,17 @@ jobs:
       - name: Publish ui/ to gh-pages branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # The bundled aggregate trend series — weekly + daily + monthly (#187/#188). Mirrors the
-          # Makefile TRENDS_PUBLISH allowlist; weekly is the load default, the finer/coarser series
-          # back the dashboard granularity dropdown. Single point of edit for this step.
+          # The bundled aggregate series — keyword trends weekly+daily+monthly (#187/#188) and the
+          # geo×field hiring weekly+daily+monthly (plan 006). Mirrors the Makefile TRENDS_PUBLISH
+          # allowlist; weekly is each load default, the finer/coarser series back the granularity
+          # dropdowns. No company-named file is ever bundled. Single point of edit for this step.
           TRENDS_FILES: >-
             public-data/trends.ndjson
             public-data/trends-daily.ndjson
             public-data/trends-monthly.ndjson
+            public-data/hiring-weekly.ndjson
+            public-data/hiring-daily.ndjson
+            public-data/hiring-monthly.ndjson
         run: |
           set -euo pipefail
           site="$(mktemp -d)"
