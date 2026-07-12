@@ -11,10 +11,10 @@
 
 .PHONY: \
 	help \
-	install-uv install install_docs_tools \
-	check lint format check_types check_complexity docs-lint \
+	install_uv install install_docs_tools \
+	check lint format check_types check_complexity docs_lint \
 	ingest chunk persist probe \
-	preview trends-data ui_check ui_e2e ui_shots \
+	preview trends_data ui_check ui_e2e ui_shots \
 	changelog_new changelog_preview changelog_release
 
 # MARK: Help
@@ -24,13 +24,13 @@ help: ## List available targets
 
 # MARK: Setup
 
-install-uv: ## Install the uv toolchain (prerequisite for `make install`)
+install_uv: ## Install the uv toolchain (prerequisite for `make install`)
 	curl -LsSf https://astral.sh/uv/install.sh | sh
 
-install: ## Sync the dev environment (uv) — needs uv (see `make install-uv`)
+install: ## Sync the dev environment (uv) — needs uv (see `make install_uv`)
 	uv sync
 
-install_docs_tools: ## Install docs-lint tools — markdownlint-cli2 (npm) + lychee (cargo); needs npm + cargo
+install_docs_tools: ## Install docs_lint tools — markdownlint-cli2 (npm) + lychee (cargo); needs npm + cargo
 	npm install -g markdownlint-cli2
 	cargo install lychee
 
@@ -55,7 +55,7 @@ check_types: ## Pyright type check
 check_complexity: ## Complexipy cognitive-complexity gate (max 10)
 	uv run complexipy src/ajoa_kit --max-complexity-allowed 10
 
-docs-lint: ## Markdown lint + link check (local)
+docs_lint: ## Markdown lint + link check (local)
 	markdownlint-cli2 "*.md" "docs/**/*.md" "examples/**/*.md"
 	lychee --config lychee.toml --no-progress *.md docs examples
 
@@ -143,7 +143,7 @@ ui_shots: ## Regenerate the README screencast GIFs (light+dark) via headless cap
 # file: results/hiring-companies.ndjson stays local (the boundary guard would refuse it anyway).
 TRENDS_PUBLISH := public-data/trends.ndjson public-data/trends-daily.ndjson public-data/trends-monthly.ndjson public-data/hiring-weekly.ndjson public-data/hiring-daily.ndjson public-data/hiring-monthly.ndjson
 
-trends-data: ## Push $(TRENDS_PUBLISH) to the `data` branch (real trends for the live dashboard)
+trends_data: ## Push $(TRENDS_PUBLISH) to the `data` branch (real trends for the live dashboard)
 	test -f public-data/trends.ndjson || { echo "no public-data/trends.ndjson yet — run: uv run ajoa-kit trend-snapshot"; exit 2; }
 	# Shrink guard (#249 slice D): refuse to overwrite the data branch with a SMALLER (or locally
 	# absent) series — a silently-failed restore would otherwise wipe accumulated history on the
@@ -154,7 +154,7 @@ trends-data: ## Push $(TRENDS_PUBLISH) to the `data` branch (real trends for the
 		old="$$(git show "origin/data:$$f" 2>/dev/null | wc -l)"
 		new="$$(test -f "$$f" && wc -l < "$$f" || echo 0)"
 		if [ -z "$${TRENDS_FORCE:-}" ] && [ "$$new" -lt "$$old" ]; then
-			echo "trends-data: refusing push — $$f would shrink $$old -> $$new buckets (TRENDS_FORCE=1 to override)"
+			echo "trends_data: refusing push — $$f would shrink $$old -> $$new buckets (TRENDS_FORCE=1 to override)"
 			exit 1
 		fi
 	done
@@ -171,7 +171,7 @@ trends-data: ## Push $(TRENDS_PUBLISH) to the `data` branch (real trends for the
 	for f in $$(git ls-tree -r --name-only "$$tree"); do
 		case " $(TRENDS_PUBLISH) " in
 			*" $$f "*) ;;
-			*) echo "trends-data: refusing to push unexpected path: $$f"; exit 1 ;;
+			*) echo "trends_data: refusing to push unexpected path: $$f"; exit 1 ;;
 		esac
 	done
 	commit="$$(git -c commit.gpgsign=false commit-tree "$$tree" -m "data: update trends")"

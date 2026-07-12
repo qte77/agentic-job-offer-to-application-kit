@@ -7,7 +7,7 @@
 - `AppSettings` (pydantic-settings) config + `ajoa-kit` CLI: env-overridable `config/` + `results/`
   paths (no hardcoded `ROOT`); the subcommand set is in `src/ajoa_kit/__main__.py` (ADR-0001 L1/L2).
 - Baseline gates: ruff, pyright, complexipy, a value-add `pytest` suite, CodeQL + Dependabot + CI
-  (SHA-pinned), and markdownlint + lychee (local `make docs-lint` + a `lint-md-links` CI workflow).
+  (SHA-pinned), and markdownlint + lychee (local `make docs_lint` + a `lint-md-links` CI workflow).
 - Release tooling: scriv changelog fragments under `changelog.d/`; bump-my-version → tag-release →
   publish-release pipeline (v0.2.0 cut; SHA-pinned, unsigned tags).
 - Governance, docs, and a synthetic worked example (`examples/alexis-doe/`).
@@ -64,7 +64,7 @@
   first-seen-new), via a `last_changed` corpus stamp.
 - PII-free trends relocation (#210): the publishable keyword-only trends moved out of the PII dir
   `results/` into a dedicated git-ignored `public-data/` (`AJOA_PUBLIC_DATA_DIR`), so `results/` is now
-  **exclusively PII**. `make trends-data` builds the `data`-branch tree from `public-data/` and a
+  **exclusively PII**. `make trends_data` builds the `data`-branch tree from `public-data/` and a
   **tree-allowlist guard** aborts the push if anything other than `public-data/trends{,-daily}.ndjson`
   slipped in — the publish boundary is now structural + enforced, not just conventional.
 - UI theming converged on the qte77 brand (#112/#117): EyeRest tokens, `qte77-theme` storage key,
@@ -102,14 +102,14 @@
   history first).
 - Monthly trend granularity — data layer (#188): `monthly_from_daily` rolls the same daily buckets up
   into `public-data/trends-monthly.ndjson` (`{month, counts}`, ~12 records/yr), published alongside
-  weekly/daily (the `make trends-data` allowlist is now the single `TRENDS_PUBLISH` variable,
+  weekly/daily (the `make trends_data` allowlist is now the single `TRENDS_PUBLISH` variable,
   fail-closed). The dashboard `Monthly` dropdown + same-origin bundle ride with #187 (Wave 3).
 - Internal refactor epic (#249): models consolidated into `models.py`; a `defaults.py` + tracked
   `config/keywords.json` single source of truth; `ingest.py` split into `sources.py` / `normalize.py`;
   a fail-closed `TRENDS_PUBLISH` allowlist + trends shrink guard; `app.js` split into an orchestrator
   plus three ES modules — no behaviour change, all gates green.
 - Deploy reliability (#251/#252): dropping the `paths:` filter (defeated by the parentless
-  `make trends-data` force-push) lets `main` and local `data` pushes redeploy the live same-origin
+  `make trends_data` force-push) lets `main` and local `data` pushes redeploy the live same-origin
   trends directly, while the nightly cron **dispatches** the deploy after its push (a `GITHUB_TOKEN`
   push can't self-trigger one) — ending the silent staling (#251); the cron heal (#252) restored the
   scheduled snapshot.

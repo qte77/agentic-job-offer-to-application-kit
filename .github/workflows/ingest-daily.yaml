@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: write   # `make trends-data` force-pushes public-data/trends.ndjson to the `data` branch
+      contents: write   # `make trends_data` force-pushes public-data/trends.ndjson to the `data` branch
       actions: write    # `gh run download` (read) + `gh workflow run gh-pages.yaml` dispatch (write)
     env:
       AJOA_CONFIG_DIR: ${{ github.workspace }}/config
@@ -99,7 +99,7 @@ jobs:
           # Restore both aggregate series — keyword trends{,-daily,-monthly} and geo×field
           # hiring-{weekly,daily,monthly} — so each snapshot's per-bucket upsert ACCUMULATES (keeps
           # already-published buckets, adds/updates this run's) rather than replacing; without this
-          # the shrink guard in `make trends-data` would refuse the (apparently shrinking) push.
+          # the shrink guard in `make trends_data` would refuse the (apparently shrinking) push.
           # Atomic via a tmp file: only overwrite on a clean read.
           for f in trends.ndjson trends-daily.ndjson trends-monthly.ndjson hiring-weekly.ndjson hiring-daily.ndjson hiring-monthly.ndjson; do
             if git show "origin/data:public-data/$f" > "public-data/$f.tmp" 2>/dev/null; then
@@ -123,7 +123,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          make trends-data
+          make trends_data
 
       - name: Upload the corpus (cross-run artifact store — NOT private on a public repo)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1

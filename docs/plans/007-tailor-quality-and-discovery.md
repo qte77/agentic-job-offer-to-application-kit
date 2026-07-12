@@ -196,7 +196,7 @@ S1+S2 share the tailor workflow file and may ride one branch if you prefer; kept
 - **Assume strict lint/typing/sec** (ruff incl. `S`/bandit, `ruff format`, pyright, complexipy ≤10). The
   `×` multiplication sign trips RUF001/2/3 — use `x`; `·` middle dot is fine.
 - **S3 boundary is structural:** discovery output names companies → business data → local `results/` only.
-  The `make trends-data` fail-closed allowlist would refuse it on the `data` branch anyway — never add it to
+  The `make trends_data` fail-closed allowlist would refuse it on the `data` branch anyway — never add it to
   `TRENDS_PUBLISH`.
 - **S3 ToS:** the new source must be OK-tier + reachability-verified (ADR-0002) before shipping in the seed;
   read-only public GET only; YC Work-at-a-Startup is login-walled → excluded.

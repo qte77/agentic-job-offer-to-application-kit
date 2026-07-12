@@ -44,7 +44,7 @@ cross-origin runtime fetch). Refresh them by generating locally and pushing to t
 
 ```bash
 uv run ajoa-kit trend-snapshot   # results/jobs-raw.json -> public-data/trends.ndjson (by posted week)
-make trends-data                 # push public-data/trends.ndjson -> the `data` branch
+make trends_data                 # push public-data/trends.ndjson -> the `data` branch
 ```
 
 `make preview` serves a **throwaway copy** of `ui/` with the real trends injected into it (mirroring
@@ -80,7 +80,7 @@ set the branch segment in that URL (there is no separate `?branch=` switch — t
 | `src/trends.js` | Chart.js line + stacked bars with the time-frame window, same-origin→data-branch trends loading, theme-flip invalidation (owns the chart instances) |
 | `src/theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
 | `public/data/demo.json` | Synthetic demo data — shortlist (Tab A) + fallback trends as `{week,counts}[]` records (Tab B) |
-| *(real trends)* | Not in `ui/` — fetched at runtime from the repo's `data` branch (`public-data/trends.ndjson`); refresh via `make trends-data` |
+| *(real trends)* | Not in `ui/` — fetched at runtime from the repo's `data` branch (`public-data/trends.ndjson`); refresh via `make trends_data` |
 | `public/favicon.svg` | qte77 brand mark (adaptive light/dark) — same as `paperverse` |
 | `public/vendor/` | Vendored Chart.js + Inter font TTFs (see [public/vendor/README.md](public/vendor/README.md)) |
 | `tests/` | Folder-parity placeholder (`.gitkeep`); no JS test runner — Python modules are the tested surface |

@@ -8,7 +8,7 @@ name: Deploy Pages
 # runtime fetch (raw.githubusercontent is rate-limited / blocked on some networks).
 # The live *shortlist* stays gated on #52 (PII); aggregate trends are not.
 #
-# Deploys on every push to main/data (no `paths:` filter): `make trends-data`
+# Deploys on every push to main/data (no `paths:` filter): `make trends_data`
 # force-pushes a PARENTLESS commit to the `data` branch, so GitHub has no parent
 # to diff against and a `paths:` filter would never match — the trends refresh
 # would silently never redeploy. The job is fast (~20 s) and idempotent, so

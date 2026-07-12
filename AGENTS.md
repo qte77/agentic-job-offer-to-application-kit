@@ -34,7 +34,7 @@ Recurring mistakes and their promoted fixes are logged in
 
 - `make check` (ruff lint + `ruff format --check` + `pyright` + `complexipy` + offline `pytest`) must
   pass — the same gate CI runs.
-- `make docs-lint` (markdownlint + lychee) — locally, and enforced in CI via the `lint-md-links` workflow.
+- `make docs_lint` (markdownlint + lychee) — locally, and enforced in CI via the `lint-md-links` workflow.
 - Tests earn their place: non-trivial, value-add only — no import/constant/trivial-slice tests.
 - New behaviour follows TDD (red → green); ported behaviour is pinned with regression tests.
 

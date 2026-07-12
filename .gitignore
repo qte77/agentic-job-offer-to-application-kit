@@ -5,7 +5,7 @@
 # regardless — git never untracks a tracked file — so no per-file re-include dance is needed.
 results/
 # Generated but PII-FREE: the publishable aggregate trends (#210). Reaches the `data` branch only via
-# `git add -f` (the `make trends-data` tree-allowlist guard asserts ONLY these files are pushed).
+# `git add -f` (the `make trends_data` tree-allowlist guard asserts ONLY these files are pushed).
 public-data/
 config/
 /library/
