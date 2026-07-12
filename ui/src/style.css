@@ -207,6 +207,16 @@ thead th {
   white-space: nowrap;
 }
 
+/* Sortable company headers (#4) — click/Enter/Space cycles asc<->desc; the .sort-ind arrow and
+   aria-sort reflect the active column. Scoped to #companies-table so the shortlist headers stay
+   static. */
+#companies-table thead th[data-sort] { cursor: pointer; user-select: none; }
+#companies-table thead th[data-sort]:hover { color: var(--primary); }
+#companies-table thead th[data-sort]:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+#companies-table thead th[aria-sort="ascending"],
+#companies-table thead th[aria-sort="descending"] { color: var(--primary); }
+.sort-ind { font-size: 0.7rem; }
+
 tbody td {
   padding: 0.55rem 0.75rem;
   border-bottom: 1px solid var(--border);

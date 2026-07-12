@@ -35,8 +35,13 @@ def main(out_path: str, corpus_path: str = "results/corpus.json") -> None:
     corpus = json.loads(corpus_file.read_text()) if corpus_file.exists() else []
     rows = aggregate_companies(corpus, lane_by_id=lane_by_id()) if corpus else []
     if rows:
-        pathlib.Path(out_path).write_text(json.dumps([r.model_dump() for r in rows]))
-        msg = f"preview: bundled {len(rows)} company rows -> {out_path}"
+        # Newest last_seen = the snapshot's "as of" date (#3). ISO YYYY-MM-DD sorts lexically, so a
+        # plain string max is the date max — no parsing needed. {snapshot, rows} is consumed only by
+        # ui/src/companies.js (the tab is never published), so the array->object change stays local.
+        snapshot = max((r["last_seen"] for r in corpus if r.get("last_seen")), default="")
+        payload = {"snapshot": snapshot, "rows": [r.model_dump() for r in rows]}
+        pathlib.Path(out_path).write_text(json.dumps(payload))
+        msg = f"preview: bundled {len(rows)} company rows (as of {snapshot or 'n/a'}) -> {out_path}"
     else:
         msg = "preview: no corpus (results/corpus.json) -> companies tab stays hidden"
     sys.stdout.write(msg + "\n")
