@@ -1,0 +1,95 @@
+---
+name: Verify Sources
+
+# Monthly source-freshness re-probe (#217): GET every config/default-seed.json feeds/ats endpoint
+# (read-only, no auth), re-stamp `_date_verified` on the live ones, and surface dead/unconfirmed slugs
+# for review. Runs against the live network by design (like ingest-daily) — NOT exercised by PR CI;
+# validate changes via workflow_dispatch and read the run logs. If the seed changed, it pushes a branch
+# and opens a review PR; a human decides what to drop/triage. Never writes to main directly.
+on:
+  schedule:
+    - cron: '0 6 1 * *'   # 06:00 UTC on the 1st of each month
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: verify-sources
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: re-probe seed sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write        # push the freshness branch
+      pull-requests: write    # open the review PR
+    env:
+      AJOA_CONFIG_DIR: ${{ github.workspace }}/config
+      PYTHONPATH: ${{ github.workspace }}/src
+    steps:
+      - name: Checkout (main repo; credentials kept for the branch push)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      # polyfetch-scrape is public; borrow its fetch stack (the ats/feed probes run through it) rather
+      # than vendoring it. Must live inside the workspace — checkout cannot write to a sibling `../`.
+      - name: Checkout polyfetch-scrape (public fetch stack)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          repository: qte77/polyfetch-scrape
+          path: polyfetch-scrape
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990  # v8.3.2
+        with:
+          enable-cache: true
+          cache-dependency-glob: polyfetch-scrape/uv.lock
+
+      - name: Install the headless browser (tier-3 fallback for anti-bot sources)
+        working-directory: polyfetch-scrape
+        run: uv run patchright install --with-deps chromium
+
+      # Re-probe every feeds/ats endpoint; the verb re-stamps _date_verified on the live ones, writes
+      # the seed back, and prints the dead/unconfirmed report to stdout (captured for the PR body).
+      - name: Re-probe sources
+        working-directory: polyfetch-scrape
+        run: |
+          uv run --with pydantic --with pydantic-settings --with defusedxml \
+            python -m ajoa_kit verify-sources | tee "$GITHUB_WORKSPACE/verify-report.txt"
+
+      # Only open a PR when the seed actually changed (fresh dates and/or a dead slug newly unconfirmed);
+      # otherwise this is a no-op month. The gh pr create may fail if the org blocks Actions from
+      # creating PRs — the branch is pushed regardless, so a human can open it (same as the release flow).
+      - name: Open a review PR if the seed changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet config/default-seed.json; then
+            echo "no seed changes — all sources fresh, nothing to review"
+            exit 0
+          fi
+          ts="$(date -u +%Y%m%d)"
+          branch="chore/source-freshness-${ts}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add config/default-seed.json
+          git commit -m "chore(sources): monthly _date_verified refresh + dead-slug triage (#217)"
+          git push origin "HEAD:refs/heads/${branch}"
+          {
+            echo 'Automated monthly source-freshness re-probe (ajoa-kit verify-sources, #217).'
+            echo ''
+            echo 'Re-stamped _date_verified on the live sources. Review the diff and the report below'
+            echo 'for any dead/unconfirmed slugs to drop or triage before merging.'
+            echo ''
+            echo '```'
+            cat "$GITHUB_WORKSPACE/verify-report.txt"
+            echo '```'
+          } > "$GITHUB_WORKSPACE/pr-body.md"
+          gh pr create --base main --head "$branch" \
+            --title "chore(sources): monthly source freshness (${ts})" \
+            --body-file "$GITHUB_WORKSPACE/pr-body.md" \
+            || echo "::warning::gh pr create failed (Actions may be blocked from opening PRs) — branch '${branch}' is pushed; open the PR by hand."
