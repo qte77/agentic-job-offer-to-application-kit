@@ -8,7 +8,7 @@ frame per interaction, and assembles them into `assets/images/usage-<theme>.gif`
 Deterministic + reproducible: re-run on any UI change instead of hand-capturing. Run via the
 polyfetch venv (which ships patchright + Chromium), adding Pillow for the GIF assembly:
 
-    make ui-shots   # uv run --directory $POLYFETCH_DIR --with pillow python scripts/ui_shots.py
+    make ui_shots   # uv run --directory $POLYFETCH_DIR --with pillow python scripts/ui_shots.py
 """
 
 from __future__ import annotations

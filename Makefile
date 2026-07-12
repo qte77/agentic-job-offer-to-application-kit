@@ -14,7 +14,7 @@
 	install-uv install install_docs_tools \
 	check lint format check_types check_complexity docs-lint \
 	ingest chunk persist probe \
-	preview trends-data ui-check ui-e2e ui-shots \
+	preview trends-data ui_check ui_e2e ui_shots \
 	changelog_new changelog_preview changelog_release
 
 # MARK: Help
@@ -126,13 +126,13 @@ preview: ## Serve the dashboard locally with real trends in a throwaway copy (ui
 	echo "serving $$site -> http://localhost:$${PORT:-8000}/"
 	uv run python -m http.server "$${PORT:-8000}" --directory "$$site"
 
-ui-check: ## Headless-browser smoke for the dashboard (CSP/render/console); borrows POLYFETCH_DIR's patchright
+ui_check: ## Headless-browser smoke for the dashboard (CSP/render/console); borrows POLYFETCH_DIR's patchright
 	uv run --directory "$${POLYFETCH_DIR:-../polyfetch-scrape}" python "$(CURDIR)/scripts/ui_check.py"
 
-ui-e2e: ## Full dashboard e2e (local hard gate + remote best-effort; viewports/device/themes/clicks); borrows POLYFETCH_DIR's patchright
+ui_e2e: ## Full dashboard e2e (local hard gate + remote best-effort; viewports/device/themes/clicks); borrows POLYFETCH_DIR's patchright
 	uv run --directory "$${POLYFETCH_DIR:-../polyfetch-scrape}" python "$(CURDIR)/scripts/ui_e2e.py"
 
-ui-shots: ## Regenerate the README screencast GIFs (light+dark) via headless capture; borrows POLYFETCH_DIR's patchright + Pillow
+ui_shots: ## Regenerate the README screencast GIFs (light+dark) via headless capture; borrows POLYFETCH_DIR's patchright + Pillow
 	uv run --directory "$${POLYFETCH_DIR:-../polyfetch-scrape}" --with pillow python "$(CURDIR)/scripts/ui_shots.py"
 
 # The publishable aggregate series (#210 allowlist + #188 monthly + plan-006 hiring): keyword

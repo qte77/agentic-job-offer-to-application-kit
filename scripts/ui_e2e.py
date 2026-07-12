@@ -16,7 +16,7 @@ fails the run (CI has no browser and this is a local dev tool).
 
 Run through the sibling polyfetch-scrape venv (patchright + Chromium), same as ui_check.py::
 
-    make ui-e2e                    # uv run --directory $POLYFETCH_DIR python scripts/ui_e2e.py
+    make ui_e2e                    # uv run --directory $POLYFETCH_DIR python scripts/ui_e2e.py
 """
 
 from __future__ import annotations
@@ -321,17 +321,17 @@ def main() -> int:
             print(f"  remote skipped (unreachable): {type(e).__name__}: {e}")
 
     if local_fails:
-        print(f"\nui-e2e FAILED — LOCAL ({len(local_fails)}):")
+        print(f"\nui_e2e FAILED — LOCAL ({len(local_fails)}):")
         for f in local_fails:
             print(f"  - {f}")
         return 1
     if remote_fails:
-        print(f"\nui-e2e local PASSED; remote flagged {len(remote_fails)} non-fatal issue(s):")
+        print(f"\nui_e2e local PASSED; remote flagged {len(remote_fails)} non-fatal issue(s):")
         for f in remote_fails:
             print(f"  - {f}")
     else:
         print(
-            "\nui-e2e PASSED (local hard gate + remote; viewports + device; themes + interactions)"
+            "\nui_e2e PASSED (local hard gate + remote; viewports + device; themes + interactions)"
         )
     return 0
 

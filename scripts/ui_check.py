@@ -8,7 +8,7 @@ is loaded with `?base=` so the cross-origin `data`-branch trends fetch exercises
 Run it through the sibling polyfetch-scrape venv (which ships patchright + Chromium) so no local
 browser install is needed::
 
-    make ui-check                  # uv run --directory $POLYFETCH_DIR python scripts/ui_check.py
+    make ui_check                  # uv run --directory $POLYFETCH_DIR python scripts/ui_check.py
 
 Exits non-zero on the first problem. Capture violations via the console (the browser logs CSP
 violations there via CDP regardless of the policy) — an in-page `securitypolicyviolation` listener
@@ -150,11 +150,11 @@ def main() -> int:
     finally:
         httpd.shutdown()
     if failures:
-        print(f"ui-check FAILED ({len(failures)}):")
+        print(f"ui_check FAILED ({len(failures)}):")
         for f in failures:
             print(f"  - {f}")
         return 1
-    print("ui-check PASSED")
+    print("ui_check PASSED")
     return 0
 
 
