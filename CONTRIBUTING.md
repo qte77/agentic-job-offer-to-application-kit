@@ -63,6 +63,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `prefill-fields` | `--ats <name> --slug <board> --job-id <id>` (Greenhouse schema lookup) |
 | `probe` | — (probe candidate slugs across ATS platforms) |
 | `trend-snapshot` | — (see [§Trends data branch](#trends-data-branch)) |
+| `status` | `<slug>` — set/read a local application-outcome status per offer · `--stage <applied/responded/interview/offer/rejected>` `--date <YYYY-MM-DD>` `--notes <text>` (#273) |
 
 Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tiered per
 [ADR-0002](docs/decisions/0002-source-tos-tiers.md).
