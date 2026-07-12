@@ -57,4 +57,4 @@ hard-code a port.
 ## Reference
 
 `scripts/ui_check.py` (smoke) and `scripts/ui_e2e.py` (e2e) are the worked implementations. Both run
-via `make ui-check` / `make ui-e2e` (which borrow `POLYFETCH_DIR`'s patchright venv).
+via `make ui_check` / `make ui_e2e` (which borrow `POLYFETCH_DIR`'s patchright venv).

@@ -16,15 +16,15 @@ documents them; the rest of the docs link here instead of repeating commands.
 make install     # sync the dev environment (uv)
 make check       # ruff + format-check + pyright + complexipy + offline pytest + coverage (CI parity)
 make docs-lint   # markdownlint + lychee link check
-make ui-check    # fast headless dashboard smoke (CSP/render/console)
-make ui-e2e      # full dashboard e2e — local + remote, viewports/device/themes/interactions
-make ui-shots    # regenerate the README screencast GIFs (light + dark)
+make ui_check    # fast headless dashboard smoke (CSP/render/console)
+make ui_e2e      # full dashboard e2e — local + remote, viewports/device/themes/interactions
+make ui_shots    # regenerate the README screencast GIFs (light + dark)
 ```
 
 `make docs-lint` needs two tools `uv sync` does **not** install —
 [`markdownlint-cli2`](https://github.com/DavidAnson/markdownlint-cli2) (npm) and
 [`lychee`](https://github.com/lycheeverse/lychee) (cargo) — run `make install_docs_tools` once
-(needs `npm` + `cargo` on `PATH`). The `ui-*` targets borrow the sibling `polyfetch-scrape`
+(needs `npm` + `cargo` on `PATH`). The `ui_*` targets borrow the sibling `polyfetch-scrape`
 patchright venv (set `POLYFETCH_DIR`); the headless-testing dos & don'ts are in
 [docs/testing-headless-ui.md](docs/testing-headless-ui.md).
 

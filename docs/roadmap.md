@@ -122,7 +122,7 @@
   **local per-company** series (`results/hiring-companies.ndjson`, never published), wired into the
   ingest cron. The local Companies tab also gained a snapshot "as of" date + click-to-sort columns,
   and the dashboard renders both series (geo-by-field top-10 in Market-trends, per-company top-10 in
-  the Companies tab) — verified end-to-end by a new `make ui-e2e` (local + remote) harness.
+  the Companies tab) — verified end-to-end by a new `make ui_e2e` (local + remote) harness.
 - Location noise-folding (#309): `parse_geo` strips trailing org suffixes (`Office`/`HQ`/`Hub`) and
   maps placeholder junk (`LOCATION`/`N/A`) to `Unknown`, so same-place variants stop splitting the
   Companies-tab ranking and the geo-by-field hiring keys.
