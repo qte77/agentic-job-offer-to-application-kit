@@ -14,6 +14,7 @@ Usage::
     ajoa-kit prefill-fields [--ats greenhouse --slug S --job-id ID]
     ajoa-kit probe
     ajoa-kit trend-snapshot
+    ajoa-kit discover
     ajoa-kit status <slug> [--stage S] [--date D] [--notes N]
 
 Each subcommand delegates to the corresponding L1 module's ``main()`` via its ``func``
@@ -118,6 +119,13 @@ def _trend_snapshot(_args: argparse.Namespace) -> None:
 def _companies_snapshot(_args: argparse.Namespace) -> None:
     """Snapshot company-hiring trends (geo-x-field public + local per-company) from the corpus."""
     from ajoa_kit.companies_trend import main as run
+
+    run()
+
+
+def _discover(_args: argparse.Namespace) -> None:
+    """Derive an emerging/hiring company signal from the discovery source (local-only, #292)."""
+    from ajoa_kit.discover import main as run
 
     run()
 
@@ -270,6 +278,15 @@ def main() -> None:
             "results/hiring-companies.ndjson."
         ),
     ).set_defaults(func=_companies_snapshot)
+
+    sub.add_parser(
+        "discover",
+        help=(
+            "Derive an emerging/who's-hiring company signal from the config 'discovery' source "
+            "into results/emerging-companies.json (local business data, never published). "
+            "Requires polyfetch env (set POLYFETCH_DIR)."
+        ),
+    ).set_defaults(func=_discover)
 
     args = parser.parse_args()
     args.func(args)

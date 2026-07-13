@@ -152,6 +152,10 @@
     {"name": "themuse", "_date_verified": "2026-06-20",
      "_tos": "Public /api/public/jobs, robots-ALLOWED (User-agent:* disallows only /api/users*, not /api/public); no-auth 200 with full JD + nested metadata. API ToS requests attribution (link to themuse.com); the dashboard emits only aggregate {week,counts} facts (Feist), not Muse listings, so no on-page backlink is required. Fetched page-1 with an eng-relevant category filter (ADR-0002)."}
   ],
+  "discovery": [
+    {"name": "yc-oss", "format": "yc-oss", "url": "https://yc-oss.github.io/api/companies/hiring.json", "_date_verified": "2026-07-13",
+     "_tos": "Community mirror of YC's public company directory (provenance: YC's public Algolia index), served as static JSON on GitHub Pages — robots-clean (github.io allows /), read-only no-auth GET. Preferred over the first-party api.ycombinator.com, whose robots.txt is a blanket Disallow:/ (CAUTION by the jobicy precedent, ADR-0002). The repo carries no LICENSE, so only non-copyrightable facts are extracted (company name/batch/hiring — Feist), aggregated LOCALLY into results/emerging-companies.json and NEVER published (business data; the make trends_data boundary guard refuses it). Discovery layer, NOT an ingest source — the ingest loader reads only feeds/ats/aggregators, so this key is inert to it. Phase-1 single source (#292, ADR-0004)."}
+  ],
   "_blocked": [
     {"ats": "workable", "slug": "huggingface", "company": "Hugging Face", "lane": "engineering", "_date_verified": "2026-06-19",
      "_reason": "Our widget endpoint is undocumented + apply.workable.com robots.txt ai-train=no (a documented public jobs API exists, but third-party use is a grey zone with no explicit permission). Only ATS where HF resolves."},
