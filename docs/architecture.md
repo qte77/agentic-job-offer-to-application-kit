@@ -270,7 +270,8 @@ public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
 - **Built:** `src/ajoa_kit/` engine; `AppSettings` config + `ajoa-kit` CLI (ADR-0001 L1/L2);
   `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; `cc-workflow-tailor-offer.js` Stage-3
   tailor pack (match/CV/cover-letter/gap-report/prefill-pack + optional coverage-report on JD
-  must-have coverage, #55); `ajoa-kit ats-check` parse-safety (#9);
+  must-have coverage, #55, + an optional draft→critique→revise pass, #272); `ajoa-kit ats-check`
+  parse-safety (#9) + a deterministic `cv-stuffing-check.md` keyword-stuffing backstop (#272);
   style/tone tailoring (#16); `ajoa-kit status` local application-outcome tracker (#273);
   cited delivery safety note (research.md §Delivery, #8); structured board
   catalog (#10) with ToS/ToU tiers (ADR-0002, #95); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);

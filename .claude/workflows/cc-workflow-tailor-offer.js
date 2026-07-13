@@ -13,9 +13,15 @@
 //                                // `ajoa-kit style --json` (reads config/style.json). Omit = neutral.
 //     fields:  '<markdown>',      // optional — application-field checklist for the prefill pack (#50);
 //                                // generate with `ajoa-kit prefill-fields ...`. Omit = generic fields.
+//     critique: true,            // optional (#272) — run a draft→critique→revise loop over the CV +
+//                                // cover letter before prefill. Default off. Trims low-relevance /
+//                                // duplicated / unsupported / keyword-stuffed lines; never invents
+//                                // experience, never hides an honest gap. Costs extra LLM calls.
+//     critiqueRounds: 1,         // optional — how many critique+revise passes (default 1). Ignored
+//                                // unless critique is true.
 //   }})
 // (now under .claude/workflows/, it can also be invoked by name: Workflow({ name: 'tailor-offer' }).)
-// ⚠️ TOKEN USAGE: a few LLM subagents (Match → Tailor → Prefill) per offer — modest, but it is an LLM pass; tailor only offers you actually intend to pursue.
+// ⚠️ TOKEN USAGE: a few LLM subagents (Match → Tailor → [Critique] → Prefill) per offer — modest, but it is an LLM pass; tailor only offers you actually intend to pursue.
 //
 // Persist the returned pack with `ajoa-kit persist-offer` — see CONTRIBUTING.md §Commands
 // (writes results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md — human reviews + submits).
@@ -37,6 +43,7 @@ export const meta = {
   phases: [
     { title: 'Match', detail: 'assess real requirement overlap of the offer vs the evidence library' },
     { title: 'Tailor', detail: 'draft tailored CV, cover letter, and honest gap report from the match' },
+    { title: 'Critique', detail: 'optional (args.critique): critique the drafts vs the evidence and revise flagged lines' },
     { title: 'Prefill', detail: 'assemble a human-review prefill pack (no auto-submit) from the CV + fields' },
   ],
 }
@@ -50,6 +57,11 @@ const offerId = cfg.offerId
 const STYLE = cfg.style && typeof cfg.style === 'object' ? cfg.style : {}
 // Optional application-field checklist for the prefill pack (from `ajoa-kit prefill-fields`, #50).
 const FIELDS = typeof cfg.fields === 'string' ? cfg.fields : ''
+// Optional draft→critique→revise loop over the CV + cover letter before prefill (#272). Off by
+// default; critiqueRounds is how many critique+revise passes to run (>=1) when it is on.
+const CRITIQUE = cfg.critique === true
+const CRITIQUE_ROUNDS =
+  Number.isInteger(cfg.critiqueRounds) && cfg.critiqueRounds > 0 ? cfg.critiqueRounds : 1
 
 if (!lane) throw new Error('args.lane required (which results/<lane>/shortlist.json to read)')
 if (!offerId) throw new Error('args.offerId required (the shortlist entry id to tailor)')
@@ -165,6 +177,68 @@ This is for the candidate's eyes, not the employer. Return it as "gap_report".`,
     ),
 ])
 
+// --- optional critique loop (#272) ----------------------------------------------------
+// draft (above) → critique (grounded in SOURCES) → revise, gated by args.critique. Trims
+// low-relevance / duplicated / unsupported / cover-letter-dependent lines and grounds anything
+// weakly supported — but NEVER invents experience and NEVER hides an honest gap. When off,
+// cvText/coverText are the untouched drafts, so the default path is byte-for-byte unchanged.
+let cvText = cv.cv
+let coverText = cover.cover_letter
+if (CRITIQUE) {
+  phase('Critique')
+  for (let round = 1; round <= CRITIQUE_ROUNDS; round++) {
+    const critique = await agent(
+      `${SOURCES}
+
+DRAFT CV (revision ${round}):
+${cvText}
+
+DRAFT COVER LETTER (revision ${round}):
+${coverText}
+
+Critique these drafts against the candidate's real evidence. For each CV bullet and cover-letter
+sentence, judge: (a) RELEVANCE to this offer's must-haves, (b) UNIQUENESS (redundant with another
+line?), (c) GROUNDING (truly supported by the evidence, or an unsupported claim / keyword-stuffing?),
+and (d) for cover-letter lines, whether they merely restate the CV. List concrete, minimal edits:
+which specific lines to trim, merge, or ground better. HARD RULES: never suggest inventing experience
+the evidence does not support, and never suggest removing or softening an honest gap the candidate
+genuinely has. Return the critique as "critique".`,
+      { schema: strField('critique', 'markdown line-level critique'), phase: 'Critique', label: `critique-${round}` },
+    )
+    const revised = await agent(
+      `${SOURCES}
+
+CURRENT CV:
+${cvText}
+
+CURRENT COVER LETTER:
+${coverText}
+
+CRITIQUE TO APPLY:
+${critique.critique}
+
+Apply ONLY the edits the critique names: trim, merge, or better-ground the flagged lines and leave
+every unflagged line untouched. Keep the CV ATS-safe (single column, no tables/HTML, standard
+headings) and keep every honest gap visible. NEVER invent experience beyond the evidence. Return the
+revised CV as "cv" and the revised cover letter as "cover_letter".`,
+      {
+        schema: {
+          type: 'object',
+          properties: {
+            cv: { type: 'string', description: 'revised markdown CV' },
+            cover_letter: { type: 'string', description: 'revised markdown cover letter' },
+          },
+          required: ['cv', 'cover_letter'],
+        },
+        phase: 'Critique',
+        label: `revise-${round}`,
+      },
+    )
+    cvText = revised.cv
+    coverText = revised.cover_letter
+  }
+}
+
 phase('Prefill')
 const fieldsBlock = FIELDS
   ? `Fill EXACTLY these application fields (from the live job form):\n${FIELDS}`
@@ -174,10 +248,10 @@ const prefill = await agent(
   `${SOURCES}
 
 TAILORED CV (already produced):
-${cv.cv}
+${cvText}
 
 COVER LETTER (already produced):
-${cover.cover_letter}
+${coverText}
 
 Assemble a prefill pack in markdown: for each application field, give the value the candidate would
 enter, drawn ONLY from the evidence library / tailored CV. ${fieldsBlock}
@@ -198,8 +272,8 @@ return {
   offer_id: offerId,
   match: match.match,
   must_haves: match.must_haves,
-  cv: cv.cv,
-  cover_letter: cover.cover_letter,
+  cv: cvText,
+  cover_letter: coverText,
   gap_report: gap.gap_report,
   prefill_pack: prefill.prefill_pack,
 }
