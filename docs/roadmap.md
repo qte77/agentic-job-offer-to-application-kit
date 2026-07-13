@@ -126,6 +126,14 @@
 - Location noise-folding (#309): `parse_geo` strips trailing org suffixes (`Office`/`HQ`/`Hub`) and
   maps placeholder junk (`LOCATION`/`N/A`) to `Unknown`, so same-place variants stop splitting the
   Companies-tab ranking and the geo-by-field hiring keys.
+- Tailor critique loop + anti-stuffing (#272/#317): an optional `args.critique` draft→critique→revise
+  pass over the CV/cover (trims low-relevance/unsupported lines, never fabricates or hides a gap) + a
+  deterministic `cv-stuffing-check.md` keyword-stuffing backstop at persist.
+- Gap-report upskilling pointers (#274/#318): the match pass emits 1–2 generic learning pointers per
+  uncovered must-have, rendered as a Resources column in `coverage-report.md`.
+- Company discovery (#292/#319, ADR-0004): `ajoa-kit discover` reads one OK-tier public source (yc-oss)
+  and derives an emerging/who's-hiring signal joined to the local corpus → `results/emerging-companies.json`
+  (aggregate-only, **local-only**, never published).
 
 ## Next
 
@@ -140,8 +148,10 @@
   `persist_scored` membership check both shipped, #195). Backlog ranked in the ADR.
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
 - Broaden ingest reach: more JSON aggregators as their robots/ToS clear (jobicy/himalayas/remotive
-  — #94 deferred follow-ups). Outlook (#109): slug-discovery from public board directories, and
-  keyed aggregators (e.g. Jooble) — both outside the current no-auth/no-key model.
+  — #94 deferred follow-ups). Outlook (#109): the public-directory **read layer** shipped as company
+  discovery (#292, yc-oss, local-only); resolving ATS slugs for discovered companies is the deferred
+  phase-2 (ADR-0004 §Out of scope, gated on phase-1 proving out). Keyed aggregators (e.g. Jooble) stay
+  outside the current no-auth/no-key model.
 - Trends file growth: aggregated trends are the durable store (on the `data` branch); the JD corpus
   stays git-ignored / ephemeral **by design** (#191, accepted limitation — **closed**; recorded in
   architecture.md §Data layout). The two trend files grow linearly (~23 KB/yr

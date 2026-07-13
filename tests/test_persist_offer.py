@@ -77,6 +77,18 @@ def test_write_pack_flags_unsafe_cv_without_failing(tmp_path: Path) -> None:
     assert "table" in (offer_dir / "cv-ats-check.md").read_text().lower()
 
 
+def test_write_pack_flags_stuffed_cv_without_failing(tmp_path: Path) -> None:
+    # A keyword-stuffed CV (a 25+-item one-line skills wall) must surface a cv-stuffing-check.md for
+    # human review (#272) but never block the pack — a review aid, not a gate.
+    wall = ", ".join(f"Tool{i}" for i in range(30))
+    stuffed = {**PACK, "cv": f"## Summary\nEngineer.\n\n## Skills\n{wall}\n\n## Experience\n- x\n"}
+    offer_dir = persist_offer.write_pack(stuffed, slug="acme-ai-101", results_dir=tmp_path)
+    names = sorted(p.name for p in offer_dir.glob("*.md"))
+    assert "cv-stuffing-check.md" in names
+    assert "cv.md" in names  # non-blocking — the full pack still wrote
+    assert "stuffing" in (offer_dir / "cv-stuffing-check.md").read_text().lower()
+
+
 def test_write_pack_incomplete_writes_nothing(tmp_path: Path) -> None:
     incomplete = {k: v for k, v in PACK.items() if k != "cover_letter"}
     with pytest.raises(ValueError, match="cover_letter"):

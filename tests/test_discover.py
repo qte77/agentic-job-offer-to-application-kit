@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from ajoa_kit import discover
-from ajoa_kit.discover import emerging_signal, extract_companies, normalize_company
+from ajoa_kit.discover import _batch_year, emerging_signal, extract_companies, normalize_company
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,6 +34,24 @@ def test_normalize_company_merges_surface_variants_to_one_key() -> None:
         == normalize_company("STRIPE")
         == normalize_company("Stripe")
     )
+
+
+def test_normalize_company_preserves_brand_meaningful_words() -> None:
+    # "Co" / "Company" / "Holdings" are brand parts, not pure legal designators — stripping them
+    # would over-merge distinct companies, so they must be preserved.
+    assert normalize_company("The Honest Company") == "the honest company"
+    assert normalize_company("Acme Holdings") == "acme holdings"
+    assert normalize_company("Trade Co") == "trade co"
+    # ...while unambiguous legal designators are still stripped (regression guard):
+    assert normalize_company("Acme Corp") == "acme"
+
+
+def test_batch_year_extracts_the_trailing_year() -> None:
+    assert _batch_year("Summer 2026") == 2026
+    assert _batch_year("Winter 2012") == 2012
+    assert _batch_year("") == 0
+    assert _batch_year(None) == 0
+    assert _batch_year("no year here") == 0
 
 
 def test_extract_companies_yc_oss_keeps_named_companies_only() -> None:

@@ -30,13 +30,16 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from pathlib import Path
 
-# Trailing legal-entity suffix stripped when canonicalizing a name, so "Acme, Inc." and "Acme"
-# collapse to one key. Applied repeatedly for compound suffixes ("Foo Co., Ltd.").
+# Trailing legal-entity designator stripped when canonicalizing a name, so "Acme, Inc." and "Acme"
+# collapse to one key. Applied repeatedly for a compound tail ("Foo GmbH & Co. KG" → "Foo GmbH").
+# Deliberately excludes brand-meaningful words ("Co", "Company", "Holdings") — stripping those would
+# over-merge genuinely distinct companies ("The Honest Company" is not "The Honest").
 _SUFFIX = re.compile(
-    r"[\s,]+(?:inc|incorporated|llc|ltd|limited|corp|corporation|co|company|holdings|"
+    r"[\s,]+(?:inc|incorporated|llc|ltd|limited|corp|corporation|"
     r"gmbh|ag|plc|sa|srl|bv|oy|ab|as|pty|llp)\.?$",
     re.IGNORECASE,
 )
+_TOP_UNTRACKED = 15  # how many "hiring, not yet in your corpus" companies `discover` prints
 
 
 def normalize_company(name: str) -> str:
@@ -59,6 +62,15 @@ def normalize_company(name: str) -> str:
         prev = text
         text = _SUFFIX.sub("", text).strip(" ,.")
     return text.casefold()
+
+
+def _batch_year(batch: str | None) -> int:
+    """The 4-digit year in a YC batch label (``"Summer 2026" -> 2026``); ``0`` when there is none.
+
+    Used to rank discovered companies most-recent-batch-first (recent batch == emerging).
+    """
+    match = re.search(r"(\d{4})\s*$", batch or "")
+    return int(match.group(1)) if match else 0
 
 
 def extract_companies(payload: object, fmt: str) -> list[dict]:
@@ -205,6 +217,17 @@ def main() -> None:
         f"discover: {len(signal)} companies "
         f"({hiring} hiring, {in_corpus} already in corpus) -> {out_path}"
     )
+    # Surface the actionable slice: hiring companies NOT in your pipeline, most-recent batch first
+    # (recent == emerging). The full ranked set is in the JSON; this is just the eyeball view.
+    untracked = sorted(
+        (v for v in signal.values() if not v["in_corpus"]),
+        key=lambda v: (-_batch_year(v["batch"]), v["name"].casefold()),
+    )
+    if untracked:
+        shown = untracked[:_TOP_UNTRACKED]
+        print(f"  emerging/hiring not yet in your corpus (top {len(shown)} of {len(untracked)}):")
+        for v in shown:
+            print(f"    - {v['name']}  ({v['batch'] or '?'})")
 
 
 if __name__ == "__main__":
