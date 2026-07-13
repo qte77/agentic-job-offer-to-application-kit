@@ -1,7 +1,7 @@
 # Plan 004 — #271 relevance fit rubric (LEAN): explainable rationale + deadline & deal-breaker flags
 
-**Status:** approved 2026-07-08 (lean); scope expanded 2026-07-09 to type `deadline`/`deal_breaker` on
-`ScoredItem` + carry `ScoredItem` end-to-end (ADR-0003); implemented in #271. Handoff:
+**Status: SHIPPED** — implemented in #271 (#280). Approved 2026-07-08 (lean); scope expanded 2026-07-09
+to type `deadline`/`deal_breaker` on `ScoredItem` + carry `ScoredItem` end-to-end (ADR-0003). Handoff:
 [docs/handoffs/004-relevance-fit-rubric.md](../handoffs/004-relevance-fit-rubric.md). A cloud
 (Ultraplan) session may further refine this — if so, reconcile against the owner-approved version
 before executing; otherwise this lean plan is canonical.
