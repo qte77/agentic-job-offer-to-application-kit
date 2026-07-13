@@ -1,6 +1,6 @@
 # Plan 006 — companies-hiring: tab UX (#3 date · #4 sort) + hiring trend series (#2 local + publishable)
 
-**Status: PLANNED (2026-07-12).** `main` green at `bdc620d`. Follow-ups to the shipped #284 company
+**Status: SHIPPED (2026-07-12)** — Companies-tab date/sort (#305), geo-by-field + local hiring series (#306), hiring charts (#308), parse_geo noise-folding (#309). Follow-ups to the shipped #284 company
 tracker (`ajoa_kit.companies` + `scripts/build_ui_companies.py` + the local-only Companies tab) and the
 prefill paste-helper (#295). Scope confirmed after an explicit KISS/YAGNI review — the user chose the
 **full** #2 (local per-company **and** publishable geo×field) plus **both** #3/#4. This plan carries the
