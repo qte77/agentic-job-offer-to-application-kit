@@ -1,6 +1,6 @@
 # Plan 007 — tailor-quality (#272 critique loop · #274 upskilling pointers) + discovery (#292)
 
-**Status: PLANNED (2026-07-12).** `main` green at `1de5faa`. Three backlog features, two clusters.
+**Status: SHIPPED (2026-07-13)** — S1 #272 (#317) · S2 #274 (#318) · S3 #292 (#319). Three backlog features, two clusters.
 Carries a symbol-level source map (verified 2026-07-12, `file:line`) so a resuming session **does not
 re-map the codebase**. Handoff:
 [docs/handoffs/007-tailor-quality-and-discovery.md](../handoffs/007-tailor-quality-and-discovery.md) — read first.
@@ -29,9 +29,9 @@ value proves out.
 
 | # | Slice | Cluster | What | Test? |
 |---|---|---|---|---|
-| **S1** | #272 critique loop | tailor | optional draft→critique→revise phase (JS glue) + deterministic anti-stuffing detector (Python) | **yes** (the pure detector; loop verified live) |
-| **S2** | #274 upskilling pointers | tailor | gap agent emits `resources` per uncovered must-have; render in coverage table | **yes** (`coverage_summary` extension) |
-| **S3** | #292 discovery (phased) | discovery | new L1 `discover.py` + `discover` verb + `"discovery"` seed key + per-source tiering; local-only output | **yes** (pure extractor/normalizer/signal) |
+| **S1 ✅** | #272 critique loop | tailor | optional draft→critique→revise phase (JS glue) + deterministic anti-stuffing detector (Python) — **shipped #317** | **yes** (the pure detector; loop verified live) |
+| **S2 ✅** | #274 upskilling pointers | tailor | match pass emits `resources` per uncovered must-have; render in coverage table — **shipped #318** | **yes** (`coverage_summary` extension) |
+| **S3 ✅** | #292 discovery (phased) | discovery | new L1 `discover.py` + `discover` verb + `"discovery"` seed key (yc-oss) + per-source tiering; local-only output — **shipped #319** | **yes** (pure extractor/normalizer/signal) |
 
 S1+S2 share the tailor workflow file and may ride one branch if you prefer; kept separate by topic here.
 

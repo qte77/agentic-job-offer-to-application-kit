@@ -1,7 +1,7 @@
 # Handoff 007 — tailor-quality (#272 · #274) + discovery (#292)
 
-**State (2026-07-12):** `main` green at `1de5faa`. Plan (with the full symbol-level source map —
-**read it; don't re-map the codebase**):
+**State (2026-07-13): SHIPPED.** All three slices merged — S1 #272 (#317) · S2 #274 (#318) · S3 #292
+(#319); all three issues CLOSED; `main` @ `f73b97c`. Plan (with the full symbol-level source map):
 [docs/plans/007-tailor-quality-and-discovery.md](../plans/007-tailor-quality-and-discovery.md).
 
 ## Done
@@ -15,19 +15,25 @@ source). All three issues are already OPEN — each PR `Closes` its own.
 
 ## Resume here (in order — one PR per slice)
 
-1. **S1 (#272)** — `feat/tailor-critique`, TDD the Python only. Add the optional `args.critique`
-   draft→critique→revise phase to the tailor workflow (JS glue, **verified live** via a real
-   `Workflow({name:'tailor-offer'})` run — no unit test) **+** a new pure `stuffing.py` detector
-   (red→green) surfaced as an optional `cv-stuffing-check.md` persist artifact. Docs: CHANGELOG +
-   script header + CONTRIBUTING §Pipeline.
-2. **S2 (#274)** — `feat/gap-report-upskilling`. Extend the gap agent to emit `resources` per uncovered
-   must-have (glue) + render them in `coverage_summary` (Python, TDD `tests/test_coverage.py`). No new
-   switch. CHANGELOG.
-3. **S3 (#292)** — `feat/company-discovery`, TDD the module. New L1 `discover.py`
-   (`normalize_company`/`extract_companies`/`emerging_signal`, pure) + network glue (lazy polyfetch) +
-   `ajoa-kit discover` verb + a `"discovery"` key (ONE OK-tier source) in `config/default-seed.json` +
-   ADR-0003 (source tiering). Output **local `results/emerging-companies.json`, never published**.
-   Docs: CHANGELOG + CONTRIBUTING CLI table + `__main__` usage + architecture (Built + Data layout) + ADR.
+**All three slices are shipped (see State above) — nothing to resume.** What landed, and two
+deviations from the original spec worth noting:
+
+1. **S1 (#272) ✅ shipped #317** — `feat/tailor-critique`. Optional `args.critique`
+   draft→critique→revise phase in the tailor workflow (JS glue, **verified live** — but via
+   `Workflow({scriptPath})`, NOT `{name}`; the name-registry serves a stale session-start snapshot)
+   **+** the pure `stuffing.py` detector, surfaced as an optional `cv-stuffing-check.md` persist
+   artifact. Docs: CHANGELOG + script header + CONTRIBUTING §Pipeline.
+2. **S2 (#274) ✅ shipped #318** — `feat/gap-report-upskilling`. **Deviation:** resources ride on the
+   **match** pass's `must_haves` (matchSchema + prompt), not the gap agent — `coverage_summary` already
+   consumes `must_haves`, so this is one source with no brittle requirement-text merge. Rendered as a
+   Resources column (Python, TDD `tests/test_coverage.py`). No new switch. CHANGELOG.
+3. **S3 (#292) ✅ shipped #319** — `feat/company-discovery`. New L1 `discover.py`
+   (`normalize_company`/`extract_companies`/`emerging_signal`, pure) + network glue (reuses
+   `sources.get_json`) + `ajoa-kit discover` verb + a `"discovery"` key in `config/default-seed.json`
+   (**source = yc-oss `companies/hiring.json`**) + **ADR-0004** (source tiering; `0003` was taken).
+   Output **local `results/emerging-companies.json`, never published** (verified git-ignored). Docs:
+   CHANGELOG + CONTRIBUTING CLI table + `__main__` usage + architecture (Built + Data layout) + ADR.
+   Phase-2 (slug wiring) deferred per ADR-0004 + the distillation caveat.
 
 ## Per-slice recipe
 
@@ -65,6 +71,6 @@ cross-ref `#284` with "for #284") → `gh pr checks <n> --watch` → `gh pr merg
 | `src/ajoa_kit/__main__.py` | CLI dispatcher; add a `discover` verb mirroring `_probe`/`_companies_snapshot` (lazy-import) (S3). |
 | `config/default-seed.json` | `feeds`/`ats`/`aggregators` loaded; a new `"discovery"` key is ignored by the ingest loader → add ONE OK-tier source there (S3). |
 | `src/ajoa_kit/sources.py` · `slug_probe.py` · `normalize.py` · `companies.py` | shipped — reuse: lazy-polyfetch fetch glue + SSRF guard (`sources.py`), name→slug probe (`slug_probe.py`), `company` record field (`normalize.record`), `parse_geo`/`_CITY_ALIASES` normalizer pattern (`companies.py`) as the `normalize_company` model + corpus join. |
-| `docs/decisions/0003-discovery-source-tiers.md` | **does not exist yet** — new ADR for S3 source tiering (or amend ADR-0002). |
+| `docs/decisions/0004-discovery-source-tiers.md` | **shipped** (renumbered from 0003 — that number was taken) — S3 source tiering; yc-oss OK, official YC API CAUTION, YC WaaS BLOCKED, newsletters deferred. |
 | `results/evidence-library.json` | per-user grounding corpus (git-ignored); the #272 critic validates CV/cover lines against it. Example: `examples/alexis-doe/results/evidence-library.json`. |
-| GitHub issues | `#272`/`#274`/`#292` OPEN (each PR closes its own); `#284` is the S3 consumer (cross-ref "for #284"). |
+| GitHub issues | `#272`/`#274`/`#292` **CLOSED** (#317/#318/#319 respectively); `#284` (S3 consumer) was closed earlier by #294. |
