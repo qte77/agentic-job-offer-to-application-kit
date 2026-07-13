@@ -6,8 +6,9 @@ returned JSON into on-disk markdown artifacts a human reviews before submitting.
     python -m ajoa_kit.persist_offer <path-to-workflow-result.json> [--slug SLUG]
 
 Writes ``results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md`` (plus a
-``coverage-report.md`` when the pack carries ``must_haves``, and a ``cv-ats-check.md`` when the CV
-trips the parse-safety pass, #75), and a ``meta.json`` recording the JD id so the local dashboard
+``coverage-report.md`` when the pack carries ``must_haves``, a ``cv-ats-check.md`` when the CV
+trips the parse-safety pass, #75, and a ``cv-stuffing-check.md`` when it trips the keyword-stuffing
+pass, #272), and a ``meta.json`` recording the JD id so the local dashboard
 can join the pack back to its shortlist row (#209). The results root comes from
 ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate workspace works.
 
@@ -26,6 +27,7 @@ from pathlib import Path
 from ajoa_kit.ats_check import parse_safety_warnings
 from ajoa_kit.coverage import coverage_summary
 from ajoa_kit.settings import AppSettings
+from ajoa_kit.stuffing import stuffing_warnings
 
 # (pack key, output filename, rendered H1 heading) — the order files are written in.
 ARTIFACTS: list[tuple[str, str, str]] = [
@@ -89,8 +91,9 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     Validation happens before any write, so an incomplete pack leaves the disk untouched.
     When the pack carries ``must_haves``, a ``coverage-report.md`` is also written — outside
     the all-or-nothing artifact set, so packs without it are unaffected. A ``cv-ats-check.md`` is
-    written whenever the tailored CV trips the parse-safety check (#75) — a non-blocking review
-    aid, also outside the all-or-nothing set.
+    written whenever the tailored CV trips the parse-safety check (#75), and a
+    ``cv-stuffing-check.md`` whenever it trips the keyword-stuffing check (#272) — both non-blocking
+    review aids, also outside the all-or-nothing set.
 
     Args:
         pack: The tailor result.
@@ -118,6 +121,17 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
         items = "\n".join(f"- {w}" for w in warnings)
         (offer_dir / "cv-ats-check.md").write_text(
             '---\ntitle: "CV ATS parse-safety"\n---\n\n'
+            "Review before submitting — non-blocking warnings, not errors.\n\n"
+            f"{items}\n"
+        )
+    # Auto keyword-stuffing check on the tailored CV (#272): surface dishonest keyword-density /
+    # copy-paste / skills-wall constructs for human review. Same non-blocking, opt-out-free backstop
+    # as cv-ats-check — a file appears only when there is something to trim; never raises.
+    stuffing = stuffing_warnings(pack["cv"])
+    if stuffing:
+        items = "\n".join(f"- {w}" for w in stuffing)
+        (offer_dir / "cv-stuffing-check.md").write_text(
+            '---\ntitle: "CV keyword-stuffing check"\n---\n\n'
             "Review before submitting — non-blocking warnings, not errors.\n\n"
             f"{items}\n"
         )
