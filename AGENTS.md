@@ -41,3 +41,7 @@ Recurring mistakes and their promoted fixes are logged in
 ## Quality thresholds (self-review before opening a PR)
 
 - Context completeness >= 8/10 · Clarity >= 7/10 · No incoherence with existing patterns.
+
+## Progress reporting
+
+- Report multi-step work as a `[ ]` / `[x]` checklist so state stays glanceable; no percentage meters.
