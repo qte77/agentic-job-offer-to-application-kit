@@ -103,6 +103,12 @@ const matchSchema = {
             type: ['string', 'null'],
             description: 'short citation from the evidence library / CV, or null if a gap',
           },
+          resources: {
+            type: 'array',
+            items: { type: 'string' },
+            description:
+              'for an UNCOVERED must-have only: 1-2 generic, non-fabricated upskilling pointers (a topic, course, or doc area) the candidate could learn to close the gap; omit or [] when covered (#274)',
+          },
         },
         required: ['requirement', 'covered'],
       },
@@ -128,7 +134,9 @@ and which they do not. Be strict and honest — no overstatement. Return the pro
 Also return "must_haves": an array with one object per JD must-have requirement —
 { requirement: the must-have (verbatim or tightly paraphrased), covered: true/false for whether the
 candidate genuinely meets it, evidence: a short citation from the evidence library / CV, or null if
-it is a gap }.`,
+it is a gap, resources: for an UNCOVERED must-have, 1-2 concrete-but-generic learning pointers (a
+topic, course, or documentation area — never a fabricated URL and never a claim the candidate already
+has it) to help close the gap; omit or use [] when covered }.`,
   { schema: matchSchema, phase: 'Match', label: 'match' },
 )
 
