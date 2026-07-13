@@ -33,6 +33,22 @@ def test_renders_one_row_per_must_have_with_covered_evidence_and_resources() -> 
     assert "Production on-call is the main gap." in out  # gap_report appended
 
 
+def test_resources_are_omitted_on_a_covered_must_have() -> None:
+    # Defensive: even if the match pass emits resources on a COVERED must-have, the covered row
+    # shows the placeholder, not upskilling pointers — resources are a gap aid only.
+    must_haves = [
+        {
+            "requirement": "Python",
+            "covered": True,
+            "evidence": "Acme",
+            "resources": ["should not appear"],
+        }
+    ]
+    out = coverage_summary(must_haves, "")
+    assert "| Python | covered | Acme | — |" in out
+    assert "should not appear" not in out
+
+
 def test_missing_or_empty_resources_render_as_placeholder() -> None:
     must_haves = [
         {"requirement": "Go", "covered": False, "evidence": None},  # key absent

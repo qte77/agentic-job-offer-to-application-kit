@@ -49,6 +49,20 @@ def _resources_cell(resources: object) -> str:
     return "; ".join(cells) if cells else _PLACEHOLDER
 
 
+def _row(item: dict) -> str:
+    """Render one must-have entry as a pipe-safe markdown table row.
+
+    Columns: ``| requirement | covered/gap | evidence | resources |``. Upskilling pointers are a gap
+    aid — a covered must-have renders none, even if the match pass mistakenly emitted some (#274).
+    """
+    is_covered = bool(item.get("covered"))
+    covered = "covered" if is_covered else "gap"
+    req = _cell(item.get("requirement"))
+    evidence = _cell(item.get("evidence"))
+    resources = _PLACEHOLDER if is_covered else _resources_cell(item.get("resources"))
+    return f"| {req} | {covered} | {evidence} | {resources} |"
+
+
 def coverage_summary(must_haves: list[dict], gap_report: str) -> str:
     """Render the must-have coverage table plus the gap report as markdown.
 
@@ -70,12 +84,7 @@ def coverage_summary(must_haves: list[dict], gap_report: str) -> str:
             "| Must-have | covered/gap | Evidence | Resources |",
             "| --- | --- | --- | --- |",
         ]
-        for item in must_haves:
-            covered = "covered" if item.get("covered") else "gap"
-            req = _cell(item.get("requirement"))
-            evidence = _cell(item.get("evidence"))
-            resources = _resources_cell(item.get("resources"))
-            lines.append(f"| {req} | {covered} | {evidence} | {resources} |")
+        lines += [_row(item) for item in must_haves]
     gap = (gap_report or "").strip()
     if gap:
         lines += ["", "## Gap report", "", gap]
