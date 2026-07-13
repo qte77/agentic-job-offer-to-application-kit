@@ -14,16 +14,47 @@ from hypothesis import strategies as st
 from ajoa_kit.coverage import coverage_summary
 
 
-def test_renders_one_row_per_must_have_with_covered_and_evidence() -> None:
+def test_renders_one_row_per_must_have_with_covered_evidence_and_resources() -> None:
     must_haves = [
         {"requirement": "5y Python", "covered": True, "evidence": "ML platform at Acme"},
-        {"requirement": "Kubernetes", "covered": False, "evidence": None},
+        {
+            "requirement": "Kubernetes",
+            "covered": False,
+            "evidence": None,
+            "resources": ["CKA course", "k8s.io docs"],
+        },
     ]
     out = coverage_summary(must_haves, "Production on-call is the main gap.")
-    assert "| Must-have | covered/gap | Evidence |" in out
-    assert "| 5y Python | covered | ML platform at Acme |" in out
-    assert "| Kubernetes | gap | — |" in out  # None evidence -> placeholder
+    assert "| Must-have | covered/gap | Evidence | Resources |" in out
+    # covered must-have carries no upskilling pointers -> placeholder
+    assert "| 5y Python | covered | ML platform at Acme | — |" in out
+    # uncovered must-have shows the (grounded, generic) learning pointers
+    assert "| Kubernetes | gap | — | CKA course; k8s.io docs |" in out
     assert "Production on-call is the main gap." in out  # gap_report appended
+
+
+def test_missing_or_empty_resources_render_as_placeholder() -> None:
+    must_haves = [
+        {"requirement": "Go", "covered": False, "evidence": None},  # key absent
+        {"requirement": "Rust", "covered": False, "evidence": None, "resources": None},
+        {"requirement": "SQL", "covered": False, "evidence": None, "resources": []},
+    ]
+    out = coverage_summary(must_haves, "")
+    for req in ("Go", "Rust", "SQL"):
+        assert f"| {req} | gap | — | — |" in out
+
+
+def test_resource_cells_are_sanitized_and_joined() -> None:
+    must_haves = [
+        {
+            "requirement": "X",
+            "covered": False,
+            "evidence": None,
+            "resources": ["a | b", "line1\nline2"],
+        }
+    ]
+    out = coverage_summary(must_haves, "")
+    assert "| X | gap | — | a \\| b; line1 line2 |" in out  # pipes escaped, newline collapsed
 
 
 def test_sanitizes_pipes_and_newlines_so_cells_cannot_break_the_table() -> None:
@@ -41,9 +72,9 @@ def test_empty_must_haves_is_a_placeholder_not_a_table() -> None:
     assert "| --- |" not in out  # no table emitted
 
 
-_VALUES = st.one_of(st.none(), st.text(), st.booleans(), st.integers())
+_VALUES = st.one_of(st.none(), st.text(), st.booleans(), st.integers(), st.lists(st.text()))
 _ITEM = st.dictionaries(
-    keys=st.sampled_from(["requirement", "covered", "evidence", "extra"]),
+    keys=st.sampled_from(["requirement", "covered", "evidence", "resources", "extra"]),
     values=_VALUES,
 )
 

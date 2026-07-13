@@ -30,12 +30,32 @@ def _cell(value: object) -> str:
     return text or _PLACEHOLDER
 
 
+def _resources_cell(resources: object) -> str:
+    """Render an uncovered must-have's upskilling pointers into one pipe-safe cell.
+
+    Each pointer is sanitized like any other cell and joined with ``; ``. A missing/``None``
+    value, a non-list, or a list with no usable entries becomes the placeholder — so covered
+    must-haves (which carry no ``resources``) render blank (#274).
+
+    Args:
+        resources: The entry's ``resources`` value (expected ``list[str]``, but untrusted).
+
+    Returns:
+        A one-line, pipe-safe cell listing the pointers, or the placeholder.
+    """
+    if not isinstance(resources, list):
+        return _PLACEHOLDER
+    cells = [_cell(r) for r in resources if r is not None and str(r).strip()]
+    return "; ".join(cells) if cells else _PLACEHOLDER
+
+
 def coverage_summary(must_haves: list[dict], gap_report: str) -> str:
     """Render the must-have coverage table plus the gap report as markdown.
 
     Args:
-        must_haves: One ``{requirement, covered, evidence}`` dict per JD must-have; keys
-            may be missing or ``None`` and values are sanitized.
+        must_haves: One ``{requirement, covered, evidence, resources?}`` dict per JD must-have;
+            keys may be missing or ``None`` and values are sanitized. ``resources`` is an
+            optional ``list[str]`` of upskilling pointers for an uncovered must-have (#274).
         gap_report: The pack's gap report, appended under its own heading when present.
 
     Returns:
@@ -46,12 +66,16 @@ def coverage_summary(must_haves: list[dict], gap_report: str) -> str:
     if not must_haves:
         lines.append("_No must-have requirements identified._")
     else:
-        lines += ["| Must-have | covered/gap | Evidence |", "| --- | --- | --- |"]
+        lines += [
+            "| Must-have | covered/gap | Evidence | Resources |",
+            "| --- | --- | --- | --- |",
+        ]
         for item in must_haves:
             covered = "covered" if item.get("covered") else "gap"
             req = _cell(item.get("requirement"))
             evidence = _cell(item.get("evidence"))
-            lines.append(f"| {req} | {covered} | {evidence} |")
+            resources = _resources_cell(item.get("resources"))
+            lines.append(f"| {req} | {covered} | {evidence} | {resources} |")
     gap = (gap_report or "").strip()
     if gap:
         lines += ["", "## Gap report", "", gap]
