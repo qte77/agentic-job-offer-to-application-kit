@@ -233,10 +233,11 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   `config/lanes.json` (the canonical position lanes, #195). Your `config/seed.json` overrides the
   default-seed when present; absent it, ingest falls back to the default.
 - `results/` — everything generated and **PII-bearing** (`jobs-raw.json`, `corpus.json`,
-  `daily-summary.md`, `<lane>/shortlist.*`, `offers/<slug>/`, `hiring-companies.ndjson`); git-ignored
-  (dir kept via `.gitkeep`), **never published**. The `daily-summary.md` digest (#175) names
-  companies/titles → **local-only**; the per-company `hiring-companies.ndjson` series is likewise
-  business data, never a CI artifact or branch.
+  `daily-summary.md`, `<lane>/shortlist.*`, `offers/<slug>/`, `hiring-companies.ndjson`,
+  `emerging-companies.json`); git-ignored (dir kept via `.gitkeep`), **never published**. The
+  `daily-summary.md` digest (#175) names companies/titles → **local-only**; the per-company
+  `hiring-companies.ndjson` series and the `discover` output `emerging-companies.json` (#292) are
+  likewise business data (company names), never a CI artifact or branch.
 - `public-data/` — the **PII-free** publishable aggregates only (`trends{,-daily,-monthly}.ndjson`,
   keyword `{week,counts}`; `hiring-{weekly,daily,monthly}.ndjson`, geo-by-field hiring `{week,counts}`
   with **no company names**); git-ignored, generated (#210). The one place anything crosses to the
@@ -280,6 +281,8 @@ public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
   no-build `ui/` dashboard (#11 PR-B, vendored Chart.js — synthetic Tab A + aggregate `{week,counts}`
   Tab B); `ajoa-kit companies-snapshot` → geo-by-field hiring `public-data/hiring-*.ndjson` (aggregate,
   no company names) + local per-company `results/hiring-companies.ndjson` (plan 006);
+  `ajoa-kit discover` → local emerging/who's-hiring company signal `results/emerging-companies.json`
+  (one OK-tier source, aggregate-only, never published — #292, ADR-0004);
   the reusable `run-with-keywords` workflow (#79); `ajoa-kit refresh` shortlist liveness sweep
   (#214 — corpus-delisted + URL re-probe, flag-`stale`-or-`--delete`); baseline gates (ruff, pyright,
   complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).

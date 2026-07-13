@@ -69,6 +69,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `probe` | — (probe candidate slugs across ATS platforms) |
 | `trend-snapshot` | — (see [§Trends data branch](#trends-data-branch)) |
 | `companies-snapshot` | — company-hiring series: publishable geo-by-field + local per-company (see [§Trends data branch](#trends-data-branch)) |
+| `discover` | — reads the config `discovery` source (yc-oss) → emerging/hiring company signal in `results/emerging-companies.json` (local business data, never published; needs polyfetch env) (#292) |
 | `status` | `<slug>` — set/read a local application-outcome status per offer · `--stage <applied/responded/interview/offer/rejected>` `--date <YYYY-MM-DD>` `--notes <text>` (#273) |
 
 Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tiered per
