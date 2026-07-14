@@ -4,7 +4,7 @@
 > scraping, no automated submission.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.6.1-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.7.0-blue)](CHANGELOG.md)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A580%25-blue)](pyproject.toml)
 [![Python](https://img.shields.io/badge/python-3.11+-blue)](pyproject.toml)
 [![CodeQL](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml/badge.svg)](https://github.com/qte77/agentic-job-offer-to-application-kit/actions/workflows/codeql.yaml)

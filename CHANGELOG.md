@@ -16,6 +16,113 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.7.0] - 2026-07-14
+
+### Added
+
+- Dashboard trend-granularity dropdown (#187/#188): a Weekly / Daily / Monthly selector wires the
+  already-published `trends-daily.ndjson` + `trends-monthly.ndjson` series into the market-trends
+  charts (previously only the weekly series rendered). The time-frame window now applies uniformly
+  across all three granularities, and the gh-pages deploy bundles all three series same-origin.
+
+- Dashboard shortlist now surfaces the `deadline` and `deal_breaker` flags (#283): the Role cell
+  shows a caution "due …" pill and a negative "deal-breaker: …" pill when the `ScoredItem` carries
+  them (they already rendered server-side in `shortlist.md`). Optional per offer.
+
+- Local-only company-hiring tracker (#284): a `make preview`-only dashboard tab shows who's hiring
+  by location × field with per-company active-role counts and an optional heating/cooling momentum
+  tag (dormant until the corpus history spans ~4+ weeks). Aggregation + lossless location parsing
+  live in the new tested `ajoa_kit.companies` module; `scripts/build_ui_companies.py` builds the
+  view from `results/corpus.json`. Business data stays local — never written to source `ui/`, never
+  on the `data` branch — so the tab stays hidden on the published site.
+
+- Application-outcome tracker (#273): a new `ajoa-kit status <slug>` verb records how far each
+  application has progressed — `stage` (applied → responded → interview → offer/rejected), `date`,
+  `notes` — in a local `results/offers/<slug>/status.json`, set and read by hand. Local-only PII
+  (git-ignored `results/`), never published; closes the apply→outcome loop the offer packs left open.
+
+- Prefill paste-helper (#295): the local dashboard's offer expand now shows the human-review prefill
+  pack alongside the tailored CV and cover letter — each field in a copy-ready table with the existing
+  per-doc Copy button. Clipboard only: you review, paste, and submit by hand; nothing drives an ATS
+  form or auto-submits (`docs/research.md` §Delivery). Local/preview-only, like the rest of the pack.
+
+- Dashboard **Companies tab**: click a column header (or press Enter/Space) to sort the table
+  ascending/descending, with an `aria-sort` arrow indicator on the active column.
+
+- **`ajoa-kit companies-snapshot`** — a company-hiring trend series built from the corpus by each
+  JD's `first_seen` (new roles seen per bucket). Emits a **publishable geo×field** series to
+  `public-data/hiring-{weekly,daily,monthly}.ndjson` (`{week|date|month, counts}` keyed by
+  `"<city>, <region> · <field>"` — aggregate, **no company names**, published to the `data` branch +
+  gh-pages like the keyword trends) and a **local per-company** series to git-ignored
+  `results/hiring-companies.ndjson` (never published). Wired into the daily ingest cron.
+
+- **`make ui_e2e`** — a comprehensive headless dashboard e2e (`scripts/ui_e2e.py`, patchright via the
+  polyfetch venv) that complements the fast `make ui_check` smoke: it drives the local preview build
+  (hard gate) **and** the remote gh-pages site (best-effort), across desktop/tablet/mobile viewports
+  plus an iPhone 13 device descriptor, cycling the theme (verifying light vs dark) and exercising the
+  tabs, trends dropdowns, Companies sort headers, and offer-row expand.
+
+- Dashboard **hiring charts** (plan 006 S2b): the Market-trends tab gains a publishable
+  **geo-by-field** hiring line chart (top 10, reusing the trends time-frame/granularity pickers), and
+  the local Companies tab gains a **per-company** hiring chart (top 10, weekly) bundled only by
+  `make preview`. Both reuse the vendored Chart.js and the trends fetch/URL helpers; the per-company
+  series is same-origin only and never published.
+
+- `ajoa-kit discover` — a curated startup-discovery layer (#292). Reads one OK-tier public source (the
+  yc-oss mirror of YC's directory), extracts company names, and derives an emerging / who's-hiring
+  signal joined to the local JD corpus → `results/emerging-companies.json`. Aggregate-only and
+  **local-only** (business data, never published); phase-1 single source, ToS-tiered per ADR-0004.
+  Feeds the company-hiring tracker (for #284).
+
+- `ajoa-kit discover` now prints the actionable slice — the top emerging/hiring companies **not yet in
+  your corpus**, most-recent batch first — instead of just counts (#292).
+
+- Gap coverage report now lists 1–2 generic upskilling pointers per **uncovered** must-have. The
+  tailor match pass emits an optional `resources` list per requirement and `coverage_summary` renders
+  it in a new Resources column of `coverage-report.md` — grounded, non-fabricated pointers (topic /
+  course / doc area); covered must-haves stay blank (#274).
+
+- `tailor-offer` workflow: an optional draft→critique→revise loop over the tailored CV and cover
+  letter (`args.critique`, off by default; `args.critiqueRounds` sets the pass count). It trims
+  low-relevance, duplicated, unsupported, or keyword-stuffed lines against the evidence library —
+  never inventing experience and never hiding an honest gap (#272).
+- `persist-offer` now writes an optional `cv-stuffing-check.md` when the tailored CV trips a new
+  deterministic keyword-stuffing check (`ajoa_kit.stuffing`) — a non-blocking review aid alongside
+  `cv-ats-check.md` (#272).
+
+### Changed
+
+- Relevance screening is now explainable at GATE 2: the rationale names the fit across skill /
+  experience / culture-location / progression / motivation, and two optional flags — `deadline`
+  and `deal_breaker` — surface in each `shortlist.md` row (a `· due <date>` / `· deal-breaker` tag
+  plus a deal-breaker bullet). Both are typed on `ScoredItem`, and the persist/refresh pipeline now
+  carries the model end-to-end (ADR-0003), validating on-disk shortlist rows on every re-read so a
+  corrupt row fails loud instead of rendering through. (#271)
+
+- Dashboard **Companies tab**: the local snapshot now shows its "as of" date (the newest
+  `last_seen` in the corpus). The preview `companies.json` payload is now `{snapshot, rows}`
+  (internal preview contract; the tab is never published).
+
+- `companies.parse_geo` now folds noisy locations into one bucket: it strips a trailing org suffix
+  (`Office`/`HQ`/`Hub`) and maps placeholder junk (`LOCATION`, `N/A`, …) to `Unknown`. Tightens the
+  Companies-tab ranking and the geo-by-field hiring keys (fewer split near-duplicates).
+
+- `discover` company-name normalization no longer strips brand-meaningful suffixes (`Co` / `Company` /
+  `Holdings`), so genuinely distinct companies stop merging onto one key (#292).
+- The gap `coverage-report.md` renders upskilling resources only on **uncovered** must-haves; a covered
+  must-have shows none, even if the match pass emitted some (#274).
+
+### Fixed
+
+- Dashboard offer expand: the tailored CV, cover letter, and prefill pack now stack in one full-width
+  column — each a uniform, internally-scrolling pane — instead of an uneven 2-column grid that squeezed
+  the cover letter into an unreadable sliver when the CV was wide. One consistent layout regardless of
+  how much each doc varies in size.
+
+- The market-trends **granularity** dropdown (#285) now shares the time-frame picker's styling
+  (border / background / padding / focus ring) instead of rendering as an unstyled native select —
+  the rule targets `.range-picker select` rather than the `#trends-range` id.
+
 ## [0.6.1] - 2026-07-08
 
 ### Changed
