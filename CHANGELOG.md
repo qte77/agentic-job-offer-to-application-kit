@@ -104,7 +104,7 @@ Types of changes:
   (internal preview contract; the tab is never published).
 
 - `companies.parse_geo` now folds noisy locations into one bucket: it strips a trailing org suffix
-  (` Office`/` HQ`/` Hub`) and maps placeholder junk (`LOCATION`, `N/A`, …) to `Unknown`. Tightens the
+  (`Office`/`HQ`/`Hub`) and maps placeholder junk (`LOCATION`, `N/A`, …) to `Unknown`. Tightens the
   Companies-tab ranking and the geo-by-field hiring keys (fewer split near-duplicates).
 
 - `discover` company-name normalization no longer strips brand-meaningful suffixes (`Co` / `Company` /
