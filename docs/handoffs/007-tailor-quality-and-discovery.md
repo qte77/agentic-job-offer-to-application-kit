@@ -74,3 +74,31 @@ cross-ref `#284` with "for #284") → `gh pr checks <n> --watch` → `gh pr merg
 | `docs/decisions/0004-discovery-source-tiers.md` | **shipped** (renumbered from 0003 — that number was taken) — S3 source tiering; yc-oss OK, official YC API CAUTION, YC WaaS BLOCKED, newsletters deferred. |
 | `results/evidence-library.json` | per-user grounding corpus (git-ignored); the #272 critic validates CV/cover lines against it. Example: `examples/alexis-doe/results/evidence-library.json`. |
 | GitHub issues | `#272`/`#274`/`#292` **CLOSED** (#317/#318/#319 respectively); `#284` (S3 consumer) was closed earlier by #294. |
+
+## Post-0.7.0 addendum (2026-07-14) — state + open threads
+
+007 shipped; the session then cut **release v0.7.0** (bump→tag→publish; 17 fragments collected) and did
+follow-ups: `#321` discover actionable output + tailor polish · `#322` AGENTS.md `[ ]/[x]` reporting rule ·
+`#323` marked plans 004/006 shipped · `#327` recorded discovery-source research verdicts in the seed
+(`_blocked`/`_deferred`, `_kind: "discovery"`). `main` @ `0602d79`, clean, v0.7.0 published; dashboard e2e
+green (screenshots archived to a private Artifact).
+
+**Open threads — nothing blocking, none urgent:**
+
+1. **#193 adopt reusable release workflows** — BLOCKED on external `qte77/.github#33` (still OPEN; owner is
+   GitHub-watching it). On merge: adopt bump/tag/publish as thin `uses:` callers, **SHA-pinned**, guardrails
+   intact (never-delete-tags / idempotent / scriv). Recipe in the issue.
+2. **Discovery phase-2 = HN "Who is hiring?" Algolia API** — the sole recorded lead (seed `_deferred`
+   `_kind:discovery` + ADR-0004). Public/no-auth/broader-than-YC, but needs free-text (regex/LLM) extraction
+   → a real slice, only if `yc-oss` proves too narrow. `yc-oss` stays the single live source.
+3. **Governance (unfiled): publish per-company hiring on gh-pages** — local-only by design. Reversing it needs
+   a new ADR + a **separate** published allowlist, and ONLY the yc-oss public/self-declared slice is
+   defensible — **never** the scraped `results/hiring-companies.ndjson`. Decide if worth an issue.
+4. **Deferred issues:** `#269` posted_at survivorship series · `#275` md→PDF spike (cheapest to retire — a
+   short dependency-weight spike → go/won't-do).
+5. **Dependabot:** two open PRs (github-actions + uv python-deps). Review/merge per each PR's own CI (MAJOR
+   complexipy/ruff/pyright bumps can red the gate).
+
+**Release gotchas learnt this session:** verify edited `.claude/workflows/*.js` via `Workflow({scriptPath})`
+not `{name}` (stale snapshot); collected `CHANGELOG.md` re-lints fragments (MD038 trap); `publish-release.yaml`
+is manual-dispatch; `config/` is git-ignored → `git add -f` the seed. (All in local memory.)
