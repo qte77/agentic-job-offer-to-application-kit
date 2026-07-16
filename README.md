@@ -1,6 +1,7 @@
 # agentic-job-offer-to-application-kit
 
-> Turn a candidate portfolio into tailored, ATS-safe job applications — feed/API-first, no
+> Turn a candidate portfolio into tailored, ATS-safe job applications — **grounded strictly in
+> evidence you can back up, with an honest gap report, never fabricated**. Feed/API-first, no
 > scraping, no automated submission.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -14,8 +15,12 @@
 
 ## What
 
-A **generic** pipeline (a small Python engine + LLM/agent phases). **Claude Code** is the
-on-demand orchestrator via Workflow-tool scripts, but the phases are documented
+**It tailors only to evidence you can back up — never inventing experience or keyword-stuffing —
+and hands you an honest gap report, so you apply knowing exactly where you stand.** That integrity
+is the point: the opposite of a generic LLM that pads your CV with claims you can't defend.
+
+Under the hood it's a **generic** pipeline (a small Python engine + LLM/agent phases). **Claude Code**
+is the on-demand orchestrator via Workflow-tool scripts, but the phases are documented
 agent-agnostically so any coding agent can drive them.
 
 1. **Evidence library** (build once) — mine a portfolio into a verified, lane-tagged brag document.
