@@ -88,12 +88,12 @@ green (screenshots archived to a private Artifact).
 1. **#193 adopt reusable release workflows** — BLOCKED on external `qte77/.github#33` (still OPEN; owner is
    GitHub-watching it). On merge: adopt bump/tag/publish as thin `uses:` callers, **SHA-pinned**, guardrails
    intact (never-delete-tags / idempotent / scriv). Recipe in the issue.
-2. **Discovery phase-2 = HN "Who is hiring?" Algolia API** — the sole recorded lead (seed `_deferred`
-   `_kind:discovery` + ADR-0004). Public/no-auth/broader-than-YC, but needs free-text (regex/LLM) extraction
-   → a real slice, only if `yc-oss` proves too narrow. `yc-oss` stays the single live source.
-3. **Governance (unfiled): publish per-company hiring on gh-pages** — local-only by design. Reversing it needs
+2. **Discovery phase-2 = HN "Who is hiring?" Algolia API** (**#331**) — the sole recorded lead (seed
+   `_deferred` `_kind:discovery` + ADR-0004). Public/no-auth/broader-than-YC, but needs free-text (regex/LLM)
+   extraction → a real slice, only if `yc-oss` proves too narrow. `yc-oss` stays the single live source.
+3. **Governance (#332): publish per-company hiring on gh-pages** — local-only by design. Reversing it needs
    a new ADR + a **separate** published allowlist, and ONLY the yc-oss public/self-declared slice is
-   defensible — **never** the scraped `results/hiring-companies.ndjson`. Decide if worth an issue.
+   defensible — **never** the scraped `results/hiring-companies.ndjson`. A decision to make.
 4. **Deferred issues:** `#269` posted_at survivorship series · `#275` md→PDF spike (cheapest to retire — a
    short dependency-weight spike → go/won't-do).
 5. **Dependabot:** two open PRs (github-actions + uv python-deps). Review/merge per each PR's own CI (MAJOR
