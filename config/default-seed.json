@@ -176,7 +176,13 @@
     {"_platform": "jobs.ch", "_date_verified": "2026-06-19",
      "_reason": "No public API/RSS (JobCloud); ToS bars crawlers/scrapers/automation; robots.txt disallows /api + detail pages — paste only."},
     {"_platform": "google-for-jobs", "_date_verified": "2026-06-20",
-     "_reason": "Search surface, not a data source — no public candidate-side listings API; the only path is scraping SERPs, which violates Google ToS + robots.txt (Disallow: /search). See ADR-0002."}
+     "_reason": "Search surface, not a data source — no public candidate-side listings API; the only path is scraping SERPs, which violates Google ToS + robots.txt (Disallow: /search). See ADR-0002."},
+    {"name": "wellfound", "_kind": "discovery", "_date_verified": "2026-07-14",
+     "_reason": "Discovery candidate (company signal, not ingest): startup/job directory whose bulk data sits behind login; the read-only-public-GET rule forbids it, as with YC Work-at-a-Startup. BLOCKED (#292, ADR-0004)."},
+    {"name": "crunchbase", "_kind": "discovery", "_date_verified": "2026-07-14",
+     "_reason": "Discovery candidate: company/funding API needs a Crunchbase-provisioned developer key (no self-serve/anon) — outside the no-auth/no-key model. BLOCKED (ADR-0004)."},
+    {"name": "hnhiring.com", "_kind": "discovery", "_date_verified": "2026-07-14",
+     "_reason": "Discovery candidate: unofficial third-party re-publish of HN 'Who is hiring' comments; no operator identity/ToS, HTML-only, redundant with the official HN Algolia API. BLOCKED — prefer the source over the middleman (ADR-0004)."}
   ],
   "_deferred": [
     {"_note": "Public JSON aggregators still pending a condition below (arbeitnow shipped in #94 under the loaded `aggregators` key). The loader reads only feeds/ats/aggregators; this block is documentation.",
@@ -184,6 +190,16 @@
        {"name": "jobicy", "_date_verified": "2026-06-20", "url": "https://jobicy.com/api/v2/remote-jobs", "_tos": "open API (ai-train=yes, full JD) BUT robots.txt Disallow:/api/ + no redistribution to other aggregators + asks <=~1 poll/hr — robots conflict, deferred (ADR-0002)."},
        {"name": "himalayas", "_date_verified": "2026-06-20", "url": "https://himalayas.app/jobs/api", "_tos": "public /jobs/api returns 200 unauth, but general ToS §30 requires prior written approval for automated tools; no dedicated API-ToS grant (ADR-0002)."},
        {"name": "remotive", "_date_verified": "2026-06-20", "url": "https://remotive.com/api/remote-jobs", "_tos": "robots.txt Disallow:/api/*; attribution (follow link + name) + <=4 req/day + 24h delay; private paid API for heavy use, no public price (ADR-0002)."}
+     ]},
+    {"_note": "Discovery-layer candidates (#292, ADR-0004): company-signal sources evaluated but NOT adopted — yc-oss stays the single phase-1 source. Recorded so they are not re-researched; not loaded by any pipeline (discover.py reads only the `discovery` key).",
+     "_kind": "discovery",
+     "sources": [
+       {"name": "hn-whoishiring", "_date_verified": "2026-07-14", "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&query=Ask%20HN%20Who%20is%20hiring",
+        "_reason": "PHASE-2 LEAD. Public no-auth Algolia API; HN robots disallows only interactive endpoints (Crawl-delay:30); broader-than-YC + monthly recency. Deferred: signal is free-text comments (no schema) -> needs regex/LLM extraction, a real slice not a drop-in. Revisit if yc-oss proves too narrow."},
+       {"name": "startups-gallery", "_date_verified": "2026-07-14", "url": "https://startups.gallery",
+        "_reason": "CAUTION: robots Allow:/ but no findable ToS (absence != permission); HTML-only (no API/JSON), Framer side-project (brittle scrape); no per-company hiring flag + same VC population as yc-oss -> redundant, worse-parsed superset. Not worth adding even via polyfetch."},
+       {"name": "startup-newsletters", "_date_verified": "2026-07-14",
+        "_reason": "DEFERRED-WEAK: Harmonic Hot25 / Ramp reports / a16z Next-Play+Build / Early Days / Founders-You-Should-Know. Curated prose + Substacks (some paywalled); names embedded in text -> unreliable deterministic extraction (confirms #292 prose=weak)."}
      ]}
   ]
 }
