@@ -50,6 +50,11 @@ expand to chase "market intel."
   in_corpus}}`), joined to the local corpus by a normalized company key. **Never published** — the
   business-data boundary is structural (the `trends_data` allowlist + this ADR), not just convention.
 - Adding a second source requires the same tiering + reachability-verify pass recorded here.
+- Further candidates evaluated 2026-07-14 (startups.gallery, HN "Who is hiring?", Wellfound, Crunchbase,
+  hnhiring.com, breakout-startup newsletters) are recorded **per-source** in `config/default-seed.json`
+  `_blocked` / `_deferred` (tagged `_kind: "discovery"`) so they are not re-researched — the seed is the
+  machine-readable list; this ADR narrates only the shipped decision. Bottom line: **none cleared the bar;
+  the HN Algolia API is the sole phase-2 lead** (public/no-auth but needs free-text extraction).
 - Partially reopens the ADR-0002 slug-discovery deferral: this reads a public directory to derive
   *company signal*, not to auto-derive ATS board tokens — the latter stays deferred (ADR-0002 §Out of scope).
 
