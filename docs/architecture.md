@@ -233,7 +233,8 @@ single source of truth that AGENTS.md, README.md, and SECURITY.md link to:
   `config/lanes.json` (the canonical position lanes, #195). Your `config/seed.json` overrides the
   default-seed when present; absent it, ingest falls back to the default.
 - `results/` — everything generated and **PII-bearing** (`jobs-raw.json`, `corpus.json`,
-  `daily-summary.md`, `<lane>/shortlist.*`, `offers/<slug>/`, `hiring-companies.ndjson`,
+  `daily-summary.md`, `<lane>/shortlist.*`, `offers/<slug>/` (incl. optional `render-pdf` PDFs
+  written beside each `.md`, #275), `hiring-companies.ndjson`,
   `emerging-companies.json`); git-ignored (dir kept via `.gitkeep`), **never published**. The
   `daily-summary.md` digest (#175) names companies/titles → **local-only**; the per-company
   `hiring-companies.ndjson` series and the `discover` output `emerging-companies.json` (#292) are
@@ -274,6 +275,8 @@ public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
   must-have coverage with per-gap upskilling pointers, #55/#274, + an optional draft→critique→revise
   pass, #272); `ajoa-kit ats-check`
   parse-safety (#9) + a deterministic `cv-stuffing-check.md` keyword-stuffing backstop (#272);
+  `ajoa-kit render-pdf` optional Markdown→PDF export of a tailored pack (#275, lazy `[pdf]` extra —
+  fpdf2 + markdown-it, no LaTeX / no build; single-column ATS-safe selectable text, bundled DejaVu font);
   style/tone tailoring (#16); `ajoa-kit status` local application-outcome tracker (#273);
   cited delivery safety note (research.md §Delivery, #8); structured board
   catalog (#10) with ToS/ToU tiers (ADR-0002, #95); runtime-configurable pre-filter keywords (`config/keywords.json`, #31);

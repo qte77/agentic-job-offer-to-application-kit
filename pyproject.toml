@@ -13,6 +13,11 @@ dependencies = [
     "pydantic-settings>=2.14.2",
 ]
 
+# Optional, lazy-imported extra (#275): `uv sync --extra pdf` enables `ajoa-kit render-pdf`.
+# Never core — render_pdf.py imports fpdf2/markdown-it inside functions so it loads without these.
+[project.optional-dependencies]
+pdf = ["fpdf2>=2.8", "markdown-it-py>=3.0"]
+
 [project.scripts]
 ajoa-kit = "ajoa_kit.__main__:main"
 
@@ -29,6 +34,9 @@ dev = [
     # Adopting 6.x is a deliberate task (refactor those two mains), not a Dependabot drive-by.
     "complexipy>=5.6.1,<6",
     "hypothesis>=6.156.4",
+    # PDF extra, in dev too so `make check` can live-render (render_pdf still lazy-imports them).
+    "fpdf2>=2.8",
+    "markdown-it-py>=3.0",
 ]
 
 [build-system]

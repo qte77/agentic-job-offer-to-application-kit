@@ -9,6 +9,7 @@ Usage::
     ajoa-kit refresh [--lane NAME] [--delete] [--dry-run]
     ajoa-kit verify-sources [--dry-run]
     ajoa-kit ats-check <cv.md>
+    ajoa-kit render-pdf <cv.md> [--out OUT.pdf]
     ajoa-kit lanes [--json]
     ajoa-kit style [--json]
     ajoa-kit prefill-fields [--ats greenhouse --slug S --job-id ID]
@@ -69,6 +70,13 @@ def _ats_check(args: argparse.Namespace) -> None:
     from ajoa_kit.ats_check import main as run
 
     run(src=Path(args.file))
+
+
+def _render_pdf(args: argparse.Namespace) -> None:
+    """Render a tailored .md (cv/cover-letter) to an ATS-safe PDF (needs the [pdf] extra)."""
+    from ajoa_kit.render_pdf import main as run
+
+    run(src=Path(args.file), out=Path(args.out) if args.out else None)
 
 
 def _style(args: argparse.Namespace) -> None:
@@ -229,6 +237,13 @@ def main() -> None:
     )
     ats_p.add_argument("file", metavar="FILE", help="Path to a CV markdown file.")
     ats_p.set_defaults(func=_ats_check)
+
+    rp = sub.add_parser(
+        "render-pdf", help="Render a tailored .md to an ATS-safe PDF. Needs the [pdf] extra."
+    )
+    rp.add_argument("file", metavar="FILE", help="Path to a tailored markdown file.")
+    rp.add_argument("--out", default="", help="Output PDF path (default: <file>.pdf).")
+    rp.set_defaults(func=_render_pdf)
 
     style_p = sub.add_parser("style", help="Preview the resolved writing-style directives (#16).")
     style_p.add_argument(
