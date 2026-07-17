@@ -44,6 +44,7 @@ make persist FILE=<workflow-output.json>              # -> results/<lane>/shortl
 #   Workflow({ scriptPath: ".claude/workflows/cc-workflow-tailor-offer.js", args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
 uv run ajoa-kit persist-offer <workflow-output.json>  # -> results/offers/<slug>/*.md
 uv run ajoa-kit ats-check results/offers/<slug>/cv.md # ATS parse-safety gate
+uv run ajoa-kit render-pdf results/offers/<slug>/cv.md # optional -> cv.pdf (needs: uv sync --extra pdf)
 ```
 
 Build the evidence library once, upstream, via the Stage-1 Workflow
@@ -63,6 +64,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `refresh` | reconcile shortlists vs the corpus `delisted` state + a read-only URL re-probe · `--lane <name>` (default: all buckets) · `--delete` (remove vs flag `stale`) · `--dry-run` |
 | `verify-sources` | re-probe every `config/default-seed.json` `feeds`/`ats` source (read-only, no auth), stamp `_date_verified` on the live ones, report the rest for manual triage · `--dry-run` (#217) |
 | `ats-check` | `FILE` — a CV markdown file |
+| `render-pdf` | `FILE` — a tailored markdown file · `--out <path>` (default `<file>.pdf`) — optional Markdown→PDF export; needs the `[pdf]` extra (`uv sync --extra pdf`) |
 | `lanes` | `--json` — emit the workflow `lanes` arg from `config/lanes.json` (the canonical 7 lanes) |
 | `style` | `--json` — emit the tailor `style` arg from `config/style.json` |
 | `prefill-fields` | `--ats <name> --slug <board> --job-id <id>` (Greenhouse schema lookup) |
