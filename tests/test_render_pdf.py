@@ -1,15 +1,22 @@
-"""Value-add tests for the pure HTML normaliser behind ``render-pdf`` (issue #275).
+"""Value-add tests for ``render-pdf`` (issue #275).
 
-``_normalize_html`` reduces markdown-it's HTML to the tag subset fpdf2's ``write_html`` renders.
-Each case pins one transformation the renderer depends on — the sharp edges (tag remap, drop with
-text kept, link survival, entity safety), not the glue (that is verified live against a real PDF).
-The module imports without the ``pdf`` extra (fpdf2/markdown-it are lazy), so importing it here
-never needs those deps.
+The pure ``_normalize_html`` cases pin one transformation each — the sharp edges (tag remap, drop
+with text kept, link survival, entity safety). A final guarded smoke test pins the render *glue*:
+that a real accented / bold / italic / linked document renders to a valid PDF without raising (it
+skips when the ``pdf`` extra is absent, so the pure cases still run offline — importing this module
+never needs fpdf2/markdown-it, they are lazy inside ``render_pdf``).
 """
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import pytest
+
 from ajoa_kit import render_pdf
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_strong_and_em_are_remapped_to_b_and_i() -> None:
@@ -50,3 +57,20 @@ def test_html_entities_are_left_untouched() -> None:
     out = render_pdf._normalize_html("<p>Tom &amp; Jerry &lt;3</p>")
     assert "&amp;" in out
     assert "&lt;" in out
+
+
+def test_render_pdf_produces_a_valid_pdf(tmp_path: Path) -> None:
+    # Glue smoke (skips without the [pdf] extra). Covers the silent-regression surface: frontmatter
+    # strip, an accented H1 (Unicode-font path — the spike's one gap), bold/italic, a link. A broken
+    # font path or write_html signature would raise; a valid PDF starts with the %PDF- magic bytes.
+    pytest.importorskip("fpdf")
+    pytest.importorskip("markdown_it")
+    md = (
+        '---\ntitle: "Tailored CV"\n---\n\n'
+        "# José Müller\n\n## Summary\n**Infra** and *DX* — see [GitHub](https://github.com/me).\n"
+    )
+    out = tmp_path / "cv.pdf"
+    render_pdf.render_pdf(md, out)
+    data = out.read_bytes()
+    assert data.startswith(b"%PDF-")
+    assert len(data) > 1024  # embedded DejaVu ⇒ a real PDF is comfortably over 1 KB
