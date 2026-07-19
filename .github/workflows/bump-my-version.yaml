@@ -1,25 +1,15 @@
 ---
 name: bump-my-version
 
-# Manually-triggered version bump. Invokes the `bump-my-version` CLI
-# directly (the package is a dev dep — see [dependency-groups].dev in
-# pyproject.toml) rather than the `callowayproject/bump-my-version`
-# composite action, which transitively uses tag-pinned subactions that
-# the repo's "Require actions to be pinned to a full-length commit SHA"
-# rule rejects.
-#
-# Behavior: bumps pyproject.toml + README badge + src/ajoa_kit/__init__.py
-# per [tool.bumpversion] config, syncs uv.lock, collects changelog.d
-# fragments into CHANGELOG.md, pushes a `bump-<run>-<base>` branch, and
-# opens a PR for review. Tagging is intentionally deferred to
-# `tag-release.yaml`, which fires on push-to-main and tags the
-# squash-merge commit on `main` so the `v{new}` ref always points to a
-# commit reachable from `main` (no "tag drift" from squash-merging the
-# bump-branch commit).
-#
-# NOTE: the opened PR is bot-authored (GITHUB_TOKEN), so its checks idle
-# at `action_required` until a real-user event — push an empty commit to
-# the bump branch, or close + reopen the PR (see CONTRIBUTING "Releasing").
+# Thin caller: delegates the version bump to the estate-standard reusable
+# workflow (qte77/.github, #193). Behavior is unchanged — bumps the
+# [tool.bumpversion] files (pyproject.toml + README badge + __init__.py +
+# ui/index.html footer), syncs uv.lock, collects changelog.d/ fragments into
+# CHANGELOG.md, and opens a `chore(release)` PR. Tagging stays deferred to
+# tag-release.yaml (the reusable bumps with --no-tag on the uv path), so the
+# v{new} tag lands on main's squash-merge commit. The opened PR is bot-authored
+# (GITHUB_TOKEN) so its checks idle at action_required until a real-user event
+# — see CONTRIBUTING "Releasing".
 
 on:
   workflow_dispatch:
@@ -38,96 +28,11 @@ permissions:
   contents: write
   pull-requests: write
 
-env:
-  BRANCH_NEW: bump-${{ github.run_number }}-${{ github.ref_name }}
-
 jobs:
   bump:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-        with:
-          fetch-depth: 0
-
-      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990  # v8.3.2
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-
-      - name: Set up Python + install dev deps (bump-my-version)
-        run: |
-          uv python install 3.12
-          uv sync --group dev
-
-      - name: Configure git + branch
-        env:
-          BRANCH: ${{ env.BRANCH_NEW }}
-        run: |
-          git config user.email "bumped@qte77.gha"
-          git config user.name "bump-my-version"
-          git checkout -b "$BRANCH"
-
-      - name: Run bump-my-version
-        id: bump
-        env:
-          BUMP_TYPE: ${{ inputs.bump_type }}
-        run: |
-          set -euo pipefail
-          PREV_VERSION=$(uv run bump-my-version show current_version)
-          # --no-tag: tag-release.yaml creates the annotated tag against
-          # main's squash-merge commit, not this feature branch's commit.
-          uv run bump-my-version bump --no-tag "$BUMP_TYPE"
-          NEW_VERSION=$(uv run bump-my-version show current_version)
-          {
-            echo "prev_version=$PREV_VERSION"
-            echo "new_version=$NEW_VERSION"
-            echo "bumped=true"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Sync uv.lock to the new version
-        if: steps.bump.outputs.bumped == 'true'
-        run: |
-          set -euo pipefail
-          # bump-my-version patches the version files but not uv.lock, whose own
-          # ajoa-kit entry would otherwise lag the bumped pyproject version.
-          uv lock
-          if ! git diff --quiet uv.lock; then
-            git add uv.lock
-            git commit -m "chore: sync uv.lock"
-          fi
-
-      - name: Collect changelog fragments
-        if: steps.bump.outputs.bumped == 'true'
-        env:
-          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
-        run: |
-          set -euo pipefail
-          if ls changelog.d/*.md >/dev/null 2>&1; then
-            uv run scriv collect --version "$NEW_VERSION"
-            git add CHANGELOG.md changelog.d/
-            git commit -m "docs(changelog): collect fragments for $NEW_VERSION"
-          else
-            echo "no changelog fragments to collect"
-          fi
-
-      - name: Push branch
-        if: steps.bump.outputs.bumped == 'true'
-        env:
-          BRANCH: ${{ env.BRANCH_NEW }}
-        run: |
-          git push origin "HEAD:refs/heads/$BRANCH"
-
-      - name: Open release PR
-        if: steps.bump.outputs.bumped == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_BRANCH: ${{ github.ref_name }}
-          HEAD_BRANCH: ${{ env.BRANCH_NEW }}
-          PREV_VERSION: ${{ steps.bump.outputs.prev_version }}
-          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
-        run: |
-          gh pr create \
-            --base "$BASE_BRANCH" \
-            --head "$HEAD_BRANCH" \
-            --title "chore(release): bump $PREV_VERSION -> $NEW_VERSION" \
-            --body "Automated bump via bump-my-version.yaml workflow_dispatch. Updates pyproject.toml, the README version badge, src/ajoa_kit/__init__.py, and CHANGELOG.md. The \`v$NEW_VERSION\` tag is created automatically by \`tag-release.yaml\` after this PR is squash-merged to main, so the tag always points at the merge commit."
+    uses: qte77/.github/.github/workflows/bump-version.yml@b03592321e529d0d136b35852fc9045e96c65159  # 2026-07-18
+    with:
+      bump_type: ${{ inputs.bump_type }}
+      use_uv: true
+      sync_lockfile: true
+      collect_scriv: true
