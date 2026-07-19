@@ -16,6 +16,27 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.8.0] - 2026-07-19
+
+### Added
+
+- Optional Markdown→PDF export (#275): a new `ajoa-kit render-pdf FILE [--out OUT.pdf]` verb turns a
+  tailored `results/offers/<slug>/{cv,cover-letter}.md` into a clean, single-column, ATS-safe PDF
+  with a real (selectable) text layer a human reviews and submits. Powered by `fpdf2` +
+  `markdown-it-py` behind a lazy-imported `[pdf]` extra (`uv sync --extra pdf`) — never a core
+  dependency, no LaTeX / no build step. Ships the DejaVu Sans font (its license under
+  `src/ajoa_kit/fonts/`) so accents / en-dash / `·` / smart-quotes render correctly; headings and
+  list bullets are recolored to black for a professional CV. The PDF is written beside the source
+  `.md` under the git-ignored `results/offers/<slug>/`, never published.
+
+### Changed
+
+- Release CI now delegates to the estate-standard reusable workflows in `qte77/.github` (#193):
+  `bump-my-version.yaml`, `tag-release.yaml`, and `publish-release.yaml` are thin `uses:` callers
+  (SHA-pinned) instead of inline steps. Behavior and the operator commands are unchanged; the bump
+  now commits via the GitHub API (signed), and the never-delete-tags / idempotent guardrails are
+  centralized upstream.
+
 ## [0.7.0] - 2026-07-14
 
 ### Added
