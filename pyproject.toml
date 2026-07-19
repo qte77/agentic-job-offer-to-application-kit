@@ -103,15 +103,17 @@ entry_title_template = "[{{ version }}] - {{ date.strftime('%Y-%m-%d') }}"
 md_html_anchors = false
 
 # Version bumping (release flow). `gh workflow run bump-my-version.yaml -f bump_type=…`
-# rewrites the three files below, syncs uv.lock, collects fragments, and opens a
-# `chore(release)` PR; `tag-release.yaml` tags the merge commit (CI passes --no-tag).
-# See CONTRIBUTING.md "Releasing".
+# rewrites the version files below and syncs uv.lock + collects fragments. The qte77/.github
+# bump-version reusable (#193) commits the result via the GitHub API (signed) and opens a
+# `chore(release)` PR; `tag-release.yaml` tags the merge commit. So bump-my-version must NOT
+# commit or tag itself — files-only (commit/tag = false), else it aborts on the runner with
+# "empty ident name" (no git identity is configured for a files-only bump). See CONTRIBUTING "Releasing".
 [tool.bumpversion]
 current_version = "0.7.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
-commit = true
-tag = true
+commit = false
+tag = false
 allow_dirty = false
 sign_tags = false
 tag_name = "v{new_version}"
