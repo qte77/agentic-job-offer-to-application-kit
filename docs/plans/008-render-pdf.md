@@ -1,8 +1,8 @@
 # Plan 008 — `render-pdf`: optional light Markdown→PDF for tailored packs (#275)
 
-**Status: PLANNED (2026-07-14).** Spike done → **GO via fpdf2**. `main` green at `c5ab2dd`. Carries a
-symbol-level source map (verified 2026-07-14) so a resuming session **does not re-map the codebase**.
-Handoff: [docs/handoffs/008-render-pdf.md](../handoffs/008-render-pdf.md) — read first.
+**Status: SHIPPED (2026-07-19)** — #275 CLOSED via #335 (`render-pdf` feature) + #336 (glue smoke test).
+Spike done → **GO via fpdf2**. Kept as history; carries the symbol-level source map from the build.
+Handoff: [docs/handoffs/008-render-pdf.md](../handoffs/008-render-pdf.md).
 
 ## Context
 
