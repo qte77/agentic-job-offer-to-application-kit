@@ -1,7 +1,7 @@
 # Handoff 008 — `render-pdf` (#275)
 
-**State (2026-07-14): PLANNED, not started.** `main` @ `c5ab2dd`, clean, v0.7.0 released. Approved plan with a
-full symbol-level source map — **read it, don't re-map**:
+**State (2026-07-19): SHIPPED.** #275 CLOSED via #335 (the `render-pdf` feature) + #336 (glue smoke test);
+`main` @ `983ff6a`. Kept as history — the source map below is the record. Plan:
 [docs/plans/008-render-pdf.md](../plans/008-render-pdf.md).
 
 ## Done (context)
