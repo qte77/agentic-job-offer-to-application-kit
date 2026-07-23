@@ -274,7 +274,8 @@ public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
   tailor pack (match/CV/cover-letter/gap-report/prefill-pack + optional coverage-report on JD
   must-have coverage with per-gap upskilling pointers, #55/#274, + an optional draft→critique→revise
   pass, #272); `ajoa-kit ats-check`
-  parse-safety (#9) + a deterministic `cv-stuffing-check.md` keyword-stuffing backstop (#272);
+  parse-safety (#9) + a deterministic `cv-stuffing-check.md` keyword-stuffing backstop (#272)
+  and a deterministic `jd-truncation-check.md` source-JD-cap backstop (#347);
   `ajoa-kit render-pdf` optional Markdown→PDF export of a tailored pack (#275, lazy `[pdf]` extra —
   fpdf2 + markdown-it, no LaTeX / no build; single-column ATS-safe selectable text, bundled DejaVu font);
   style/tone tailoring (#16); `ajoa-kit status` local application-outcome tracker (#273);

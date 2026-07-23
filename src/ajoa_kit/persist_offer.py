@@ -7,8 +7,9 @@ returned JSON into on-disk markdown artifacts a human reviews before submitting.
 
 Writes ``results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md`` (plus a
 ``coverage-report.md`` when the pack carries ``must_haves``, a ``cv-ats-check.md`` when the CV
-trips the parse-safety pass, #75, and a ``cv-stuffing-check.md`` when it trips the keyword-stuffing
-pass, #272), and a ``meta.json`` recording the JD id so the local dashboard
+trips the parse-safety pass, #75, a ``cv-stuffing-check.md`` when it trips the keyword-stuffing
+pass, #272, and a ``jd-truncation-check.md`` when the source JD sat at the ingest description
+cap, #347), and a ``meta.json`` recording the JD id so the local dashboard
 can join the pack back to its shortlist row (#209). The results root comes from
 ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate workspace works.
 
@@ -26,6 +27,7 @@ from pathlib import Path
 
 from ajoa_kit.ats_check import parse_safety_warnings
 from ajoa_kit.coverage import coverage_summary
+from ajoa_kit.defaults import DESC_CAP
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.stuffing import stuffing_warnings
 
@@ -85,15 +87,53 @@ def render(pack: dict) -> list[tuple[str, str]]:
     return rendered
 
 
+def jd_truncation_warning(jd_id: str | None, results_dir: Path, cap: int = DESC_CAP) -> str | None:
+    """Detect a source JD that sits at the ingest description cap (#347).
+
+    The tailor pass grounds on ``results/jobs-raw.json``, whose ``description`` ingest caps at
+    :data:`ajoa_kit.defaults.DESC_CAP` chars — a pack built from a capped JD silently lost
+    whatever requirements sat past the cap, and the Match agents notice it only sometimes.
+    Deterministic check instead: a warning when the recorded description length reached the cap,
+    ``None`` when the JD is complete or indeterminable (missing corpus / unknown id — never
+    raises, never claims either way without evidence).
+
+    Args:
+        jd_id: The pack's JD id (``offer_id``/``id``); ``None``/empty skips the check.
+        results_dir: The results root holding ``jobs-raw.json``.
+        cap: The ingest description cap to compare against.
+
+    Returns:
+        A human-facing warning string, or ``None``.
+    """
+    if not jd_id:
+        return None
+    try:
+        records = json.loads((results_dir / "jobs-raw.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    for rec in records if isinstance(records, list) else []:
+        if isinstance(rec, dict) and rec.get("id") == jd_id:
+            desc = rec.get("description")
+            if isinstance(desc, str) and len(desc) >= cap:
+                return (
+                    f"the ingested JD description sits at the {cap}-char ingest cap, so this "
+                    "pack was tailored from a truncated JD — open the live posting and check "
+                    "the requirements past the cut before submitting"
+                )
+            return None
+    return None
+
+
 def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     """Write the validated pack to ``results_dir/offers/<safe-slug>/``.
 
     Validation happens before any write, so an incomplete pack leaves the disk untouched.
     When the pack carries ``must_haves``, a ``coverage-report.md`` is also written — outside
     the all-or-nothing artifact set, so packs without it are unaffected. A ``cv-ats-check.md`` is
-    written whenever the tailored CV trips the parse-safety check (#75), and a
-    ``cv-stuffing-check.md`` whenever it trips the keyword-stuffing check (#272) — both non-blocking
-    review aids, also outside the all-or-nothing set.
+    written whenever the tailored CV trips the parse-safety check (#75), a
+    ``cv-stuffing-check.md`` whenever it trips the keyword-stuffing check (#272), and a
+    ``jd-truncation-check.md`` whenever the source JD sat at the ingest description cap
+    (#347) — all non-blocking review aids, also outside the all-or-nothing set.
 
     Args:
         pack: The tailor result.
@@ -135,9 +175,19 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
             "Review before submitting — non-blocking warnings, not errors.\n\n"
             f"{items}\n"
         )
+    jd_id = pack.get("offer_id") or pack.get("id")
+    # Deterministic source-JD truncation check (#347): a pack tailored from a DESC_CAP-capped JD
+    # lost whatever sat past the cap, and agent self-reporting misses it — same non-blocking
+    # review-aid idiom as the two CV checks above.
+    truncation = jd_truncation_warning(jd_id, results_dir)
+    if truncation:
+        (offer_dir / "jd-truncation-check.md").write_text(
+            '---\ntitle: "Source JD truncation check"\n---\n\n'
+            "Review before submitting — non-blocking warning, not an error.\n\n"
+            f"- {truncation}\n"
+        )
     # Sidecar for the local dashboard join (#209): the dir is named by the (maybe custom) slug, so
     # record the JD id -> this offer so build_ui_shortlist can attach cv/cover-letter by id.
-    jd_id = pack.get("offer_id") or pack.get("id")
     if jd_id:
         (offer_dir / "meta.json").write_text(json.dumps({"id": jd_id, "slug": safe_slug(slug)}))
     return offer_dir
