@@ -13,7 +13,10 @@
 //     //   results/evidence-library.json (the Stage-1 output) for the candidate brief
 //   }})
 // (now under .claude/workflows/, it can also be invoked by name: Workflow({ name: 'relevance' }).)
-// ⚠️ TOKEN USAGE: fans out ONE subagent per batch — cost scales with batchCount (e.g. 106 batches ≈ 106 LLM calls). Use limitBatches:K for a cheap dry run before a full pass.
+// ⚠️ TOKEN USAGE: fans out ONE subagent per batch — cost scales with batchCount (e.g. 106 batches ≈ 106 LLM calls; measured ≈100k tokens per 40-JD batch, 2026-07). Use limitBatches:K for a cheap dry run before a full pass.
+// ⚠️ RESUME: Workflow resumeFromRunId replays completed agents from cache SAME-SESSION only — and a
+// re-run of `ingest --merge` / `chunk --new` recomputes the delta, so the batch files a paused run
+// references may silently change; after any re-chunk, start a fresh run instead of resuming.
 //
 // Persist the returned shortlist with `ajoa-kit persist` — see CONTRIBUTING.md §Commands.
 //

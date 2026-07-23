@@ -29,6 +29,11 @@ Recurring mistakes and their promoted fixes are logged in
   [docs/decisions/0002-source-tos-tiers.md](docs/decisions/0002-source-tos-tiers.md).
 - **Python**: target `pydantic` for structured config/models (no `TypedDict` / `dataclass`);
   keep pure logic importable without the network layer (lazy-import `polyfetch_scrape`).
+- **Network-touching subcommands** (`ingest` / `probe` / `refresh` / `verify-sources` /
+  `discover`) import the fetch layer from the sibling
+  [polyfetch-scrape](https://github.com/qte77/polyfetch-scrape) checkout — run them via the
+  venv-borrow (see [CONTRIBUTING §Polyfetch venv-borrow](CONTRIBUTING.md#polyfetch-venv-borrow));
+  never add it as a hard dependency.
 
 ## Quality gates
 

@@ -31,7 +31,9 @@ agent-agnostically so any coding agent can drive them.
 Seven configurable **position lanes** (CxO/fractional · founding engineer · senior IC engineering ·
 applied-AI/ML · forward-deployed/solutions · cloud/DevOps/platform · architect), defined in
 `config/lanes.json` — see [docs/architecture.md §Position lanes](docs/architecture.md#position-lanes).
-Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist.
+Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist
+(measured: ≈100k tokens per 40-JD relevance batch; ≈300–600k per tailored offer with the
+critique pass).
 
 A no-build **dashboard** (screencast below) surfaces the tailored shortlist, the published job-market
 trends (keyword frequency + geo-by-field hiring), and a local Companies-hiring view with a snapshot
@@ -69,8 +71,11 @@ make install      # sync the dev environment (uv)
 make preview      # serve the dashboard at http://localhost:8000 (PORT=9000 make preview to change)
 ```
 
-Two ways to actually use it once installed — both run the LLM phases via the **Claude Code**
-Workflow tool (`Workflow({…})`), so you'll need Claude Code installed as well as uv:
+The demo and dashboard are fully standalone; **running a search is agent-driven** — the
+relevance/tailor phases execute only inside a Claude Code session (documented
+agent-agnostically, so another coding agent can implement them). Two ways to actually use it
+once installed — both run the LLM phases via the **Claude Code** Workflow tool
+(`Workflow({…})`), so you'll need Claude Code installed as well as uv:
 
 - **Try the bundled example (no fetch, no data of your own).** Screen the synthetic
   [`examples/alexis-doe/`](examples/alexis-doe/) corpus straight to a scored shortlist plus a tailored
