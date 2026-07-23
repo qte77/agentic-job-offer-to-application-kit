@@ -90,6 +90,36 @@ def test_write_pack_flags_stuffed_cv_without_failing(tmp_path: Path) -> None:
     assert "stuffing" in (offer_dir / "cv-stuffing-check.md").read_text().lower()
 
 
+def test_write_pack_normalizes_embedded_frontmatter(tmp_path: Path) -> None:
+    # Tailor agents sometimes embed the ---title--- block inside the artifact value itself
+    # (once or even twice); render() wraps it again, stacking 2-3 blocks that leak into the
+    # dashboard as literal text (#351). The written artifact must carry exactly ONE canonical
+    # block regardless of what the agent emitted.
+    embedded = (
+        '---\ntitle: "Tailored CV"\n---\n\n'
+        '---\ntitle: "Tailored CV"\n---\n\n'
+        "## Summary\nEngineer.\n"
+    )
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "cv": embedded}, slug="acme-ai-101", results_dir=tmp_path
+    )
+    cv = (offer_dir / "cv.md").read_text()
+    assert cv.count("---\ntitle:") == 1
+    assert cv.startswith('---\ntitle: "Tailored CV"\n---\n\n## Summary')
+
+
+def test_write_pack_keeps_mid_document_rules(tmp_path: Path) -> None:
+    # A `---` thematic break inside the body is content, not frontmatter — only leading
+    # block(s) are normalized (#351).
+    body = "## Summary\nEngineer.\n\n---\n\n## Experience\n- x\n"
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "cv": body}, slug="acme-ai-101", results_dir=tmp_path
+    )
+    cv = (offer_dir / "cv.md").read_text()
+    assert "\n---\n\n## Experience" in cv  # the rule survives
+    assert cv.count("---\ntitle:") == 1
+
+
 def test_write_pack_flags_capped_jd_for_review(tmp_path: Path) -> None:
     # A pack whose source JD in jobs-raw.json sits AT the ingest DESC_CAP was tailored from a
     # truncated description (#347) — deterministically surface a jd-truncation-check.md review
