@@ -21,7 +21,7 @@
 //                                // unless critique is true.
 //   }})
 // (now under .claude/workflows/, it can also be invoked by name: Workflow({ name: 'tailor-offer' }).)
-// ⚠️ TOKEN USAGE: a few LLM subagents (Match → Tailor → [Critique] → Prefill) per offer — modest, but it is an LLM pass; tailor only offers you actually intend to pursue.
+// ⚠️ TOKEN USAGE: LLM subagents (Match → Tailor → [Critique] → Prefill) per offer — measured ≈300–600k tokens per offer with critique (~420k avg, 2026-07); tailor only offers you actually intend to pursue.
 //
 // Persist the returned pack with `ajoa-kit persist-offer` — see CONTRIBUTING.md §Commands
 // (writes results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md — human reviews + submits).
