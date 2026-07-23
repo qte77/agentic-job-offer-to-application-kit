@@ -81,9 +81,17 @@ def render(pack: dict) -> list[tuple[str, str]]:
         value = pack.get(key)
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"pack missing required artifact: {key}")
+        # Tailor agents sometimes embed the title block inside the value itself (#351) — strip
+        # any LEADING frontmatter block(s) so the canonical wrap below is the only one; a `---`
+        # rule mid-body is content and stays.
+        body = value.strip()
+        stripped = strip_frontmatter(body)
+        while stripped != body:
+            body = stripped.strip()
+            stripped = strip_frontmatter(body)
         # Title as YAML frontmatter (not a wrapping `# H1`) so each artifact keeps a single H1
         # from its own body — markdownlint strips frontmatter, so no MD025 "multiple H1" noise.
-        rendered.append((filename, f'---\ntitle: "{heading}"\n---\n\n{value.strip()}\n'))
+        rendered.append((filename, f'---\ntitle: "{heading}"\n---\n\n{body}\n'))
     return rendered
 
 
