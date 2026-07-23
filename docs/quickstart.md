@@ -22,8 +22,12 @@ them in full.
 ## Run your own search
 
 **Prerequisites:** [uv](https://docs.astral.sh/uv/) (provisions Python ≥ 3.11), **Claude Code** (its
-Workflow tool runs the relevance/tailor phases), and a `polyfetch-scrape` checkout beside this repo at
-`../polyfetch-scrape` (the network-fetch layer `make ingest` / `probe` borrow). The Makefile is the
+Workflow tool runs the relevance/tailor phases), and a
+[`polyfetch-scrape`](https://github.com/qte77/polyfetch-scrape) checkout beside this repo —
+`git clone https://github.com/qte77/polyfetch-scrape ../polyfetch-scrape && (cd ../polyfetch-scrape && uv sync)`
+— the network-fetch layer every network-touching subcommand borrows (`ingest`, `probe`,
+`refresh`, `verify-sources`, `discover`); see
+[CONTRIBUTING §Polyfetch venv-borrow](../CONTRIBUTING.md#polyfetch-venv-borrow). The Makefile is the
 command source of truth (`make help`); the CLI flags and the `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR` /
 `POLYFETCH_DIR` overrides are tabulated in [CONTRIBUTING.md](../CONTRIBUTING.md#commands) for
 contributors. What you author first is the **source list**:
@@ -80,7 +84,7 @@ Screen only the offers first seen in the latest pull (cheap — skips everything
 union them into the existing shortlists without clobbering:
 
 ```bash
-POLYFETCH_DIR=../polyfetch-scrape uv run ajoa-kit ingest --merge   # updates results/corpus.json
+POLYFETCH_DIR=../polyfetch-scrape scripts/ingest.sh --merge       # updates results/corpus.json
 uv run ajoa-kit chunk --new                                       # batch only the corpus.json delta
 # relevance (Workflow tool) over the delta batches; save the result, then:
 uv run ajoa-kit persist --merge <relevance-output.json>           # union by id into shortlists
@@ -89,9 +93,13 @@ uv run ajoa-kit persist --merge <relevance-output.json>           # union by id 
 Then reconcile — offers get filled or closed, so a shortlist goes stale:
 
 ```bash
-uv run ajoa-kit refresh --lane engineering --dry-run   # report what would be flagged
-uv run ajoa-kit refresh --lane engineering             # flag dead offers `stale` (default)
-uv run ajoa-kit refresh --delete                       # remove dead offers from every lane instead
+# refresh re-probes offer URLs, so it runs via the polyfetch venv-borrow
+# (see CONTRIBUTING §Polyfetch venv-borrow):
+AJOA_CONFIG_DIR="$PWD/config" AJOA_RESULTS_DIR="$PWD/results" PYTHONPATH="$PWD/src" \
+  uv run --directory ../polyfetch-scrape --with pydantic --with pydantic-settings --with defusedxml \
+  python -m ajoa_kit refresh --lane engineering --dry-run   # report what would be flagged
+# same invocation without --dry-run flags dead offers `stale` (default);
+# `refresh --delete` removes them from every lane instead
 ```
 
 Each `results/<lane>/shortlist.json` entry is re-checked against the corpus `delisted` state **and** a

@@ -35,7 +35,7 @@ script's header in [`.claude/workflows/`](.claude/workflows/) for the exact `arg
 
 ```bash
 POLYFETCH_DIR=../polyfetch-scrape make ingest         # -> results/jobs-raw.json
-#   uv run ajoa-kit ingest --merge  also folds the pull into results/corpus.json (the daily-cron corpus)
+#   scripts/ingest.sh --merge  also folds the pull into results/corpus.json (the daily-cron corpus)
 make chunk                                            # -> results/batches/ + manifest.json
 # relevance (Workflow tool) — batchCount = results/batches/manifest.json .batch_count:
 #   Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js", args: { rootDir: ".", batchCount: <N> } })
@@ -50,6 +50,24 @@ uv run ajoa-kit render-pdf results/offers/<slug>/cv.md # optional -> cv.pdf (nee
 Build the evidence library once, upstream, via the Stage-1 Workflow
 (`.claude/workflows/cc-workflow-evidence-library.js`) → `results/evidence-library.json`.
 
+### Polyfetch venv-borrow
+
+The network-touching subcommands (`ingest`, `probe`, `refresh`, `verify-sources`, `discover`)
+lazy-import `polyfetch_scrape` and run inside the sibling
+[polyfetch-scrape](https://github.com/qte77/polyfetch-scrape) venv rather than this repo's.
+`scripts/ingest.sh` wraps the recipe for ingest; for the others run it directly:
+
+```bash
+AJOA_CONFIG_DIR="$PWD/config" AJOA_RESULTS_DIR="$PWD/results" PYTHONPATH="$PWD/src" \
+  uv run --directory "${POLYFETCH_DIR:-../polyfetch-scrape}" \
+  --with pydantic --with pydantic-settings --with defusedxml \
+  python -m ajoa_kit <subcommand> [flags]
+```
+
+The borrow provides only the heavy fetch stack; the `--with` trio adds ajoa-kit's own light
+deps onto that env, and the absolute `AJOA_*` paths keep output in this repo after
+`--directory` switches the working directory.
+
 ### CLI subcommands
 
 Every step is also a subcommand — `uv run ajoa-kit <cmd>` (the `make` targets wrap the
@@ -61,8 +79,8 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `chunk` | `--batch-size N` (default 40) · `--new` — batch only the latest-pull `corpus.json` delta (offers new or changed this pull) for an incremental re-screen (#226/#235) |
 | `persist` | `FILE` — the relevance workflow result · `--merge` — union into the existing shortlists / `jobs-scored.json` by id instead of overwriting (#226) |
 | `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` |
-| `refresh` | reconcile shortlists vs the corpus `delisted` state + a read-only URL re-probe · `--lane <name>` (default: all buckets) · `--delete` (remove vs flag `stale`) · `--dry-run` |
-| `verify-sources` | re-probe every `config/default-seed.json` `feeds`/`ats` source (read-only, no auth), stamp `_date_verified` on the live ones, report the rest for manual triage · `--dry-run` (#217) |
+| `refresh` | reconcile shortlists vs the corpus `delisted` state + a read-only URL re-probe · `--lane <name>` (default: all buckets) · `--delete` (remove vs flag `stale`) · `--dry-run` · runs via the [venv-borrow](#polyfetch-venv-borrow) (the re-probe imports `polyfetch_scrape`) |
+| `verify-sources` | re-probe every `config/default-seed.json` `feeds`/`ats` source (read-only, no auth), stamp `_date_verified` on the live ones, report the rest for manual triage · `--dry-run` (#217) · runs via the [venv-borrow](#polyfetch-venv-borrow) |
 | `ats-check` | `FILE` — a CV markdown file |
 | `render-pdf` | `FILE` — a tailored markdown file · `--out <path>` (default `<file>.pdf`) — optional Markdown→PDF export; needs the `[pdf]` extra (`uv sync --extra pdf`) |
 | `lanes` | `--json` — emit the workflow `lanes` arg from `config/lanes.json` (the canonical 7 lanes) |
@@ -84,7 +102,7 @@ Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tie
 | `AJOA_CONFIG_DIR` | `config` | where `seed.json` / `keywords.json` / `style.json` are read (the tracked `keywords.json` is canonical + published as trend keys — keep it generic; use a private dir for personal vocab) |
 | `AJOA_RESULTS_DIR` | `results` | where ingest/chunk/persist artifacts (PII) are written |
 | `AJOA_PUBLIC_DATA_DIR` | `public-data` | where PII-free publishable trends are written (the only data published, #210) |
-| `POLYFETCH_DIR` | `../polyfetch-scrape` | the `polyfetch-scrape` checkout `make ingest` / `probe` borrow |
+| `POLYFETCH_DIR` | `../polyfetch-scrape` | the [polyfetch-scrape](https://github.com/qte77/polyfetch-scrape) checkout the network-touching subcommands borrow (see [§Polyfetch venv-borrow](#polyfetch-venv-borrow)) |
 | `PORT` | `8000` | port for `make preview` |
 | `TRENDS_FORCE` | *(unset)* | `1` skips `make trends_data`'s shrink guard (which refuses a push that would drop bucket counts) for an intentional prune |
 | `.env` file | *(none)* | optional dotenv (`AppSettings.env_file`, `src/ajoa_kit/settings.py`) that sets any `AJOA_*` override above; git-ignored — keep private paths out of the repo |
