@@ -78,7 +78,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `ingest` | `--merge` — also fold the pull into a running `results/corpus.json` (4-state dedup-merge) · reads `config/seed.json`, else `config/default-seed.json` |
 | `chunk` | `--batch-size N` (default 40) · `--new` — batch only the latest-pull `corpus.json` delta (offers new or changed this pull) for an incremental re-screen (#226/#235) |
 | `persist` | `FILE` — the relevance workflow result · `--merge` — union into the existing shortlists / `jobs-scored.json` by id instead of overwriting (#226) |
-| `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` |
+| `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` · writes a `jd-truncation-check.md` review aid when the source JD sat at the ingest description cap (#347) |
 | `refresh` | reconcile shortlists vs the corpus `delisted` state + a read-only URL re-probe · `--lane <name>` (default: all buckets) · `--delete` (remove vs flag `stale`) · `--dry-run` · runs via the [venv-borrow](#polyfetch-venv-borrow) (the re-probe imports `polyfetch_scrape`) |
 | `verify-sources` | re-probe every `config/default-seed.json` `feeds`/`ats` source (read-only, no auth), stamp `_date_verified` on the live ones, report the rest for manual triage · `--dry-run` (#217) · runs via the [venv-borrow](#polyfetch-venv-borrow) |
 | `ats-check` | `FILE` — a CV markdown file |

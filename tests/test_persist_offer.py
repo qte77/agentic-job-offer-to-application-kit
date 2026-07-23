@@ -16,6 +16,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from ajoa_kit import persist_offer
+from ajoa_kit.defaults import DESC_CAP
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -87,6 +88,50 @@ def test_write_pack_flags_stuffed_cv_without_failing(tmp_path: Path) -> None:
     assert "cv-stuffing-check.md" in names
     assert "cv.md" in names  # non-blocking — the full pack still wrote
     assert "stuffing" in (offer_dir / "cv-stuffing-check.md").read_text().lower()
+
+
+def test_write_pack_flags_capped_jd_for_review(tmp_path: Path) -> None:
+    # A pack whose source JD in jobs-raw.json sits AT the ingest DESC_CAP was tailored from a
+    # truncated description (#347) — deterministically surface a jd-truncation-check.md review
+    # aid (agent self-reporting misses it), but never block the pack.
+    jd_id = "ashby:acme-ai:101"
+    (tmp_path / "jobs-raw.json").write_text(
+        json.dumps([{"id": jd_id, "description": "x" * DESC_CAP}])
+    )
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "offer_id": jd_id}, slug="acme-ai-101", results_dir=tmp_path
+    )
+    note = offer_dir / "jd-truncation-check.md"
+    assert note.is_file()
+    assert "truncat" in note.read_text().lower()
+    assert "live posting" in note.read_text()
+    assert (offer_dir / "cv.md").is_file()  # non-blocking — the full pack still wrote
+
+
+def test_write_pack_no_truncation_note_for_full_jd(tmp_path: Path) -> None:
+    # A below-cap JD is complete — no truncation note.
+    jd_id = "ashby:acme-ai:101"
+    (tmp_path / "jobs-raw.json").write_text(
+        json.dumps([{"id": jd_id, "description": "a complete, short JD"}])
+    )
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "offer_id": jd_id}, slug="acme-ai-101", results_dir=tmp_path
+    )
+    assert not (offer_dir / "jd-truncation-check.md").exists()
+
+
+def test_write_pack_truncation_check_indeterminable_is_silent(tmp_path: Path) -> None:
+    # Missing corpus or an unknown id makes truncation indeterminable — no note, no crash
+    # (never claim completeness or truncation without evidence).
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "offer_id": "ashby:acme-ai:101"}, slug="no-corpus", results_dir=tmp_path
+    )
+    assert not (offer_dir / "jd-truncation-check.md").exists()
+    (tmp_path / "jobs-raw.json").write_text(json.dumps([{"id": "other:1", "description": "x"}]))
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "offer_id": "ashby:acme-ai:101"}, slug="unknown-id", results_dir=tmp_path
+    )
+    assert not (offer_dir / "jd-truncation-check.md").exists()
 
 
 def test_write_pack_incomplete_writes_nothing(tmp_path: Path) -> None:
