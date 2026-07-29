@@ -30,7 +30,7 @@ Result: corpus 7 563 → **7 997** (434 new / 396 changed / 2 224 delisted); del
 **Defect found and fixed mid-phase** — see `refresh.classify` below. PR
 [#354](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/354).
 
-### Phase B — evidence-library rebuild · IN FLIGHT
+### Phase B — evidence-library rebuild · DONE (2026-07-29), one gap open
 
 ```text
 Workflow({ scriptPath: '.claude/workflows/cc-workflow-evidence-library.js', args: {
@@ -38,13 +38,30 @@ Workflow({ scriptPath: '.claude/workflows/cc-workflow-evidence-library.js', args
   profileRepo: '/workspaces/qte77/qte77', leanAwayFrom: '', maxProjects: 24 }})
 ```
 
-Run id `wf_bc321d71-472`. **Done when** the returned object is written to
-`results/evidence-library.json` and `perProject` covers the July repos the 06-29 library missed
-(this kit, `claude-azure-workflows-gui`, `agentic-cax-gauge`, `web-recon-kit`, `a2ui-agui-kit`,
-`fo-scraper-miwi`, `__SABI`, `protocols`) plus the 4 changed ones (`agenthud-agui-a2ui`,
-`ai-agents-research`, `polyfetch-scrape`, `claude-code-plugins`).
+Run id `wf_bc321d71-472` — landed on the **4th** resume (51 agents, 0 errors). The three earlier
+attempts died mid-run, twice on session limits and once on a process exit; each resume replayed the
+cached miners and got further (26 → 36 → 55 → complete). Written to `results/evidence-library.json`
+(117 KB, 24 `perProject`, 16 master bullets, 14 skill clusters). The 06-29 library is kept as
+`results/evidence-library.2026-06-29.json` so bullet drift is diffable.
 
-Keep the 06-29 library as `results/evidence-library.2026-06-29.json` so bullet drift is diffable.
+**Done-when: 9 of 12.** Covered — this kit, `claude-azure-workflows-gui`, `web-recon-kit`,
+`a2ui-agui-kit`, `fo-scraper-miwi`, `agenthud-agui-a2ui`, `ai-agents-research`, `polyfetch-scrape`,
+`claude-code-plugins`. **Not covered — `agentic-cax-gauge`, `__SABI`, `protocols`**: all three exist
+and are recent but small (11 / 19 / 2 commits), and `maxProjects: 24` selected 24 of 84 workspace
+repos, so they lost the cut.
+
+**Side effect of the same cap:** ~10 repos that *were* in the 06-29 library dropped out, notably the
+`gha-*` Actions family (`gha-issue-triage`, `gha-sbom-action`, `gha-llms-txt-action`,
+`gha-rxiv-feed-action`, `gha-rxiv-paper-eval`, `gha-arbitrary-repo-timeline`) plus
+`polyforge-orchestrator`, `vlm-toolkit`, `diagramforge`. That thins the cloud/DevOps lane's evidence
+(only `gha-sec-feed` survives from that family). The tailor workflow reads the *new* library only.
+
+| Open item | Gate | Done-when |
+|---|---|---|
+| Raise the cap (~34) and re-resume, or accept 24 as-is | **owner** (spend) | either the 3 repos appear in `perProject`, or the plan records the decision to ship without them |
+
+Cached miners replay free, so a re-resume at a higher cap only pays for the new repos plus a fresh
+assemble — not a full re-mine.
 
 ### Phase C — re-screen the delta
 

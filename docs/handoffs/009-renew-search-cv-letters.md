@@ -1,6 +1,6 @@
 # Handoff 009 — renew the local job search, CV and letters
 
-**State (2026-07-28): Phase A done, Phase B in flight, C+D pending.** Plan:
+**State (2026-07-29): Phase A + B done, C+D pending.** Plan:
 [docs/plans/009-renew-search-cv-letters.md](../plans/009-renew-search-cv-letters.md). Arc 008
 (`render-pdf`) is closed and shipped — nothing migrated from it.
 
@@ -10,6 +10,11 @@
       Corpus 7 563 → **7 997**; delta = **21 batches / 830 JDs**; sources **140/142** live.
 - [x] **PR [#354](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/354)** —
       `fix(refresh): only 404/410 expire a shortlist entry`. CI green, **NOT MERGED** (see Blocked).
+- [x] **Phase B evidence library.** `wf_bc321d71-472` landed on the 4th resume (51 agents, 0
+      errors); `results/evidence-library.json` = 117 KB / 24 projects / 16 master bullets / 14 skill
+      clusters. Old library kept at `results/evidence-library.2026-06-29.json`. **Coverage is 9 of
+      the 12 repos the done-when named** — see the plan's Phase B for the gap and the open cap
+      decision.
 
 ## The defect, because it changes how you read old sweeps
 
@@ -37,9 +42,9 @@ Both are permission grants, not work. Everything else proceeded around them.
 1. Merge #354, then re-run `refresh` via the
    [venv-borrow](../../CONTRIBUTING.md#polyfetch-venv-borrow) — expect the stale count to drop
    well below 147 as the 56 false positives return.
-2. When Phase B (`wf_bc321d71-472`) lands: back up the old library to
-   `results/evidence-library.2026-06-29.json`, write the workflow's return value to
-   `results/evidence-library.json`, and diff `masterCvBullets` to see what actually changed.
+2. Settle the `maxProjects` cap (plan → Phase B table): re-resume `wf_bc321d71-472` at ~34 to pull
+   in `agentic-cax-gauge`, `__SABI`, `protocols` and the dropped `gha-*` family, or accept 24 and
+   record that. Cached miners replay free — only new repos plus a fresh assemble cost tokens.
 3. Phase C — relevance over `batchCount: 21`, then `make persist FILE=<out> --merge`.
 4. Phase D — top **12** by fit across surviving packs + fresh keepers; `persist-offer` →
    `ats-check` → optional `render-pdf`. Archive non-survivors to `results/offers-archive/<slug>/`
@@ -51,6 +56,10 @@ Both are permission grants, not work. Everything else proceeded around them.
 - **Never resolve liveness by following redirects** — Greenhouse's job-removed page is HTTP 200.
 - **Never archive on the corpus-id join** — it reports all 29 packs "absent" while the shortlist
   join matches 29/29. Use the sweep's `stale` flag.
+- **The new library is not a superset of the old one.** `maxProjects: 24` over 84 repos dropped ~10
+  projects the 06-29 library had, incl. six `gha-*` Actions repos — the cloud/DevOps lane keeps only
+  `gha-sec-feed` from that family. Tailoring reads the new library only, so lane evidence thins
+  until the cap decision is settled.
 - `persist` without `--merge` overwrites the accrued shortlists.
 - Phase D at 12 packs ≈ 4–7M tokens; Phase C ≈ 2.1M.
 - `env -u GH_TOKEN -u GITHUB_TOKEN` on every `gh` / `git push`; commit with `--no-gpg-sign`.
