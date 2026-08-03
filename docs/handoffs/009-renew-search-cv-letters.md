@@ -1,6 +1,6 @@
 # Handoff 009 — renew the local job search, CV and letters
 
-**State (2026-07-29): Phase A + B done, C+D pending.** Plan:
+**State (2026-08-03): Phase A + B + B2 done; D next, then C.** Plan:
 [docs/plans/009-renew-search-cv-letters.md](../plans/009-renew-search-cv-letters.md). Arc 008
 (`render-pdf`) is closed and shipped — nothing migrated from it.
 
@@ -10,6 +10,10 @@
       Corpus 7 563 → **7 997**; delta = **21 batches / 830 JDs**; sources **140/142** live.
 - [x] **PR [#354](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/354)** —
       `fix(refresh): only 404/410 expire a shortlist entry`. CI green, **NOT MERGED** (see Blocked).
+- [x] **PR [#358](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/358)** —
+      `fix(chunk): relocate DESC_CAP off ingest; add lane-grounding check`. Fixes the grounding half
+      of #347 (the cap truncated **80%** of ingested JDs) and ships #348's deterministic guard.
+      Hash stability verified against the live corpus: **0 of 7997** records reclassify.
 - [x] **Phase B evidence library.** `wf_bc321d71-472` landed on the 4th resume (51 agents, 0
       errors); `results/evidence-library.json` = 117 KB / 24 projects / 16 master bullets / 14 skill
       clusters. Old library kept at `results/evidence-library.2026-06-29.json`. **Coverage is 9 of
@@ -42,20 +46,23 @@ Both are permission grants, not work. Everything else proceeded around them.
 1. Merge #354, then re-run `refresh` via the
    [venv-borrow](../../CONTRIBUTING.md#polyfetch-venv-borrow) — expect the stale count to drop
    well below 147 as the 56 false positives return.
-2. Settle the `maxProjects` cap (plan → Phase B table): re-resume `wf_bc321d71-472` at ~34 to pull
-   in `agentic-cax-gauge`, `__SABI`, `protocols` and the dropped `gha-*` family, or accept 24 and
-   record that. Cached miners replay free — only new repos plus a fresh assemble cost tokens.
-3. Phase C — relevance over `batchCount: 21`, then `make persist FILE=<out> --merge`.
-4. Phase D — top **12** by fit across surviving packs + fresh keepers; `persist-offer` →
-   `ats-check` → optional `render-pdf`. Archive non-survivors to `results/offers-archive/<slug>/`
-   by **moving**, never deleting.
-5. Drop `greenhouse/dbtlabsinc` from `config/default-seed.json` (hard 404 in today's ingest).
+2. Persist the `maxProjects: 34` re-resume of `wf_bc321d71-472` when it lands (back up first), and
+   confirm `perProject` now covers `agentic-cax-gauge`, `__SABI`, `protocols` + the `gha-*` family.
+3. **Phase D before Phase C** (owner's call): re-tailor the 12 alive score-5 packs against the new
+   library, then archive the 6 corpus-delisted ones by **moving** them to
+   `results/offers-archive/<slug>/`. Both are computable offline — see the plan's Phase D.
+4. Phase C — relevance over `batchCount: 21`, then `make persist FILE=<out> --merge`.
+5. Second tailor round — any fresh Phase C keeper outranking a survivor, same cap of 12 overall.
+6. Drop `greenhouse/dbtlabsinc` from `config/default-seed.json` (hard 404 in today's ingest).
 
 ## Watch-outs
 
 - **Never resolve liveness by following redirects** — Greenhouse's job-removed page is HTTP 200.
-- **Never archive on the corpus-id join** — it reports all 29 packs "absent" while the shortlist
-  join matches 29/29. Use the sweep's `stale` flag.
+- **The corpus-id join is sound — an earlier version of this file said otherwise and was wrong.**
+  Join on `results/offers/<slug>/meta.json` → `id`, not on the slug: **29/29 match**. That gives a
+  network-free liveness signal (`last_seen != max(last_seen)`, the same one `refresh.is_delisted`
+  uses and never the buggy branch), so archiving and the Phase D ranking do **not** wait on the
+  owner-gated sweep.
 - **The new library is not a superset of the old one.** `maxProjects: 24` over 84 repos dropped ~10
   projects the 06-29 library had, incl. six `gha-*` Actions repos — the cloud/DevOps lane keeps only
   `gha-sec-feed` from that family. Tailoring reads the new library only, so lane evidence thins

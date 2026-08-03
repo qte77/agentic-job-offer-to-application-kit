@@ -56,12 +56,27 @@ repos, so they lost the cut.
 `polyforge-orchestrator`, `vlm-toolkit`, `diagramforge`. That thins the cloud/DevOps lane's evidence
 (only `gha-sec-feed` survives from that family). The tailor workflow reads the *new* library only.
 
-| Open item | Gate | Done-when |
-|---|---|---|
-| Raise the cap (~34) and re-resume, or accept 24 as-is | **owner** (spend) | either the 3 repos appear in `perProject`, or the plan records the decision to ship without them |
+**Owner decision (2026-08-03): re-resume at `maxProjects: 34`.** In flight on the same run id, so
+the 24 mined projects replay from cache and only the new repos plus a fresh assemble cost tokens.
+Note the inventory agent's prompt embeds the cap, so that one agent always re-runs; if it renames or
+re-paths a project, that project's miner re-runs too.
 
-Cached miners replay free, so a re-resume at a higher cap only pays for the new repos plus a fresh
-assemble — not a full re-mine.
+### Phase B2 — JD grounding fixes · SHIPPED [#358](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/358)
+
+`DESC_CAP` was a relevance-pass budget applied at the ingest layer, and the tailor pass reads the
+same stored record — so packs were grounded in a partial JD. Measured: **4632 of 5773 JDs (80.2%)**
+sat at the cap, median description length exactly 4000. 87% of capped JDs carry a front-loaded
+company blurb while EEO/benefits/comp appear in only 10–16%, because those live at the end and were
+already truncated — the cap kept marketing and discarded requirements.
+
+`normalize.html_to_text` now stores the whole posting; `chunk._capped` applies the cap when writing
+batches. Two changes make that safe: `content_hash` digests `description[:DESC_CAP]` (**verified: 0
+of 7997 corpus records change**, avoiding a one-off ~150-batch re-screen), and `merge_corpus` adopts
+fresh content on the *unchanged* branch, which is where every backfill lands — the old
+`{**old, ...}` would have frozen all 6063 truncated rows permanently.
+
+Also ships `persist_offer.lane_angle_warning` → `lane-grounding-check.md` (#348), the deterministic
+half of that issue; the immediate half was resolved by the rebuild (all 7 `{lane}Angle` present).
 
 ### Phase C — re-screen the delta
 
@@ -74,7 +89,9 @@ reflects them.
 
 ### Phase D — re-tailor, capped at 12
 
-Rank surviving old packs + fresh keepers by fit score, take the top 12:
+**Owner decision (2026-08-03): run D before C** — re-tailor the surviving packs now, then screen the
+delta and tailor any fresh winner in a second round. Costs more in total (some offers get tailored
+twice) but puts current CVs in hand sooner.
 
 ```text
 Workflow({ scriptPath: '.claude/workflows/cc-workflow-tailor-offer.js',
@@ -86,6 +103,15 @@ uv run ajoa-kit render-pdf results/offers/<slug>/cv.md   # needs: uv sync --extr
 
 ~300–600k tokens each → ~4–7M for 12. **Done when** each pack has all 8 artifacts and `ats-check`
 passes. Archive non-survivors to `results/offers-archive/<slug>/` — **move, never delete**.
+
+**The slate is already computable, offline.** Every pack's `meta.json` carries its corpus id, so the
+liveness join needs no network — `last_seen != max(last_seen)` is the same signal `refresh.is_delisted`
+uses, and it was never the buggy branch. As of the 2026-07-28 pull: **29/29 packs join**, **6 are
+corpus-delisted** (`anthropic-applied-ai-beneficial-deployments`, `cadaico-ai-engineer-chat-to-cad`,
+`rimini-street-…-forward-deployed-engineer`, `rockstar-technical-ai-solution-architect`,
+`stellar-ai-senior-software-engineer`, `stripe-backend-engineer-ai-security`) and **23 are alive**,
+of which **12 score 5** — exactly filling the cap. Ties at 5 need a tiebreak (confidence, then
+recency).
 
 ## Source map
 
