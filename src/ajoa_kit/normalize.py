@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from ajoa_kit.defaults import (
-    DESC_CAP,
     FILTER_ATS_BY_DEPARTMENT,
     FILTER_RSS_BY_TITLE,
     INTEREST,
@@ -88,13 +87,18 @@ def keep(
 
 
 def html_to_text(s: str | None) -> str:
-    """Unescape entities, strip tags, collapse whitespace, and cap length."""
+    """Unescape entities, strip tags, and collapse whitespace — keeping the whole posting.
+
+    Deliberately uncapped (#347): :data:`ajoa_kit.defaults.DESC_CAP` bounds the *relevance pass*,
+    so :func:`ajoa_kit.chunk.main` applies it when writing batches. Capping here truncated 80% of
+    ingested JDs, and the tailor pass reads the same stored record — so packs were built from a
+    partial posting.
+    """
     if not s:
         return ""
     s = html.unescape(s)
     s = _TAG.sub(" ", s)
-    s = _WS.sub(" ", s).strip()
-    return s[:DESC_CAP]
+    return _WS.sub(" ", s).strip()
 
 
 def canonical_url(url: str) -> str:

@@ -96,12 +96,14 @@ def render(pack: dict) -> list[tuple[str, str]]:
 
 
 def jd_truncation_warning(jd_id: str | None, results_dir: Path, cap: int = DESC_CAP) -> str | None:
-    """Detect a source JD that sits at the ingest description cap (#347).
+    """Detect a source JD that sits at the legacy ingest description cap (#347).
 
-    The tailor pass grounds on ``results/jobs-raw.json``, whose ``description`` ingest caps at
-    :data:`ajoa_kit.defaults.DESC_CAP` chars — a pack built from a capped JD silently lost
-    whatever requirements sat past the cap, and the Match agents notice it only sometimes.
-    Deterministic check instead: a warning when the recorded description length reached the cap,
+    The tailor pass grounds on ``results/jobs-raw.json``. Ingest used to truncate ``description``
+    at :data:`ajoa_kit.defaults.DESC_CAP` chars, so a pack built from such a record silently lost
+    whatever requirements sat past the cap, and the Match agents notice it only sometimes. The cap
+    has since moved to :func:`ajoa_kit.chunk.main`, so freshly pulled records are complete and this
+    check goes quiet on its own — it still matters for rows not yet re-pulled.
+    Deterministic check: a warning when the recorded description length reached the cap,
     ``None`` when the JD is complete or indeterminable (missing corpus / unknown id — never
     raises, never claims either way without evidence).
 
@@ -132,6 +134,42 @@ def jd_truncation_warning(jd_id: str | None, results_dir: Path, cap: int = DESC_
     return None
 
 
+def lane_angle_warning(lane: str | None, results_dir: Path) -> str | None:
+    """Detect an evidence library that cannot ground the pack's lane (#348).
+
+    ``cc-workflow-evidence-library.js`` derives a ``{lane}Angle`` field per lane in its ``lanes``
+    arg, so a library built with a stale or partial lane set silently lacks angles that
+    ``config/lanes.json`` defines. The 2026-06-29 library carried 5 of 7 — no ``mlAngle`` or
+    ``fdeAngle`` — and the tailor agents fell back to a neighbouring lane's angle, only sometimes
+    saying so. Deterministic check instead, in the same never-guess shape as
+    :func:`jd_truncation_warning`: ``None`` when the angle is present or the situation is
+    indeterminable (no lane, missing/unreadable library), a warning only on positive evidence.
+
+    Args:
+        lane: The pack's lane key (e.g. ``"ml"``); ``None``/empty skips the check.
+        results_dir: The results root holding ``evidence-library.json``.
+
+    Returns:
+        A human-facing warning string, or ``None``.
+    """
+    if not lane:
+        return None
+    try:
+        library = json.loads((results_dir / "evidence-library.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(library, dict):
+        return None
+    field = f"{lane}Angle"
+    if isinstance(library.get(field), str) and library[field].strip():
+        return None
+    return (
+        f"the evidence library has no `{field}`, so this pack could not be grounded in the "
+        f"{lane} lane's positioning and the tailor pass fell back to another lane — rebuild the "
+        "library with the full lane set before relying on this pack"
+    )
+
+
 def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     """Write the validated pack to ``results_dir/offers/<safe-slug>/``.
 
@@ -139,9 +177,10 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     When the pack carries ``must_haves``, a ``coverage-report.md`` is also written — outside
     the all-or-nothing artifact set, so packs without it are unaffected. A ``cv-ats-check.md`` is
     written whenever the tailored CV trips the parse-safety check (#75), a
-    ``cv-stuffing-check.md`` whenever it trips the keyword-stuffing check (#272), and a
-    ``jd-truncation-check.md`` whenever the source JD sat at the ingest description cap
-    (#347) — all non-blocking review aids, also outside the all-or-nothing set.
+    ``cv-stuffing-check.md`` whenever it trips the keyword-stuffing check (#272), a
+    ``jd-truncation-check.md`` whenever the source JD sat at the legacy ingest description cap
+    (#347), and a ``lane-grounding-check.md`` whenever the evidence library lacks the pack's
+    ``{lane}Angle`` (#348) — all non-blocking review aids, also outside the all-or-nothing set.
 
     Args:
         pack: The tailor result.
@@ -193,6 +232,15 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
             '---\ntitle: "Source JD truncation check"\n---\n\n'
             "Review before submitting — non-blocking warning, not an error.\n\n"
             f"- {truncation}\n"
+        )
+    # Deterministic lane-grounding check (#348): a library missing this lane's angle silently
+    # tailored the pack against a neighbouring lane — same non-blocking review-aid idiom.
+    grounding = lane_angle_warning(pack.get("lane"), results_dir)
+    if grounding:
+        (offer_dir / "lane-grounding-check.md").write_text(
+            '---\ntitle: "Lane grounding check"\n---\n\n'
+            "Review before submitting — non-blocking warning, not an error.\n\n"
+            f"- {grounding}\n"
         )
     # Sidecar for the local dashboard join (#209): the dir is named by the (maybe custom) slug, so
     # record the JD id -> this offer so build_ui_shortlist can attach cv/cover-letter by id.

@@ -8,6 +8,7 @@ is preserved while ``last_seen`` advances — the dates the daily ingest relies 
 from __future__ import annotations
 
 from ajoa_kit import corpus
+from ajoa_kit.defaults import DESC_CAP
 
 
 def _jd(
@@ -34,6 +35,42 @@ def test_content_hash_keys_on_content_not_tracking_fields() -> None:
     same_content = _jd("a", url="https://example.com/j/2")
     assert corpus.content_hash(base) == corpus.content_hash(same_content)
     assert corpus.content_hash(base) != corpus.content_hash(_jd("a", desc="Different work"))
+
+
+def test_content_hash_ignores_description_past_the_cap() -> None:
+    """Hashing only the first ``DESC_CAP`` chars keeps pre-relocation digests bit-identical (#347).
+
+    Descriptions used to be truncated at ingest, so every stored digest was computed over the
+    capped text. Now the full posting is stored — hashing the same slice means the ~6k already-
+    capped corpus records do NOT all flip to ``changed`` on the next pull, which would fan out a
+    one-off ~150-batch re-screen instead of the usual 21.
+
+    Accepted tradeoff, pinned here deliberately: a change occurring *only* past the cap is not
+    detected. That was already true before the relocation, so it is status quo, not a regression.
+    """
+    capped = "x" * DESC_CAP
+    assert corpus.content_hash(_jd("a", desc=capped)) == corpus.content_hash(
+        _jd("a", desc=capped + " tail that only exists in the full text")
+    )
+
+
+def test_unchanged_record_adopts_fresh_content_so_full_text_backfills() -> None:
+    """The unchanged branch must take the fresh record's content, not keep the stored one (#347).
+
+    After the relocation a re-pulled posting carries the FULL description while the stored row is
+    still truncated. The hash matches (it keys on the capped slice), so this lands in the
+    *unchanged* branch — which used to discard the fresh record entirely and would have frozen
+    every existing row at its truncated text forever, with no re-pull able to heal it.
+    """
+    capped = "x" * DESC_CAP
+    full = capped + " tail that the old ingest cap threw away"
+    prior = corpus.merge_corpus(prior=[], fresh=[_jd("a", desc=capped)], today="2026-06-01")
+    merged = corpus.merge_corpus(prior=prior, fresh=[_jd("a", desc=full)], today="2026-06-27")
+    rec = next(r for r in merged if r["id"] == "a")
+    assert rec["description"] == full  # fresh content adopted
+    assert rec["first_seen"] == "2026-06-01"  # tracking fields survive the adoption
+    assert rec["last_changed"] == "2026-06-01"  # not a material change — no re-screen
+    assert rec["last_seen"] == "2026-06-27"
 
 
 def test_new_records_are_stamped_with_today() -> None:

@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import hashlib
 
+from ajoa_kit.defaults import DESC_CAP
+
 # JD content that defines a *material* change; tracking churn (url/posted_at) is deliberately
 # excluded so a re-canonicalized URL alone does not flip a record to "changed".
 _CONTENT_FIELDS = ("title", "location", "description")
@@ -27,8 +29,19 @@ _SEP = "\x1f"  # unit separator — unlikely in JD text, so fields can't collide
 
 
 def content_hash(rec: dict) -> str:
-    """Return a stable hex digest of the JD content fields (title + location + description)."""
-    payload = _SEP.join(str(rec.get(f, "")) for f in _CONTENT_FIELDS)
+    """Return a stable hex digest of the JD content fields (title + location + description).
+
+    The description is sliced at :data:`ajoa_kit.defaults.DESC_CAP` before hashing (#347). Ingest
+    used to truncate there, so every previously stored digest was computed over the capped text;
+    hashing the same slice now that the full posting is stored keeps those digests bit-identical.
+    Without it, ~6k already-capped records would all flip to ``changed`` on the next pull and fan
+    out a one-off ~150-batch re-screen.
+
+    Tradeoff: a change occurring *only* past the cap goes undetected — which was already the case
+    before the relocation, so this preserves the existing sensitivity rather than reducing it.
+    """
+    hashed = {**rec, "description": str(rec.get("description", ""))[:DESC_CAP]}
+    payload = _SEP.join(str(hashed.get(f, "")) for f in _CONTENT_FIELDS)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -73,8 +86,14 @@ def merge_corpus(prior: list[dict], fresh: list[dict], today: str) -> list[dict]
                     "content_hash": digest,
                 }
             )
-        else:  # unchanged — only refresh last_seen
-            merged.append({**old, "last_seen": today})
+        else:  # unchanged — adopt fresh content, refresh last_seen, keep the change stamps
+            # `rec` carries no tracking fields (ingest.record() shape), so first_seen /
+            # last_changed / content_hash survive from `old`. Taking the fresh content matters
+            # since #347: a re-pulled posting now carries the FULL description while the stored
+            # row may still be truncated, and the hash matches (it keys on the capped slice), so
+            # this is the branch every backfill lands in. Keeping `old` wholesale would freeze
+            # every existing row at its truncated text with no way for a re-pull to heal it.
+            merged.append({**old, **rec, "last_seen": today})
 
     # delisted — prior ids absent from today's pull: keep as-is, last_seen frozen.
     merged.extend(rec for rec in prior if rec["id"] not in fresh_ids)

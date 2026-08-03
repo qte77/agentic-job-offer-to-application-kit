@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from ajoa_kit import chunk
+from ajoa_kit.defaults import DESC_CAP
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -70,6 +71,28 @@ def test_chunk_new_fails_loud_without_corpus(
     _setup(tmp_path, monkeypatch)  # no corpus.json written
     with pytest.raises(FileNotFoundError, match="corpus"):
         chunk.main(batch=40, new=True)
+
+
+def test_chunk_caps_description_leaving_the_stored_text_whole(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``DESC_CAP`` is a relevance-pass budget, so ``chunk`` applies it — not ingest (#347).
+
+    The batches feed the relevance screen, which is what the cap exists to bound. Ingest keeps the
+    whole posting so the tailor pass, which reads ``jobs-raw.json`` directly, is grounded in the
+    complete JD. Both halves are asserted here: batch text is capped, stored text is untouched.
+    """
+    results = _setup(tmp_path, monkeypatch)
+    long_desc = "y" * (DESC_CAP + 1000)
+    raw = results / "jobs-raw.json"
+    raw.write_text(json.dumps([{"id": "a", "title": "role", "description": long_desc}]))
+
+    chunk.main(batch=40)
+
+    batched = json.loads((results / "batches" / "batch-000.json").read_text())
+    assert len(batched[0]["description"]) == DESC_CAP  # relevance pass sees the capped slice
+    assert batched[0]["description"] == long_desc[:DESC_CAP]  # a prefix, not a re-derived string
+    assert json.loads(raw.read_text())[0]["description"] == long_desc  # source stays whole
 
 
 def test_chunk_new_includes_changed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

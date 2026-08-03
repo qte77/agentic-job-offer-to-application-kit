@@ -14,12 +14,26 @@ import json
 import sys
 from typing import TYPE_CHECKING
 
+from ajoa_kit.defaults import DESC_CAP
 from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 DEFAULT_BATCH = 40
+
+
+def _capped(rec: dict) -> dict:
+    """Return ``rec`` with its description trimmed to :data:`DESC_CAP` for the relevance pass.
+
+    The cap lives here rather than at ingest (#347): it exists to bound the relevance screen's
+    tokens, while ``results/jobs-raw.json`` keeps the whole posting so the stage-3 tailor pass —
+    which reads that file directly — is grounded in the complete JD.
+    """
+    desc = rec.get("description")
+    if not isinstance(desc, str) or len(desc) <= DESC_CAP:
+        return rec
+    return {**rec, "description": desc[:DESC_CAP]}
 
 
 def _new_offers(results: Path) -> list[dict]:
@@ -60,7 +74,7 @@ def main(batch: int = DEFAULT_BATCH, *, new: bool = False) -> None:
     n = 0
     for i in range(0, len(jobs), batch):
         (out / f"batch-{i // batch:03d}.json").write_text(
-            json.dumps(jobs[i : i + batch], ensure_ascii=False, indent=2),
+            json.dumps([_capped(rec) for rec in jobs[i : i + batch]], ensure_ascii=False, indent=2),
         )
         n += 1
 
