@@ -102,8 +102,15 @@ def jd_truncation_warning(jd_id: str | None, results_dir: Path, cap: int = DESC_
     at :data:`ajoa_kit.defaults.DESC_CAP` chars, so a pack built from such a record silently lost
     whatever requirements sat past the cap, and the Match agents notice it only sometimes. The cap
     has since moved to :func:`ajoa_kit.chunk.main`, so freshly pulled records are complete and this
-    check goes quiet on its own — it still matters for rows not yet re-pulled.
-    Deterministic check: a warning when the recorded description length reached the cap,
+    check goes quiet on its own — it still matters for rows not yet re-pulled (delisted postings
+    can never be re-pulled, so theirs stay truncated permanently).
+
+    The length test is ``== cap``, not ``>= cap``. While ingest truncated, the two were equivalent
+    because nothing could exceed the cap; once full text is stored, ``>=`` fires on every long
+    posting — ~80% of the corpus — flagging exactly the packs that are now complete. Only the exact
+    cap length is evidence of the legacy truncation.
+
+    Deterministic check: a warning when the recorded description length is exactly the cap,
     ``None`` when the JD is complete or indeterminable (missing corpus / unknown id — never
     raises, never claims either way without evidence).
 
@@ -124,7 +131,7 @@ def jd_truncation_warning(jd_id: str | None, results_dir: Path, cap: int = DESC_
     for rec in records if isinstance(records, list) else []:
         if isinstance(rec, dict) and rec.get("id") == jd_id:
             desc = rec.get("description")
-            if isinstance(desc, str) and len(desc) >= cap:
+            if isinstance(desc, str) and len(desc) == cap:
                 return (
                     f"the ingested JD description sits at the {cap}-char ingest cap, so this "
                     "pack was tailored from a truncated JD — open the live posting and check "

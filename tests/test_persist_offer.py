@@ -138,6 +138,25 @@ def test_write_pack_flags_capped_jd_for_review(tmp_path: Path) -> None:
     assert (offer_dir / "cv.md").is_file()  # non-blocking — the full pack still wrote
 
 
+def test_write_pack_no_truncation_note_for_a_jd_longer_than_the_cap(tmp_path: Path) -> None:
+    """A JD *longer* than the cap is complete, not truncated — regression for #347.
+
+    While ingest truncated, ``>= cap`` and ``== cap`` were the same test: nothing could exceed the
+    cap, so reaching it proved truncation. Storing the full posting broke that equivalence, and
+    ``>=`` then fired on every long JD — ~80% of the corpus — putting a "this pack was tailored
+    from a truncated JD" warning on precisely the packs that now have complete text. Only the exact
+    cap length is evidence of the legacy truncation.
+    """
+    jd_id = "ashby:acme-ai:101"
+    (tmp_path / "jobs-raw.json").write_text(
+        json.dumps([{"id": jd_id, "description": "x" * (DESC_CAP * 3)}])
+    )
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "offer_id": jd_id}, slug="acme-ai-101", results_dir=tmp_path
+    )
+    assert not (offer_dir / "jd-truncation-check.md").exists()
+
+
 def test_write_pack_no_truncation_note_for_full_jd(tmp_path: Path) -> None:
     # A below-cap JD is complete — no truncation note.
     jd_id = "ashby:acme-ai:101"
