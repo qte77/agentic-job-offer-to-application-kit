@@ -13,6 +13,13 @@
 #     readme.io SPA that returns 404 to non-browser HTTP clients (lychee, WebFetch) while
 #     rendering fine for humans; the applicationForm.submit citation in research.md §Delivery
 #     is valid. Ashby's /docs/ pages resolve normally and stay checked.
+# A 429 is a throttle, not a broken link. CI runners share datacenter IPs, so hosts like
+# readthedocs rate-limit them while the same URL resolves fine for a human — treating that as an
+# error fails the build on a link that is demonstrably alive. Same reasoning as
+# `refresh.GONE_STATUSES` (#347/#354): only a definitively-gone status proves death, and nothing
+# short of proof should expire a live reference. Accepting 429 keeps genuine 404s failing.
+accept = ["100..=103", "200..=299", "429"]
+
 exclude = [
     "^https://example\\.com/",
     "^https://github\\.com/.*/security/advisories/new$",
