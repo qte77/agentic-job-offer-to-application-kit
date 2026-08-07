@@ -35,20 +35,20 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}/src
     steps:
       - name: Checkout (main repo; credentials kept for the data-branch push)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       # polyfetch-scrape is public; borrow its env (httpx/curl_cffi/patchright fetch stack) rather
       # than vendoring it (architecture constraint). Must live inside the workspace — checkout
       # cannot write to a sibling `../` path.
       - name: Checkout polyfetch-scrape (public fetch stack)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           repository: qte77/polyfetch-scrape
           path: polyfetch-scrape
           persist-credentials: false
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990  # v8.3.2
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
         with:
           enable-cache: true
           cache-dependency-glob: polyfetch-scrape/uv.lock
