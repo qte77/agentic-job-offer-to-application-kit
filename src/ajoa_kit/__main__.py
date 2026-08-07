@@ -103,6 +103,27 @@ def _lanes(args: argparse.Namespace) -> None:
         print(f"{lane.key}\t{lane.label}")
 
 
+def _location(args: argparse.Namespace) -> None:
+    """Emit the candidate location policy (config/location.json) as the workflow `location` arg."""
+    import json
+
+    from ajoa_kit.ingest import load_location
+    from ajoa_kit.settings import AppSettings
+
+    policy = load_location(AppSettings().config_dir)
+    if args.json:
+        print(json.dumps(policy.model_dump(by_alias=True), indent=2, ensure_ascii=False))
+        return
+    if not policy.is_active:
+        print("no location policy — the relevance screen will not filter on location")
+        print("create config/location.json (untracked; see README) to enable it")
+        return
+    print(f"based_in\t{policy.based_in}")
+    print(f"authorized_in\t{', '.join(policy.authorized_in)}")
+    print(f"remote_ok\t{policy.remote_ok}")
+    print(f"relocate_to\t{', '.join(policy.relocate_to) or '-'}")
+
+
 def _prefill_fields(args: argparse.Namespace) -> None:
     """Print the application-field checklist for an offer (Greenhouse schema or generic)."""
     from ajoa_kit.prefill import main as run
@@ -260,6 +281,17 @@ def main() -> None:
         help="Emit the JSON `args.lanes` payload (else a key->label list).",
     )
     lanes_p.set_defaults(func=_lanes)
+
+    location_p = sub.add_parser(
+        "location",
+        help="Emit the candidate location policy (config/location.json) as the workflow arg.",
+    )
+    location_p.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the JSON `args.location` payload (else a readable summary).",
+    )
+    location_p.set_defaults(func=_location)
 
     prefill_p = sub.add_parser(
         "prefill-fields",

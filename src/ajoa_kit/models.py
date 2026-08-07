@@ -31,6 +31,52 @@ class Lane(BaseModel):
     gap_hint: str = Field(alias="gapHint")
 
 
+class LocationPolicy(BaseModel):
+    """Where the candidate can actually take a job — **advisory** input to the relevance screen.
+
+    The screen already asks for a ``deal_breaker`` phrase but had no idea what the candidate's
+    constraint was, so authorization requirements surfaced only during the tailor pass, after
+    ~400k tokens per pack: a Webflow pack scored 5/5 and called it the closest skill match in the
+    shortlist, then flagged Argentina-only residency as "disqualifying regardless of skill fit".
+
+    This makes the constraint visible at screen time. It deliberately does **not** drop or rescore
+    anything — sponsorship, remote exceptions and relocation are all negotiable in ways a screen
+    cannot judge, so the policy annotates and the human decides.
+
+    Mirrors :class:`Lane` as a cross-runtime SSOT: ``config/location.json`` feeds the Python side
+    and ``ajoa-kit location --json`` emits the same shape for the relevance workflow's
+    ``args.location``. Field aliases are camelCase so the policy round-trips unchanged.
+
+    **Not committed.** Unlike ``config/lanes.json`` this describes a person, so it stays untracked
+    under the ``config/`` ignore (same precedent as ``config/seed-candidates.json``).
+
+    An empty policy is inert: :attr:`is_active` is False and the screen behaves exactly as before,
+    so the feature ships dormant until the candidate fills it in.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    based_in: str = Field(default="", alias="basedIn")
+    """Where the candidate lives, free text (e.g. ``"Zurich, Switzerland"``)."""
+    authorized_in: list[str] = Field(default_factory=list, alias="authorizedIn")
+    """Regions the candidate may work in without sponsorship (e.g. ``["EU", "Switzerland"]``)."""
+    remote_ok: bool = Field(default=True, alias="remoteOk")
+    """Whether a remote role outside :attr:`authorized_in` is acceptable."""
+    relocate_to: list[str] = Field(default_factory=list, alias="relocateTo")
+    """Regions worth relocating for — friction, not a blocker."""
+    notes: str = ""
+    """Free text passed verbatim to the screen (visa status, notice period, hard limits)."""
+
+    @property
+    def is_active(self) -> bool:
+        """True when the policy can actually exclude something.
+
+        Without ``authorized_in`` there is no ground truth to test a JD against, so the screen is
+        told to skip location filtering entirely rather than guess from ``based_in``.
+        """
+        return bool(self.authorized_in)
+
+
 class ScoredItem(BaseModel):
     """One scored JD from the relevance workflow.
 

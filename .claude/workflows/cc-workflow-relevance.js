@@ -45,6 +45,14 @@ const count = cfg.limitBatches ? Math.min(cfg.limitBatches, batchCount) : batchC
 const LIBRARY_PATH = cfg.libraryPath || `${rootDir}/results/evidence-library.json`
 const LIBRARY_INLINE = cfg.library || null
 
+// Candidate location policy — ADVISORY: it annotates deal_breaker, and never drops or rescores a
+// JD. CANONICAL definition lives in config/location.json (untracked: it describes a person, so the
+// no-PII rule keeps it out of git); emit it with `ajoa-kit location --json` and pass as
+// args.location. Omitted or without authorizedIn it is inert and the screen ignores location
+// exactly as before.
+const LOCATION = cfg.location || null
+const LOCATION_ACTIVE = !!(LOCATION && LOCATION.authorizedIn && LOCATION.authorizedIn.length)
+
 // Honor cfg.lanes (the runtime SSOT) by deriving the keys from it — so overriding lanes in one place
 // can't desync the two workflows. CANONICAL lane defs live in config/lanes.json (#195); emit them
 // with `ajoa-kit lanes --json` and pass as args.lanes. The hardcoded list below is only the no-config
@@ -81,6 +89,10 @@ const RESULT = {
     },
     dropped_count: { type: 'integer' },
     dropped_reason_sample: { type: 'string' },
+    // How many KEPT JDs carry a location/authorization constraint the candidate does not meet.
+    // Advisory: these stay in `relevant` at their earned score — this is a "look at these" tally,
+    // never a count of exclusions.
+    location_flagged_count: { type: 'integer' },
   },
   required: ['relevant', 'dropped_count'],
 }
@@ -89,15 +101,38 @@ function gatePrompt(path) {
   const brief = LIBRARY_INLINE
     ? `CANDIDATE BRIEF (provided inline):\n${JSON.stringify(LIBRARY_INLINE)}`
     : `CANDIDATE: read the evidence library at ${LIBRARY_PATH} with the Read tool — use its headline, positioningSummary, per-lane *Angle paragraphs, skillClusters, and gapNarrative as the candidate's genuine OFFERS and honest MISSING per lane.`
+  // Inert unless config/location.json declares authorizedIn — see LOCATION_ACTIVE above.
+  const location = LOCATION_ACTIVE
+    ? `
+LOCATION AND WORK AUTHORIZATION — ADVISORY ONLY. Surface it, never act on it:
+- Based in: ${LOCATION.basedIn || '(unstated)'}
+- Authorized to work in (no sponsorship needed): ${LOCATION.authorizedIn.join(', ')}
+- Remote roles outside those regions acceptable: ${LOCATION.remoteOk ? 'yes' : 'no'}
+- Would relocate to: ${(LOCATION.relocateTo && LOCATION.relocateTo.length) ? LOCATION.relocateTo.join(', ') : '(nowhere)'}
+${LOCATION.notes ? `- Notes: ${LOCATION.notes}` : ''}
+
+This NEVER drops a JD and NEVER changes a score. Score purely on requirement overlap as you would
+without this section; the human weighs location themselves, because sponsorship, remote exceptions
+and relocation are all negotiable in ways a screen cannot judge.
+
+What it DOES change: when a JD states a location or authorization requirement the candidate does
+not currently satisfy, put that constraint verbatim in deal_breaker (e.g. "US citizen/visa only",
+"must reside in Argentina", "on-site San Francisco") and name it in the rationale. Count those JDs
+in location_flagged_count.
+
+When the JD states no location or authorization requirement, leave deal_breaker for other concerns
+and do not mention location — never infer a constraint from the company's headquarters alone.
+`
+    : ''
   return `You are screening job descriptions for ONE candidate against the target lanes (${LANES.join(', ')}). Read the JSON file at ${path} with the Read tool — it is an array of ~40 job descriptions, each {id, title, company, location, url, description, ...}.
 
 ${brief}
-
+${location}
 Judge on REAL requirement overlap, NOT keyword presence; be strict and honest about gaps.
 
 DROP (do not return) any JD that: is a non-engineering function (sales, marketing, recruiting, legal, finance, support, people/HR, pure visual design); is junior/intern; hard-requires years of people-management or large-team leadership; hard-requires deep cloud-infra-at-scale (AWS/GCP/Azure/Kubernetes/Terraform) or production-at-scale ops as a must-have; or has no genuine overlap with any lane.
 
-For each KEPT JD return: id, title, company, url, best_lane (single best fit), score 0-5 (5 = strong fit, 3 = plausible stretch, <3 = drop), verdict ("shortlist" for score>=4, "maybe" for 3), and a one-line rationale that names, in prose, the fit across skill, experience, culture/location, career progression, and motivation AND the main gap. Also set deadline to the JD's stated application deadline verbatim if one is given (else ""), and deal_breaker to one short phrase for a hard concern the human must weigh — e.g. on-site-only location, security clearance, mandated stack (else ""). Only return JDs scoring >=3. Also return dropped_count (how many you dropped) and dropped_reason_sample (one short phrase of why the bulk were dropped).`
+For each KEPT JD return: id, title, company, url, best_lane (single best fit), score 0-5 (5 = strong fit, 3 = plausible stretch, <3 = drop), verdict ("shortlist" for score>=4, "maybe" for 3), and a one-line rationale that names, in prose, the fit across skill, experience, culture/location, career progression, and motivation AND the main gap. Also set deadline to the JD's stated application deadline verbatim if one is given (else ""), and deal_breaker to one short phrase for a hard concern the human must weigh — e.g. on-site-only location, security clearance, mandated stack (else ""). Only return JDs scoring >=3. Also return dropped_count (how many you dropped) and dropped_reason_sample (one short phrase of why the bulk were dropped)${LOCATION_ACTIVE ? ', plus location_flagged_count (how many KEPT JDs you flagged with a location/authorization constraint — report 0 if none; these are never dropped)' : ''}.`
 }
 
 phase('Screen')

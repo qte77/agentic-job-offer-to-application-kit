@@ -62,6 +62,36 @@ def test_load_lanes_falls_back_to_defaults_when_absent(tmp_path: Path) -> None:
     assert ingest.load_lanes(tmp_path) is defaults.DEFAULT_LANES  # no lanes.json present
 
 
+def test_load_location_is_inert_without_a_policy_file(tmp_path: Path) -> None:
+    """A fresh clone has no config/location.json, and that must never fail or filter.
+
+    The file is untracked by design (it describes a person; the repo's no-PII rule keeps it out),
+    so absence is the normal case. An empty policy must report ``is_active`` False so the relevance
+    screen is told to skip location filtering rather than guess.
+    """
+    policy = ingest.load_location(tmp_path)
+    assert policy.is_active is False
+    assert policy.authorized_in == []
+    assert policy.remote_ok is True  # permissive default — never silently drops a remote role
+
+
+def test_load_location_reads_policy_and_round_trips_the_workflow_aliases(tmp_path: Path) -> None:
+    """The camelCase aliases must survive both directions — one file feeds Python and the JS arg."""
+    written = {
+        "basedIn": "Zurich, Switzerland",
+        "authorizedIn": ["Switzerland", "EU"],
+        "remoteOk": True,
+        "relocateTo": ["Germany"],
+        "notes": "no visa sponsorship available",
+    }
+    (tmp_path / "location.json").write_text(json.dumps(written))
+    policy = ingest.load_location(tmp_path)
+    assert policy.is_active is True  # authorized_in present -> the screen can now exclude
+    assert policy.authorized_in == ["Switzerland", "EU"]
+    assert policy.based_in == "Zurich, Switzerland"
+    assert policy.model_dump(by_alias=True) == written  # emitted shape == args.location shape
+
+
 def test_shipped_lanes_json_matches_in_code_defaults() -> None:
     # The shipped config/lanes.json is the SSOT; DEFAULT_LANES is the in-code fallback that must
     # mirror it (equality guards the two from silently drifting apart).

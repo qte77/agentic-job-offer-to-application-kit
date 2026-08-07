@@ -31,6 +31,14 @@ agent-agnostically so any coding agent can drive them.
 Seven configurable **position lanes** (CxO/fractional · founding engineer · senior IC engineering ·
 applied-AI/ML · forward-deployed/solutions · cloud/DevOps/platform · architect), defined in
 `config/lanes.json` — see [docs/architecture.md §Position lanes](docs/architecture.md#position-lanes).
+
+Optionally add `config/location.json` to have the screen flag location and work-authorization
+constraints — `{basedIn, authorizedIn[], remoteOk, relocateTo[], notes}`, emitted with
+`ajoa-kit location --json` and passed as the workflow's `args.location`. It is **advisory**: a
+flagged posting keeps its score and stays on the shortlist, with the constraint quoted in
+`deal_breaker`. The file is git-ignored on purpose (it describes you, not the project), so create
+it locally; without it the screen ignores location entirely.
+
 Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist
 (measured: ≈100k tokens per 40-JD relevance batch; ≈300–600k per tailored offer with the
 critique pass).
