@@ -1,5 +1,19 @@
 # Plan 009 — renew the local job search, CV and letters
 
+> **CLOSED 2026-08-07.** Every item below is shipped, except two that migrated to
+> [plan 010](010-screen-quality-shortlist-usability.md): **Phase C** (re-screen the delta) and the
+> **second tailor round** that follows it. Nothing is stranded here. This file is history — do not
+> add work to it.
+>
+> **Shipped:** Phase A (hygiene) · Phase B (evidence library, 24 projects) ·
+> Phase B2 [#358](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/358) ·
+> Phase D (12 packs + HumanLayer regenerated, 8 archived) ·
+> PRs [#354](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/354)
+> [#355](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/355)
+> [#358](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/358)
+> [#359](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/359)
+> [#360](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/360).
+
 **Goal.** Refresh the whole local pipeline end to end: live-only shortlists, a portfolio-current
 evidence library, a re-screened corpus delta, and up to 12 re-tailored application packs.
 
@@ -56,10 +70,14 @@ repos, so they lost the cut.
 `polyforge-orchestrator`, `vlm-toolkit`, `diagramforge`. That thins the cloud/DevOps lane's evidence
 (only `gha-sec-feed` survives from that family). The tailor workflow reads the *new* library only.
 
-**Owner decision (2026-08-03): re-resume at `maxProjects: 34`.** In flight on the same run id, so
-the 24 mined projects replay from cache and only the new repos plus a fresh assemble cost tokens.
-Note the inventory agent's prompt embeds the cap, so that one agent always re-runs; if it renames or
-re-paths a project, that project's miner re-runs too.
+**Resolved 2026-08-07: shipped at 24.** The `maxProjects: 34` re-resume was attempted and its
+assemble step was **rejected by the schema** (`must have required property 'toneApplied'`) before it
+could return; the run was interrupted mid-retry. The recovered draft held 31 projects — it gained
+`sabi` (2 060 commits, never mined before), `gha-rxiv-feed-action` and `gha-sec-feed-eval`, but
+**lost `qte77`, the profile repo** — so the owner chose the schema-valid 24-project library already
+on disk. `agentic-cax-gauge`, `__SABI` and `protocols` remain uncovered, and 5 of the 7 original
+`gha-*` repos are still absent. Not carried into arc 010: the 24-project library grounds every
+current pack and no downstream work is blocked by it.
 
 ### Phase B2 — JD grounding fixes · SHIPPED [#358](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/358)
 
@@ -78,7 +96,12 @@ fresh content on the *unchanged* branch, which is where every backfill lands —
 Also ships `persist_offer.lane_angle_warning` → `lane-grounding-check.md` (#348), the deterministic
 half of that issue; the immediate half was resolved by the rebuild (all 7 `{lane}Angle` present).
 
-### Phase C — re-screen the delta
+### Phase C — re-screen the delta · MIGRATED to [plan 010](010-screen-quality-shortlist-usability.md) item 3
+
+Staged but never run: 21 batches / 825 JDs at `results/batches/manifest.json`. Moved because the
+558 RSS records it would screen carry no company name — plan 010 item 1 fixes that first.
+
+<details><summary>original section</summary>
 
 `Workflow({ scriptPath: '.claude/workflows/cc-workflow-relevance.js', args: { rootDir: '.',
 batchCount: 21 }})` → `make persist FILE=<out.json>` **with `--merge`** (union by id; a bare
@@ -87,7 +110,17 @@ batchCount: 21 }})` → `make persist FILE=<out.json>` **with `--merge`** (union
 **Done when** `results/<lane>/shortlist.json` gains the delta's keepers and `jobs-scored.json`
 reflects them.
 
-### Phase D — re-tailor, capped at 12
+</details>
+
+### Phase D — re-tailor, capped at 12 · DONE (2026-08-07)
+
+**Shipped.** All 12 slate packs regenerated against the rebuilt library, plus a 13th for
+HumanLayer. Zero `jd-truncation-check.md` and zero `lane-grounding-check.md` across them — the
+practical proof that #358's two fixes hold. 8 corpus-delisted packs archived by `mv` to
+`results/offers-archive/` (moved, never deleted). The **second tailor round** for Phase C keepers
+migrated to [plan 010](010-screen-quality-shortlist-usability.md) item 10.
+
+<details><summary>original section</summary>
 
 **Owner decision (2026-08-03): run D before C** — re-tailor the surviving packs now, then screen the
 delta and tailor any fresh winner in a second round. Costs more in total (some offers get tailored
@@ -112,6 +145,8 @@ corpus-delisted** (`anthropic-applied-ai-beneficial-deployments`, `cadaico-ai-en
 `stellar-ai-senior-software-engineer`, `stripe-backend-engineer-ai-security`) and **23 are alive**,
 of which **12 score 5** — exactly filling the cap. Ties at 5 need a tiebreak (confidence, then
 recency).
+
+</details>
 
 ## Source map
 

@@ -1,6 +1,19 @@
 # Handoff 009 — renew the local job search, CV and letters
 
-**State (2026-08-03): Phase A + B + B2 done; D next, then C.** Plan:
+> **CLOSED 2026-08-07.** Arc complete. Two items migrated to
+> [handoff 010](010-screen-quality-shortlist-usability.md) / [plan 010](../plans/010-screen-quality-shortlist-usability.md):
+> Phase C and the second tailor round. **Start there, not here.**
+>
+> Final state: PRs #354 #355 #358 #359 #360 merged · evidence library rebuilt (24 projects) ·
+> 12 slate packs + HumanLayer regenerated with zero truncation and zero lane-grounding warnings ·
+> 8 corpus-delisted packs archived by `mv` · corpus 8 459 · jobs-raw 5 807 with full JD text ·
+> shortlists 614 rows / 467 live · 21 batches / 825 JDs staged for Phase C.
+>
+> The blockers this handoff listed are resolved: #354 merged, and the `refresh` re-sweep was
+> superseded — pack liveness is judged on the corpus join (`meta.json` → `id`, 29/29 matched),
+> which needs no network.
+
+**Historical record below — superseded by the banner above.** Plan:
 [docs/plans/009-renew-search-cv-letters.md](../plans/009-renew-search-cv-letters.md). Arc 008
 (`render-pdf`) is closed and shipped — nothing migrated from it.
 
@@ -9,7 +22,7 @@
 - [x] **Phase A hygiene.** `refresh` + `verify-sources` + `ingest --merge` + `chunk --new`.
       Corpus 7 563 → **7 997**; delta = **21 batches / 830 JDs**; sources **140/142** live.
 - [x] **PR [#354](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/354)** —
-      `fix(refresh): only 404/410 expire a shortlist entry`. CI green, **NOT MERGED** (see Blocked).
+      `fix(refresh): only 404/410 expire a shortlist entry`. CI green, **merged 2026-08-07**.
 - [x] **PR [#358](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/358)** —
       `fix(chunk): relocate DESC_CAP off ingest; add lane-grounding check`. Fixes the grounding half
       of #347 (the cap truncated **80%** of ingested JDs) and ships #348's deterministic guard.
@@ -31,29 +44,13 @@ Fix narrows the kill rule to `GONE_STATUSES = {404, 410}`. **Any `stale` flag wr
 fix is suspect** — the shortlists currently on disk were flagged by the old rule and must be
 re-swept before Phase D picks packs.
 
-## Blocked — needs the owner
+## Blocked / resume order — RESOLVED, kept for history
 
-1. **Merge PR #354** — `gh pr merge 354 --squash --admin --delete-branch` was denied by the
-   permission classifier. Branch `fix/refresh-probe-3xx-false-stale`, CI green.
-2. **Re-run the sweep** — the venv-borrow `refresh` was denied by the classifier on its third
-   invocation (it succeeded twice earlier in the same session). Until it runs, shortlist `stale`
-   flags come from the buggy rule.
-
-Both are permission grants, not work. Everything else proceeded around them.
-
-## Resume here, in order
-
-1. Merge #354, then re-run `refresh` via the
-   [venv-borrow](../../CONTRIBUTING.md#polyfetch-venv-borrow) — expect the stale count to drop
-   well below 147 as the 56 false positives return.
-2. Persist the `maxProjects: 34` re-resume of `wf_bc321d71-472` when it lands (back up first), and
-   confirm `perProject` now covers `agentic-cax-gauge`, `__SABI`, `protocols` + the `gha-*` family.
-3. **Phase D before Phase C** (owner's call): re-tailor the 12 alive score-5 packs against the new
-   library, then archive the 6 corpus-delisted ones by **moving** them to
-   `results/offers-archive/<slug>/`. Both are computable offline — see the plan's Phase D.
-4. Phase C — relevance over `batchCount: 21`, then `make persist FILE=<out> --merge`.
-5. Second tailor round — any fresh Phase C keeper outranking a survivor, same cap of 12 overall.
-6. Drop `greenhouse/dbtlabsinc` from `config/default-seed.json` (hard 404 in today's ingest).
+Both blockers cleared on 2026-08-07: #354 merged (along with #355/#358/#359/#360), and the
+owner-gated `refresh` re-sweep was superseded rather than run — pack liveness is judged on the
+corpus join, which needs no network. The resume order that lived here is finished except for
+Phase C and the second tailor round, both now
+[plan 010](../plans/010-screen-quality-shortlist-usability.md) items 3 and 10.
 
 ## Watch-outs
 
@@ -65,8 +62,9 @@ Both are permission grants, not work. Everything else proceeded around them.
   owner-gated sweep.
 - **The new library is not a superset of the old one.** `maxProjects: 24` over 84 repos dropped ~10
   projects the 06-29 library had, incl. six `gha-*` Actions repos — the cloud/DevOps lane keeps only
-  `gha-sec-feed` from that family. Tailoring reads the new library only, so lane evidence thins
-  until the cap decision is settled.
+  `gha-sec-feed` from that family. The cap decision was settled on 2026-08-07: **ship at 24** (the
+  34-cap assemble was schema-rejected and its draft lost the `qte77` profile repo). Tailoring reads
+  the 24-project library; lane evidence for cloud/DevOps stays thin by choice.
 - `persist` without `--merge` overwrites the accrued shortlists.
 - Phase D at 12 packs ≈ 4–7M tokens; Phase C ≈ 2.1M.
 - `env -u GH_TOKEN -u GITHUB_TOKEN` on every `gh` / `git push`; commit with `--no-gpg-sign`.
