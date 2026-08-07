@@ -92,6 +92,18 @@ Every open decision has a default; proceed with it unattended and let the owner 
 ## Not this arc
 
 HumanLayer / Lobby AI / Nomadic applications are owner work — outreach and submission are human by
-policy. The HumanLayer pack is at `results/offers/humanlayer-founding-product-engineer/`; the
-research behind it (their RPI pipeline, the absent eval layer, unpinned skills, the agent-races
-angle) lives in the 2026-08-07 session transcript, not in this repo.
+policy (AGENTS.md: no automated submission).
+
+**The research is persisted, not stranded in a transcript** — `results/company-research/`
+(git-ignored, alongside the packs):
+
+- `humanlayer.md` — RPI pipeline, the schema-level proof that no eval/goal/criterion table exists,
+  unpinned skills + `permissions-mode bypass`, the agent-races pitch strategy, and the honesty
+  guardrail on `skills-lock.json` (TRMNLY's prior art, not this candidate's build)
+- `lobby-ai.md` — Zurich HQ, two founding roles, **highest expected value of the three** because it
+  is the only one with no location or authorization blocker. Carries one OPEN ITEM: the JDs are
+  JS-rendered and still uncaptured, blocked on `patchright install`
+- `nomadic-ai.md` — Understanding Layer for Physical AI, 6 SF on-site roles, 3 screened at score 3,
+  all scored on company context only because the role bodies were never fetched
+
+The HumanLayer pack itself is at `results/offers/humanlayer-founding-product-engineer/`.
