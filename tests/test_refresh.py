@@ -28,9 +28,24 @@ def test_is_delisted_only_when_absent_from_latest_pull() -> None:
 def test_classify_stale_rules() -> None:
     assert refresh.classify(corpus_delisted=True, status=None) is True  # corpus says gone
     assert refresh.classify(corpus_delisted=False, status=404) is True  # definitive dead URL
+    assert refresh.classify(corpus_delisted=False, status=410) is True  # explicitly gone
     assert refresh.classify(corpus_delisted=False, status=200) is False  # live
     assert refresh.classify(corpus_delisted=False, status=None) is False  # inconclusive kept
     assert refresh.classify(corpus_delisted=True, status=200) is True  # corpus wins over a live URL
+
+
+def test_classify_keeps_entries_a_non_2xx_cannot_prove_dead() -> None:
+    """Only 404/410 prove death; a redirect, a bot-block, or a server fault must not expire.
+
+    Board URLs commonly 301 to the canonical posting (Stripe/Databricks ``gh_jid`` links), and
+    WeWorkRemotely answers an unattended probe with 403 — treating either as dead buried 56 live
+    offers in the 2026-07-28 sweep.
+    """
+    assert refresh.classify(corpus_delisted=False, status=301) is False  # moved, not gone
+    assert refresh.classify(corpus_delisted=False, status=302) is False  # moved, not gone
+    assert refresh.classify(corpus_delisted=False, status=403) is False  # bot-block, not gone
+    assert refresh.classify(corpus_delisted=False, status=429) is False  # throttled, not gone
+    assert refresh.classify(corpus_delisted=False, status=503) is False  # server fault, not gone
 
 
 def _bucket(tmp_path: Path, items: list[dict]) -> Path:

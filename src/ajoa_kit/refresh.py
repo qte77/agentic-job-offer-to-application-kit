@@ -5,8 +5,8 @@ go stale. ``refresh`` re-checks every entry two ways and marks the dead ones:
 
   - **corpus-delisted** — the #164 ``results/corpus.json`` no longer saw it in the latest pull
     (``last_seen`` frozen below the newest pull date), and
-  - **URL re-probe** — a direct read-only GET returns a definitive non-2xx (catches offers whose
-    source we stopped tracking, which the corpus can't mark).
+  - **URL re-probe** — a direct read-only GET returns a definitively-gone status (404/410; catches
+    offers whose source we stopped tracking, which the corpus can't mark).
 
 Dead entries are flagged ``stale`` by default (kept as an audit trail; the dashboard hides them) or
 dropped with ``--delete``. An inconclusive probe (network error / timeout) never flags an entry,
@@ -46,13 +46,19 @@ def is_delisted(corpus_rec: dict | None, latest_pull: str) -> bool:
     return corpus_rec is not None and corpus_rec.get("last_seen") != latest_pull
 
 
-def classify(corpus_delisted: bool, status: int | None) -> bool:
-    """Return True if an entry is stale: corpus-delisted or a definitive non-2xx re-probe.
+GONE_STATUSES = frozenset({404, 410})
+"""Statuses that prove a posting is gone. Nothing else does — see :func:`classify`."""
 
-    ``status is None`` (inconclusive — non-http(s), network error, timeout) and any 2xx are *not*
-    stale, so a flaky network never expires a live entry.
+
+def classify(corpus_delisted: bool, status: int | None) -> bool:
+    """Return True if an entry is stale: corpus-delisted, or a re-probe that proves it is gone.
+
+    Only :data:`GONE_STATUSES` prove death. ``status is None`` (inconclusive — non-http(s), network
+    error, timeout) and every other status are *not* stale, so nothing short of proof expires a live
+    entry: boards routinely 3xx to the canonical posting, answer an unattended probe with 403, or
+    fault with a 5xx, while postings that simply vanish are already caught as corpus-delisted.
     """
-    return corpus_delisted or (status is not None and not 200 <= status < 300)
+    return corpus_delisted or status in GONE_STATUSES
 
 
 def mark(
