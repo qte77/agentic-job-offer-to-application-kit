@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 
 from ajoa_kit.corpus import merge_corpus, render_daily_summary, summarize_changes
 from ajoa_kit.defaults import DEFAULT_LANES, INTEREST, TITLE_ROLES
-from ajoa_kit.models import Lane
+from ajoa_kit.models import Lane, LocationPolicy
 from ajoa_kit.normalize import _INTEREST, _TITLE_ROLES, build_patterns, keep
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.sources import AGGREGATORS, ATS, from_rss, load_sources
@@ -68,6 +68,28 @@ def load_lanes(config_dir: Path) -> list[Lane]:
         return DEFAULT_LANES
     data = json.loads(path.read_text())
     return [Lane.model_validate(item) for item in data]
+
+
+def load_location(config_dir: Path) -> LocationPolicy:
+    """Return the candidate's location policy; an absent ``config_dir/location.json`` is inert.
+
+    Emitted to the relevance workflow via ``ajoa-kit location --json`` (mirrors
+    :func:`load_lanes`), so one file feeds both runtimes. The file is deliberately **not**
+    committed — it describes a person, and the repo's no-PII rule keeps it under the ``config/``
+    ignore. Its absence is the normal case for a fresh clone and must never fail: an empty policy
+    reports :attr:`~ajoa_kit.models.LocationPolicy.is_active` False and the screen skips location
+    filtering entirely.
+
+    Args:
+        config_dir: The config root (from ``AppSettings``).
+
+    Returns:
+        The validated policy, or an empty (inert) one when the file is absent.
+    """
+    path = config_dir / "location.json"
+    if not path.is_file():
+        return LocationPolicy()
+    return LocationPolicy.model_validate(json.loads(path.read_text()))
 
 
 # --- run ------------------------------------------------------------------------------
