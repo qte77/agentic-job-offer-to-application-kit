@@ -14,11 +14,22 @@ def test_strips_tag_with_angle_bracket_in_attribute() -> None:
     assert out == "click"
 
 
+def test_keeps_the_whole_posting_for_tailoring() -> None:
+    """Ingest stores the full JD; ``DESC_CAP`` belongs to the relevance pass instead (#347).
+
+    The cap used to be applied here, and 80% of ingested JDs hit it (4632 of 5773, median length
+    exactly 4000). The tailor pass reads the same record, so most application packs were grounded
+    in a partial posting — the requirements past 4000 chars were simply gone.
+    """
+    body = "z" * (defaults.DESC_CAP + 500)
+    assert normalize.html_to_text(f"<p>{body}</p>") == body
+
+
 class TestHtmlToTextProperties:
     # Reason: pure text transform over arbitrary (possibly malformed) input; deadline off.
     @given(s=st.one_of(st.none(), st.text()))
     @settings(deadline=None)
-    def test_never_raises_and_caps_length(self, s: str | None) -> None:
+    def test_never_raises_and_collapses_whitespace(self, s: str | None) -> None:
         out = normalize.html_to_text(s)
         assert isinstance(out, str)
-        assert len(out) <= defaults.DESC_CAP
+        assert out == out.strip()  # leading/trailing whitespace always collapsed away

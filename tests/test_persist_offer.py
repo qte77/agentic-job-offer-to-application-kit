@@ -138,6 +138,25 @@ def test_write_pack_flags_capped_jd_for_review(tmp_path: Path) -> None:
     assert (offer_dir / "cv.md").is_file()  # non-blocking — the full pack still wrote
 
 
+def test_write_pack_no_truncation_note_for_a_jd_longer_than_the_cap(tmp_path: Path) -> None:
+    """A JD *longer* than the cap is complete, not truncated — regression for #347.
+
+    While ingest truncated, ``>= cap`` and ``== cap`` were the same test: nothing could exceed the
+    cap, so reaching it proved truncation. Storing the full posting broke that equivalence, and
+    ``>=`` then fired on every long JD — ~80% of the corpus — putting a "this pack was tailored
+    from a truncated JD" warning on precisely the packs that now have complete text. Only the exact
+    cap length is evidence of the legacy truncation.
+    """
+    jd_id = "ashby:acme-ai:101"
+    (tmp_path / "jobs-raw.json").write_text(
+        json.dumps([{"id": jd_id, "description": "x" * (DESC_CAP * 3)}])
+    )
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "offer_id": jd_id}, slug="acme-ai-101", results_dir=tmp_path
+    )
+    assert not (offer_dir / "jd-truncation-check.md").exists()
+
+
 def test_write_pack_no_truncation_note_for_full_jd(tmp_path: Path) -> None:
     # A below-cap JD is complete — no truncation note.
     jd_id = "ashby:acme-ai:101"
@@ -148,6 +167,43 @@ def test_write_pack_no_truncation_note_for_full_jd(tmp_path: Path) -> None:
         {**PACK, "offer_id": jd_id}, slug="acme-ai-101", results_dir=tmp_path
     )
     assert not (offer_dir / "jd-truncation-check.md").exists()
+
+
+def test_write_pack_flags_a_lane_the_library_cannot_ground(tmp_path: Path) -> None:
+    """A library missing the pack's ``{lane}Angle`` mis-grounds it silently (#348).
+
+    The 2026-06-29 library shipped with 5 of 7 angles — no ``mlAngle``/``fdeAngle`` — and three
+    ml-lane packs were tailored against it. Only one Match agent noticed and said it fell back to
+    ``engineeringAngle``; the other two said nothing. Agent self-reporting is unreliable, so the
+    check has to be deterministic, exactly like the truncation aid above.
+    """
+    (tmp_path / "evidence-library.json").write_text(
+        json.dumps({"headline": "x", "cxoAngle": "...", "engineeringAngle": "..."})
+    )
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "lane": "ml"}, slug="acme-ai-101", results_dir=tmp_path
+    )
+    note = offer_dir / "lane-grounding-check.md"
+    assert note.is_file()
+    assert "mlAngle" in note.read_text()
+    assert (offer_dir / "cv.md").is_file()  # non-blocking — the full pack still wrote
+
+
+def test_write_pack_no_grounding_note_when_the_lane_angle_exists(tmp_path: Path) -> None:
+    # The rebuilt library carries all 7 angles — a grounded lane raises no note.
+    (tmp_path / "evidence-library.json").write_text(json.dumps({"mlAngle": "the ml angle"}))
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "lane": "ml"}, slug="acme-ai-101", results_dir=tmp_path
+    )
+    assert not (offer_dir / "lane-grounding-check.md").exists()
+
+
+def test_lane_angle_warning_stays_silent_without_evidence(tmp_path: Path) -> None:
+    # No library on disk, or no lane on the pack — indeterminable, so claim nothing either way
+    # (same never-guess contract as jd_truncation_warning).
+    assert persist_offer.lane_angle_warning("ml", tmp_path) is None  # missing library
+    (tmp_path / "evidence-library.json").write_text(json.dumps({"mlAngle": "x"}))
+    assert persist_offer.lane_angle_warning(None, tmp_path) is None  # no lane on the pack
 
 
 def test_write_pack_truncation_check_indeterminable_is_silent(tmp_path: Path) -> None:
