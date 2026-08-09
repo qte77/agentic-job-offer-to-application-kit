@@ -1,0 +1,14 @@
+[
+  {
+    "id": "manual:northwind-robotics:founding-platform-engineer",
+    "title": "Founding Platform Engineer",
+    "company": "Northwind Robotics",
+    "companySlug": "northwind-robotics",
+    "location": "Zurich, CH (hybrid)",
+    "url": "https://example.invalid/northwind-robotics/careers",
+    "description": "Northwind Robotics builds fleet-orchestration software for warehouse automation. As our founding platform engineer you will own the service layer end to end: the scheduling API, the simulation harness our customers run before a rollout, and the deploy path onto customer-managed clusters. Stack: Python (FastAPI), PostgreSQL, Redis, Kubernetes, Terraform. Must haves: 6+ years building and operating backend services; comfort owning infrastructure rather than handing it off; experience with a small team shipping without heavy process. Nice to have: robotics or real-time systems exposure. Based in or willing to relocate to Zurich; we work hybrid, three days on site.",
+    "laneHint": "founding",
+    "postedAt": "2026-01-15",
+    "remote": false
+  }
+]
