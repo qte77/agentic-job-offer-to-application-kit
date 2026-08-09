@@ -21,10 +21,12 @@ import json
 from datetime import date
 from typing import TYPE_CHECKING
 
+from pydantic import ValidationError
+
 from ajoa_kit.corpus import merge_corpus, render_daily_summary, summarize_changes
 from ajoa_kit.defaults import DEFAULT_LANES, INTEREST, TITLE_ROLES
-from ajoa_kit.models import Lane, LocationPolicy
-from ajoa_kit.normalize import _INTEREST, _TITLE_ROLES, build_patterns, keep
+from ajoa_kit.models import Lane, LocationPolicy, ManualJd
+from ajoa_kit.normalize import _INTEREST, _TITLE_ROLES, build_patterns, keep, record
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.sources import AGGREGATORS, ATS, from_rss, load_sources
 
@@ -92,6 +94,41 @@ def load_location(config_dir: Path) -> LocationPolicy:
     return LocationPolicy.model_validate(json.loads(path.read_text()))
 
 
+def load_manual_jds(config_dir: Path) -> list[dict[str, Any]]:
+    """Return hand-captured JDs from ``config_dir/manual-jds.json`` as normalized records.
+
+    Mirrors :func:`load_lanes` / :func:`load_location`: an absent file is inert and returns ``[]``,
+    which is the normal case for a fresh clone. See :class:`ajoa_kit.models.ManualJd` for why these
+    are config rather than rows in ``results/jobs-raw.json``.
+
+    Args:
+        config_dir: The config root (from ``AppSettings``).
+
+    Returns:
+        One :func:`ajoa_kit.normalize.record` per entry, in file order.
+
+    Raises:
+        ValueError: If any entry is malformed. Deliberately loud — skipping a bad entry would
+            silently lose exactly the record this file exists to protect.
+    """
+    path = config_dir / "manual-jds.json"
+    if not path.is_file():
+        return []
+    try:
+        entries = [ManualJd.model_validate(item) for item in json.loads(path.read_text())]
+    except ValidationError as exc:
+        raise ValueError(f"malformed entry in {path.name} ({config_dir}): {exc}") from exc
+    return [
+        record(
+            source="manual",
+            ats="manual",
+            fetched_backend="manual-capture",
+            **e.model_dump(),
+        )
+        for e in entries
+    ]
+
+
 # --- run ------------------------------------------------------------------------------
 def collect(
     sources: list[tuple[str, Callable[[], Iterable[dict[str, Any]]]]],
@@ -134,6 +171,20 @@ def dedupe(jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         seen.add(j["id"])
         out.append(j)
     return out
+
+
+def with_manual(pulled: list[dict[str, Any]], manual: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Append ``manual`` records to a ``pulled`` batch; a pulled record with the same id wins.
+
+    Order carries the policy: :func:`dedupe` keeps the first occurrence, and once a board actually
+    publishes a posting it is authoritative over the hand-captured copy. Injecting on every run is
+    also what keeps :func:`ajoa_kit.corpus.merge_corpus` from delisting a manual record — it is
+    never "absent from today's pull".
+
+    Manual records join *after* :func:`collect`, so they deliberately bypass the keyword pre-filter:
+    a human already decided this posting is worth keeping.
+    """
+    return dedupe(pulled + manual)
 
 
 def build_summary(deduped: list[dict[str, Any]], state: dict[str, Any]) -> str:
@@ -226,14 +277,18 @@ def main(*, merge: bool = False, today: str | None = None) -> None:
     ]
 
     state = collect(sources, pat_interest, pat_title)
-    deduped = dedupe(state["jobs"])
+    manual = load_manual_jds(settings.config_dir)
+    deduped = with_manual(state["jobs"], manual)
     (results / "jobs-raw.json").write_text(json.dumps(deduped, indent=2, ensure_ascii=False))
     (results / "jobs-raw.summary.md").write_text(build_summary(deduped, state))
     if merge:
         _update_corpus(deduped, results, today or date.today().isoformat())
 
     total_filtered = sum(state["filtered"].values())
-    print(f"wrote {len(deduped)} JDs -> results/jobs-raw.json (dropped {total_filtered})")
+    print(
+        f"wrote {len(deduped)} JDs -> results/jobs-raw.json "
+        f"(dropped {total_filtered}, {len(manual)} manual)"
+    )
     print(f"sources ok: {len(state['counts'])}  failed: {len(state['failures'])}")
     for x in state["failures"]:
         print(f"  FAIL {x}")

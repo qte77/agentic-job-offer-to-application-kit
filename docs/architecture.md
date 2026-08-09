@@ -115,9 +115,10 @@ built).
 | Evidence library `LIB` | `cc-workflow-evidence-library.js` | JSON-Schema (JS) | Stage 1 → relevance / tailor | `results/evidence-library.json` |
 | App settings | `settings.AppSettings` | **pydantic-settings** | every entry point | — (env / cwd) |
 | Position lanes | `ingest.load_lanes` / `models.Lane` | **pydantic** | human → relevance / evidence (`cfg.lanes`) | `config/lanes.json` |
+| Manual JDs | `ingest.load_manual_jds` / `models.ManualJd` | **pydantic** | human → ingest (injected into every pull) | `config/manual-jds.json` |
 | seed / keywords / style | `sources.load_sources` / `ingest.load_keywords`, `models.StyleBrief` | untyped / **pydantic** | human → ingest / tailor | `config/*.json` |
 
-**Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` (config), `StyleBrief` (tailor), and the
+**Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` + `ManualJd` (config), `StyleBrief` (tailor), and the
 shortlist items (`ScoredItem`, parse-on-read through persist + merge/refresh, #271). **JS-schema'd at the `agent()`
 boundary but untyped on Python re-read:** offer pack, `must_haves`, evidence library.
 **Untyped:** the JD/corpus records (the highest-volume boundary), batches, and the remaining config

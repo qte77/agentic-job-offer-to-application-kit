@@ -23,6 +23,51 @@ AJOA_CONFIG_DIR=<scratch>/config AJOA_RESULTS_DIR=<scratch>/results \
 Stage the candidate's evidence library as `<scratch>/results/evidence-library.json`; all outputs stay
 in scratch / the sibling repo, never the kit tree.
 
+## Fetch escalation has three tiers, not two — render, then *drive*
+
+**Pattern:** A careers/JD page yields only role titles. The reflex is to escalate to the browser
+tier, and when that still yields only titles, to conclude the fetch cannot get the content. Both
+halves of that reflex are wrong: rendering can be **necessary but not sufficient**. Measured on
+Lobby AI's `/careers`, which cost four attempts:
+
+| Tier | HTML | Text | Role bodies |
+|---|---|---|---|
+| `httpx` (no JS) | 3 298 | 1 067 | no — and **no accordion markup either** |
+| `patchright`, `wait_until: networkidle` | 13 503 | 1 665 | no — panels present but `hidden=""` and empty |
+| `patchright` + two `click_text` actions | 27 371 | **6 313** | yes, both |
+
+Rendering quadrupled the HTML and still looked like a failure, because the JD text sits behind a
+Radix accordion and Radix mounts panel children only on open. Waiting longer never helps.
+
+**The trap is that the diagnosis is invisible from the cheap tier.** The static HTML contains zero
+occurrences of `aria-expanded`, `data-state="closed"` or `hidden=""` — the app is client-rendered,
+so the disclosure markup does not exist until React hydrates. You cannot tell an accordion page from
+a genuinely thin one without rendering it first.
+
+**Fix:** when a rendered page is still thin, grep the **rendered** DOM (not the served HTML) for
+`data-state="closed"` / `aria-expanded="false"` / an empty `hidden` panel, then drive it —
+`RenderOptions.actions`, `click_text` per trigger, a short `wait_ms` after each:
+
+```python
+RenderOptions(
+    actions=(
+        RenderAction(verb="click_text", text="<role title>"),
+        RenderAction(verb="wait_ms", ms=1000),
+    )
+)
+```
+
+Rendering is not interacting. This is the rule the unattended-execution guidance already states for
+UI e2e ("click buttons, dropdowns and other interactive elements") — it applies to ingest too.
+
+**And the meta-lesson, which cost more than the technique did:** the blocked tool (patchright's
+Chromium was missing) prevented the observation that would have discriminated the two hypotheses, so
+an untested inference — "the JD content is JS-rendered", reasoned by analogy to another site — got
+written into the research file as a finding. It was half true, which is the worst kind: it survived
+review and set up a fifth failed attempt. **When the verifying tool is unavailable, record the
+question as open, not the guess as the answer** — the same hedge the sibling research file applies
+to its own ABSENT verdicts. Restoring the tool cost 177 MB and two minutes.
+
 ## Stage workflows are name-invocable from `.claude/workflows/`
 
 **Pattern:** Long `Workflow({ scriptPath: '.claude/workflows/cc-workflow-*.js', … })` invocations.

@@ -45,17 +45,19 @@ records die in the same run.
 
 Remaining sequence:
 
-1. **Item 4** (manual-JD durability) — promoted to first: the next `ingest` is no longer optional
-   (it carries the item-1 backfill), so this is what stands between that run and losing the
-   HumanLayer + Nomadic JDs their packs are grounded in.
-2. **`ingest --merge`** — backfills company/salary into the corpus. Confirm the Companies-hiring
-   "Unknown" row drops from 244.
-3. **Items 5, 6** (dashboard) — independent of everything else, small, and they make the rest of the
-   arc easier to inspect. Needs `patchright install` first for e2e.
-4. **Ask the owner for item 2** (`config/location.json`). It gates item 3's value, not its
-   execution — Phase C runs fine without it, just without location flags.
-5. **Item 3** (Phase C, ~2.1M tokens) once the backfill pull and item 2 are settled.
-6. **Items 7, 8, 9** as capacity allows; **item 10** after 3.
+1. **`ingest --merge`** — the next thing to run. It backfills company/salary into the corpus and is
+   now safe: item 4 shipped, and `config/manual-jds.json` carries all 7 manual records. Confirm the
+   Companies-hiring "Unknown" row drops from 244, and that the 7 `manual:` ids survive.
+2. **Items 5, 6** (dashboard) — independent of everything else, small, and they make the rest of the
+   arc easier to inspect. `patchright install` is **done** (2026-08-09), so `make ui_e2e` /
+   `make ui_shots` work again.
+3. **Item 3** (Phase C, ~2.1M tokens) once the backfill pull has landed. The owner chose to proceed
+   **without** `config/location.json` (item 2 stays open); the advisory is inert and the screen
+   behaves exactly as before.
+4. **Items 7, 8, 9** as capacity allows; **item 10** after 3.
+
+**Owner decision 2026-08-09:** run Phase C without a location policy. Item 2 remains an open owner
+row — writing the file later costs one Phase C re-run, nothing else.
 
 ## Decide-by-default
 
@@ -78,10 +80,16 @@ Every open decision has a default; proceed with it unattended and let the owner 
 - **`gh pr merge --squash --admin`** works for PRs you authored; bot-authored PRs (dependabot,
   github-actions) need `gh pr review --approve` first because the ruleset sets
   `require_code_owner_review: true`.
-- **polyfetch's Chromium is gone** — a `uv run` in that checkout rebuilt the venv. `patchright
-  install` before any UI e2e.
-- **Disk at 96%.** Delete the ~94 MB of `*.pre-*` backups in `results/` listed in the plan before
-  installing anything.
+- **polyfetch's Chromium is restored** (2026-08-09) — but `patchright install` must run
+  **unsandboxed** (`dangerouslyDisableSandbox`). A sandboxed run reports success and downloads 177 MB,
+  then discards the writes to `~/.cache/ms-playwright`; the failure only surfaces later as
+  "Executable doesn't exist".
+- **Disk.** The ~94 MB of `*.pre-*` backups listed in the plan are deleted. 1.7 GB free after the
+  browser install; `results/` is down to 91 MB.
+- **Rendering is not interacting.** A rendered-but-still-thin page may be click-gated — drive it,
+  don't re-fetch it. Escalation has three tiers (static → rendered → driven) and a tier can be
+  necessary without being sufficient; on Lobby AI both were true, which is why four attempts failed.
+  See [AGENT_LEARNINGS](../../AGENT_LEARNINGS.md).
 - **Background workflows die.** The evidence library needed 7 attempts; 5 of 12 tailor runs failed
   on session limits. Resume is cheap — cached agents replay at ~0 tokens in ~300 ms — but **persist
   each result as it lands**, because the task output files are wiped when the scratchpad is cleared.
@@ -90,10 +98,14 @@ Every open decision has a default; proceed with it unattended and let the owner 
 
 ## Open questions for the owner
 
-1. `config/location.json` values — the advisory is inert until this exists (item 2).
-2. Whether to restore polyfetch's Chromium now (~150–300 MB on a 96% disk) or defer UI e2e.
-3. Whether `workatastartup` is wanted as a source at all, given it yields one company per fetch
+1. `config/location.json` values — the advisory is inert until this exists (item 2). **Deferred by
+   the owner 2026-08-09**; Phase C proceeds without it.
+2. Whether `workatastartup` is wanted as a source at all, given it yields one company per fetch
    rather than a feed.
+3. `origin/chore/source-freshness-20260801` still exists with one unmerged commit (`20f19cb`) whose
+   PR [#357](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/357) was **closed,
+   not merged** — superseded by #359. Deleting the branch discards that commit, so it was left
+   alone. Confirm it can go.
 
 ## Not this arc
 
@@ -107,9 +119,19 @@ policy (AGENTS.md: no automated submission).
   unpinned skills + `permissions-mode bypass`, the agent-races pitch strategy, and the honesty
   guardrail on `skills-lock.json` (TRMNLY's prior art, not this candidate's build)
 - `lobby-ai.md` — Zurich HQ, two founding roles, **highest expected value of the three** because it
-  is the only one with no location or authorization blocker. Carries one OPEN ITEM: the JDs are
-  JS-rendered and still uncaptured, blocked on `patchright install`
+  is the only one with no location or authorization blocker. **OPEN ITEM resolved 2026-08-09:** both
+  JDs captured (`lobby-ai-jds.md`, screenshot `lobby-ai-careers-expanded.png`) and now entries 6–7
+  of `config/manual-jds.json`. Adds `$2.2M led by Founderful`, the three founders, and the JD's own
+  "Evals as a Discipline" / "Minimum 8 years" / "Swiss-Based/Local" must-haves
 - `nomadic-ai.md` — Understanding Layer for Physical AI, 6 SF on-site roles, 3 screened at score 3,
   all scored on company context only because the role bodies were never fetched
 
-The HumanLayer pack itself is at `results/offers/humanlayer-founding-product-engineer/`.
+**Pack state as of 2026-08-09** — 22 packs on disk, all 22 rendering in the dashboard:
+
+| Company | CV + letter | Dashboard |
+|---|---|---|
+| HumanLayer | yes — being regenerated off the retracted claim | row 417/467, `cv` attached |
+| Nomadic AI | **none** — never tailored | 3 rows (360, 361, 467), score 3 / `maybe`, empty detail; `chief-of-staff` is on no shortlist at all |
+| Lobby AI | none | **0 rows** — captured but not yet ingested or screened |
+
+HumanLayer sitting at 417 and Nomadic ML dead last at 467 is precisely what items 5–6 fix.

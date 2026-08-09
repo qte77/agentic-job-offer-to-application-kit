@@ -77,6 +77,41 @@ class LocationPolicy(BaseModel):
         return bool(self.authorized_in)
 
 
+class ManualJd(BaseModel):
+    """One hand-captured JD from ``config/manual-jds.json`` — a posting no adapter can reach.
+
+    Some employers publish roles only behind a JS accordion, a login, or a page with no feed at
+    all, so the JD is captured by hand. Before this existed those records lived *only* in
+    ``results/jobs-raw.json``, which :func:`ajoa_kit.ingest.main` rewrites wholesale from the pull —
+    so they vanished on the next ingest and the packs grounded in them lost their JD.
+
+    Making them config turns the loss into a reload: :func:`ajoa_kit.ingest.load_manual_jds` injects
+    them into every pull, which also stops :func:`ajoa_kit.corpus.merge_corpus` from delisting them
+    (a record present in ``fresh`` is never "absent from today's pull"). Removing an entry is
+    therefore the deliberate way to retire one.
+
+    Only the author-supplied fields live here; ``source``/``ats``/``fetched_backend`` are stamped by
+    the loader. Aliases are camelCase to match ``config/lanes.json`` and ``config/location.json``.
+
+    **Not committed** — ``config/`` is git-ignored wholesale, so captured JD text never enters the
+    repo.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    """Stable id, conventionally ``manual:<company-slug>:<role-slug>``."""
+    title: str
+    company: str = ""
+    company_slug: str = Field(default="", alias="companySlug")
+    location: str = ""
+    url: str = ""
+    description: str = ""
+    lane_hint: str = Field(default="", alias="laneHint")
+    posted_at: str = Field(default="", alias="postedAt")
+    remote: bool | None = None
+
+
 class ScoredItem(BaseModel):
     """One scored JD from the relevance workflow.
 

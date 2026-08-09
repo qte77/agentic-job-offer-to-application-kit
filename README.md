@@ -39,6 +39,14 @@ flagged posting keeps its score and stays on the shortlist, with the constraint 
 `deal_breaker`. The file is git-ignored on purpose (it describes you, not the project), so create
 it locally; without it the screen ignores location entirely.
 
+Optionally add `config/manual-jds.json` for postings no adapter can reach — a role published only
+behind a JS accordion, a login, or a page with no feed. Each entry is
+`{id, title, company, companySlug, location, url, description, laneHint, postedAt, remote}`, and
+`ingest` injects them into every pull, so they survive the wholesale rewrite of
+`results/jobs-raw.json` and are never delisted from the corpus. Removing an entry is how you retire
+one; if a board later publishes the same id, the pulled record wins. Also git-ignored (captured JD
+text is not project content).
+
 Cost model: cheap pre-filter → LLM relevance → tailor only the shortlist
 (measured: ≈100k tokens per 40-JD relevance batch; ≈300–600k per tailored offer with the
 critique pass).
