@@ -40,6 +40,11 @@ the location one that shipped in [#360](https://github.com/qte77/agentic-job-off
   557 of 558 records recovered (258 distinct employers); the one miss carries no separator, so `""`
   is correct. Salary bands captured too (363). `title` left verbatim, so the corpus backfills for
   free on the next pull. **The item-3 ordering constraint is now satisfied.**
+- **Item 4** — manual-JD durability, [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364).
+  `config/manual-jds.json` + `ingest.with_manual`; injection on every pull is what also stops
+  `merge_corpus` delisting them. **The 5 in-flight records were migrated into the config and 2
+  Lobby AI roles added — 7 entries, verified byte-identical to the live `jobs-raw.json` rows apart
+  from the new `salary` key.** The next `ingest --merge` is now safe to run.
 
 ## Remaining work
 
@@ -49,7 +54,6 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 |---|---|---|---|
 | 2 | `config/location.json` written so the advisory activates | **owner** | `ajoa-kit location` reports an active policy |
 | 3 | Phase C — relevance over the delta *(migrated from 009)* | agent, after 2 | `results/<lane>/shortlist.json` gains the delta's keepers; `jobs-scored.json` reflects them |
-| 4 | Manual-JD durability across re-ingest | agent | a `manual:` record survives an `ingest --merge` that does not contain it, and is not marked delisted |
 | 5 | UI: has-pack badge + filter | agent | a tailored row is visually distinct; filter shows only rows with `cv` |
 | 6 | UI: score-desc ordering across lanes | agent | `aggregate()` output is score-ordered; a new score-4 row is not below 400 |
 | 7 | Scoped extraction at chunk time | agent | batch text drops preamble/EEO/benefits; `_capped` still bounds at `DESC_CAP` |
@@ -95,16 +99,12 @@ Workflow({ scriptPath: '.claude/workflows/cc-workflow-relevance.js',
 uv run ajoa-kit persist <out.json> --merge      # --merge is MANDATORY, see watch-outs
 ```
 
-### Item 4 — manual-JD durability
+### Item 4 — manual-JD durability · SHIPPED #364
 
-| Path | Role |
-|---|---|
-| `src/ajoa_kit/ingest.py:204` `main` | writes `results/jobs-raw.json` wholesale — the loss point |
-| `src/ajoa_kit/ingest.py:53` `load_lanes` · `:73` `load_location` | the config-loader pattern to mirror for `config/manual-jds.json` |
-| `src/ajoa_kit/corpus.py` `merge_corpus` | a manual record absent from a pull must **not** become delisted |
-
-Design: a pulled record with the same id wins (the board is authoritative once it exists); a manual
-record absent from a pull keeps its `last_seen` rather than being frozen out.
+As built: `ingest.load_manual_jds` (mirrors `load_lanes`/`load_location`) + `ingest.with_manual`,
+which appends manual records to the pull and reuses `dedupe`, so a pulled record with the same id
+wins on order alone. **`merge_corpus` needed no change** — injecting on every run means a manual
+record is never "absent from today's pull", so the delisting branch never sees it.
 
 ### Items 5–6 — dashboard
 
