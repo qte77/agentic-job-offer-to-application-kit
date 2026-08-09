@@ -131,6 +131,21 @@ cross-origin runtime fetch) — commands in
 fall back to fetching the `data` branch directly, overridable with `?base=<raw-url>`; the real trends
 are never committed to the source `ui/` (see [ui/README.md](../ui/README.md)).
 
+## Postings no adapter can reach (optional)
+
+Some roles are published only behind a JS accordion, a login, or a page with no feed at all. Capture
+the JD by hand and add it to a git-ignored `config/manual-jds.json` — a list of
+`{id, title, company, companySlug, location, url, description, laneHint, postedAt, remote}` entries,
+of which only `id` (conventionally `manual:<company>:<role>`) and `title` are required.
+
+`ingest` injects every entry into each pull, so the record survives the wholesale rewrite of
+`results/jobs-raw.json` and is never delisted from the corpus. Manual entries skip the keyword
+pre-filter — you already decided the posting is worth keeping. Removing an entry is how you retire
+one, and if a board later publishes the same `id` the **pulled** record wins. A malformed entry
+fails the run rather than being skipped silently. See
+[examples/alexis-doe](../examples/alexis-doe/README.md#adding-a-posting-no-adapter-can-reach) for a
+worked entry.
+
 ## Writing style (optional)
 
 Drop a git-ignored `config/style.json` with a `tone` string and/or paths to your own CV /

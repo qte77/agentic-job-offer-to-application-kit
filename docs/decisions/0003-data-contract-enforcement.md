@@ -83,6 +83,9 @@ A direction, not an implementation — each item below is a future slice (ranked
      Python-untyped).
   4. **Config-entry models** for `seed` / `keywords` / `style` (the raw `.get()` loads). `style` is
      done — `models.StyleBrief` is pydantic (#257); `seed` / `keywords` parse-on-read remain.
+     `config/manual-jds.json` was born typed (`models.ManualJd`, #364) rather than added to this
+     backlog, and it validates loudly: a malformed entry raises instead of being skipped, because
+     silently dropping one loses the JD a persisted pack is grounded in.
   5. **Lanes single source** (`config/lanes.json` + pydantic + `args.lanes`) — resolves the 3-place
      duplication and the "configurable lanes" wording in `architecture.md`. **Shipped (#195).**
 - No new runtime dependency (pydantic already present; JSON Schema is just data).
