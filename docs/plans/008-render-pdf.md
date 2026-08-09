@@ -68,9 +68,14 @@ closes it.
 def _render_pdf(args: argparse.Namespace) -> None:
     """Render a tailored .md (cv/cover-letter) to an ATS-safe PDF (needs the [pdf] extra)."""
     from ajoa_kit.render_pdf import main as run
+
     run(src=Path(args.file), out=Path(args.out) if args.out else None)
+
+
 # ... in main():
-rp = sub.add_parser("render-pdf", help="Render a tailored .md to an ATS-safe PDF. Needs the [pdf] extra.")
+rp = sub.add_parser(
+    "render-pdf", help="Render a tailored .md to an ATS-safe PDF. Needs the [pdf] extra."
+)
 rp.add_argument("file", metavar="FILE", help="Path to a tailored markdown file.")
 rp.add_argument("--out", default="", help="Output PDF path (default: <file>.pdf).")
 rp.set_defaults(func=_render_pdf)
