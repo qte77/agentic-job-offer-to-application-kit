@@ -86,8 +86,10 @@ Every open decision has a default; proceed with it unattended and let the owner 
   "Executable doesn't exist".
 - **Disk.** The ~94 MB of `*.pre-*` backups listed in the plan are deleted. 1.7 GB free after the
   browser install; `results/` is down to 91 MB.
-- **Rendering is not interacting.** A thin careers page may be an accordion, not a JS-render
-  problem — see [AGENT_LEARNINGS](../../AGENT_LEARNINGS.md). This cost four attempts on Lobby AI.
+- **Rendering is not interacting.** A rendered-but-still-thin page may be click-gated — drive it,
+  don't re-fetch it. Escalation has three tiers (static → rendered → driven) and a tier can be
+  necessary without being sufficient; on Lobby AI both were true, which is why four attempts failed.
+  See [AGENT_LEARNINGS](../../AGENT_LEARNINGS.md).
 - **Background workflows die.** The evidence library needed 7 attempts; 5 of 12 tailor runs failed
   on session limits. Resume is cheap — cached agents replay at ~0 tokens in ~300 ms — but **persist
   each result as it lands**, because the task output files are wiped when the scratchpad is cleared.
