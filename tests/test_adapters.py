@@ -50,6 +50,16 @@ RSS_XML = b"""<?xml version="1.0"?>
 </channel></rss>
 """
 
+SWISSDEVJOBS_RSS_XML = b"""<?xml version="1.0"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>Java Software Engineer (w/m/d) @ Acme Softwarehaus [CHF 90'000 - 110'000]</title>
+    <link>https://swissdevjobs.ch/jobs/1</link>
+    <description>Build things.</description>
+  </item>
+</channel></rss>
+"""
+
 # arbeitnow returns parsed JSON (get_json), not bytes. Second job omits tags/location.
 ARBEITNOW_JSON = {
     "data": [
@@ -106,6 +116,21 @@ def test_rss_normalizes_and_canonicalizes_url(monkeypatch: pytest.MonkeyPatch) -
     assert r["url"] == "https://ex.co/jobs/1"  # utm_source dropped
     assert r["id"] == "demo:https://ex.co/jobs/1"
     assert "stuff" in r["description"]
+    assert r["company"] == ""  # unknown feed convention -> no guessed employer
+
+
+def test_rss_recovers_company_from_the_item_title(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The employer lives only in the title; `title` itself must survive verbatim.
+
+    `title` is a content-hash field, so rewriting it would flip every re-pulled record to
+    `changed`; `company`/`salary` are not hashed and backfill for free on the next pull.
+    """
+    monkeypatch.setattr(sources, "get_bytes", lambda _url: (SWISSDEVJOBS_RSS_XML, "httpx"))
+    r = next(iter(sources.from_rss({"source": "swissdevjobs", "url": "https://ex.co/rss"})))
+
+    assert r["company"] == "Acme Softwarehaus"
+    assert r["salary"] == "CHF 90'000 - 110'000"
+    assert r["title"] == "Java Software Engineer (w/m/d) @ Acme Softwarehaus [CHF 90'000 - 110'000]"
 
 
 def test_arbeitnow_normalizes_and_tolerates_missing(monkeypatch: pytest.MonkeyPatch) -> None:

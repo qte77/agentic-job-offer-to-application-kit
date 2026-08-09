@@ -34,15 +34,21 @@ the location one that shipped in [#360](https://github.com/qte77/agentic-job-off
 | Phase D cap | 12 packs | 009 |
 | Non-survivor packs | Archive by `mv`, never delete | 009 |
 
+## Shipped
+
+- **Item 1** — RSS company extraction, [#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363).
+  557 of 558 records recovered (258 distinct employers); the one miss carries no separator, so `""`
+  is correct. Salary bands captured too (363). `title` left verbatim, so the corpus backfills for
+  free on the next pull. **The item-3 ordering constraint is now satisfied.**
+
 ## Remaining work
 
 One table. Source map and design notes below describe HOW; they never re-list WHAT is open.
 
 | # | Item | Gate | Done when |
 |---|---|---|---|
-| 1 | RSS company extraction (3 feeds, 558 records) | agent | `from_rss` yields a non-empty `company` for swissdevjobs/weworkremotely/berlinstartupjobs; unmatched titles yield `""` not a mangled name; `make check` green |
 | 2 | `config/location.json` written so the advisory activates | **owner** | `ajoa-kit location` reports an active policy |
-| 3 | Phase C — relevance over the delta *(migrated from 009)* | agent, after 1 + 2 | `results/<lane>/shortlist.json` gains the delta's keepers; `jobs-scored.json` reflects them |
+| 3 | Phase C — relevance over the delta *(migrated from 009)* | agent, after 2 | `results/<lane>/shortlist.json` gains the delta's keepers; `jobs-scored.json` reflects them |
 | 4 | Manual-JD durability across re-ingest | agent | a `manual:` record survives an `ingest --merge` that does not contain it, and is not marked delisted |
 | 5 | UI: has-pack badge + filter | agent | a tailored row is visually distinct; filter shows only rows with `cv` |
 | 6 | UI: score-desc ordering across lanes | agent | `aggregate()` output is score-ordered; a new score-4 row is not below 400 |
@@ -51,37 +57,28 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 | 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; added to `config/default-seed.json` only if OK |
 | 10 | Second tailor round for Phase C keepers *(migrated from 009)* | agent, after 3 | any fresh keeper outranking a survivor has a pack; slate still capped at 12 |
 
-**Ordering constraint:** item 1 must land **before** item 3. Those 558 JDs were screened with no
-employer name; re-screening them after the fix is free only if it happens in the same Phase C run.
+**Ordering constraint — satisfied.** Item 1 had to land before item 3, and did (#363). Those 558
+JDs were screened with no employer name; re-screening them after the fix is free only if it happens
+in the same Phase C run, so Phase C must not run until an `ingest --merge` has backfilled the
+company field into the corpus.
 
 ## Source map
 
 Exact anchors, verified 2026-08-07 on `main` after #354/#355/#358/#359/#360 merged. Line numbers
 drift — grep the symbol if it has moved.
 
-### Item 1 — RSS company extraction
+### Item 1 — RSS company extraction · SHIPPED #363
 
-| Path | Role |
-|---|---|
-| `src/ajoa_kit/sources.py:214` `from_rss` | the adapter; **`:224` hardcodes `company=""`** — the insertion point |
-| `src/ajoa_kit/normalize.py:119` `record` | the record shape every adapter emits (`company`, `company_slug`, `location`, `remote`) |
-| `src/ajoa_kit/normalize.py:89` `html_to_text` | uncapped since #358 — do not re-add a cap here |
-| `config/default-seed.json` → `feeds` | the 3 feed entries |
+As built: `normalize.rss_company_salary(source, title)` holds one regex per feed
+(`Title @ Company [CHF band]` · `Company: Title` · `Title // Company`) and `from_rss` calls it.
+Unregistered feed or non-conforming title → `("", "")`, never a guess. weworkremotely splits on the
+first colon **followed by a space** — that is what keeps `https://shiperp.com/: PHP Web Developer`
+whole and stops a role name's own colon from inventing an employer.
 
-Observed title conventions (from `results/corpus.json`, 2026-08-03 pull):
-
-| Feed | Pattern | Blank records |
-|---|---|---|
-| swissdevjobs | `Title @ Company [CHF 90'000 - 110'000]` | 363 |
-| weworkremotely | `Company: Title` | 178 |
-| berlinstartupjobs | `Title // Company` | 17 |
-
-swissdevjobs also carries a **salary band** in brackets that is currently discarded — worth
-capturing in the same change; it is the highest-signal feed for a Zurich-based search.
-
-Backfill note: `company` is **not** in `corpus._CONTENT_FIELDS` (`title`, `location`, `description`),
-so re-pulled records stay *unchanged* and the `merge_corpus` unchanged-branch adoption added in #358
-copies the new company field in without a re-screen. Existing rows heal on the next pull for free.
+`title` is left verbatim because it is a `corpus._CONTENT_FIELDS` member (`title`, `location`,
+`description`); `company`/`salary` are unhashed, so the `merge_corpus` unchanged-branch adoption
+added in #358 backfills them on the next pull with no re-screen. **The corpus still holds the old
+blank values until an `ingest --merge` runs** — that pull is a precondition for item 3.
 
 ### Item 3 — Phase C
 
@@ -190,7 +187,8 @@ a feed.
 - `make check` — ruff lint + format, pyright, complexipy, offline pytest at CI parity
 - `make docs_lint` — markdownlint + lychee (429 now accepted; see #360)
 - Items 5–6 are rendering/wiring: `make ui_check` / `make ui_e2e`, not unit tests
-- Item 1: re-run `ingest --merge` and confirm the Companies-hiring "Unknown" row drops from 244
+- Item 3's precondition (the item-1 backfill): re-run `ingest --merge` and confirm the
+  Companies-hiring "Unknown" row drops from 244
 - Item 3: `results/<lane>/shortlist.json` row counts grow; spot-check that `deal_breaker` carries
   location constraints once item 2 is done
 

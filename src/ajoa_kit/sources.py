@@ -17,7 +17,7 @@ from urllib.parse import urlencode
 
 from defusedxml.ElementTree import fromstring as xml_fromstring
 
-from ajoa_kit.normalize import canonical_url, html_to_text, record
+from ajoa_kit.normalize import canonical_url, html_to_text, record, rss_company_salary
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -212,21 +212,31 @@ def from_personio(c: dict[str, str]) -> Iterable[dict[str, Any]]:
 
 
 def from_rss(f: dict[str, str]) -> Iterable[dict[str, Any]]:
-    """Yield normalized records from an RSS 2.0 feed."""
+    """Yield normalized records from an RSS 2.0 feed.
+
+    The feeds carry no employer element, so :func:`ajoa_kit.normalize.rss_company_salary` recovers
+    it from the item title. ``title`` is deliberately left verbatim: it is a
+    :data:`ajoa_kit.corpus._CONTENT_FIELDS` member, so rewriting it would flip every re-pulled
+    record to ``changed`` and fan out a re-screen — whereas ``company``/``salary`` are not hashed,
+    so the merge's unchanged-branch adoption backfills them for free on the next pull.
+    """
     raw, backend = get_bytes(f["url"])
     root = xml_fromstring(raw)
     for item in root.iter("item"):
         link = canonical_url((item.findtext("link") or "").strip())
+        title = (item.findtext("title") or "").strip()
+        company, salary = rss_company_salary(f["source"], title)
         yield record(
             id=f"{f['source']}:{link}",
             source=f["source"],
             ats="rss",
-            company="",
+            company=company,
             lane_hint="",
             fetched_backend=backend,
-            title=(item.findtext("title") or "").strip(),
+            title=title,
             url=link,
             posted_at=(item.findtext("pubDate") or "").strip(),
+            salary=salary,
             description=html_to_text(item.findtext("description")),
         )
 

@@ -101,6 +101,42 @@ def html_to_text(s: str | None) -> str:
     return _WS.sub(" ", s).strip()
 
 
+# RSS items carry no employer field — each feed folds the company into the item title with its own
+# separator, so the title is the only source (arc 010 item 1; 558 records were stored blank).
+# Per-source and never guessed: a feed with no entry here yields "" rather than a mangled name.
+_RSS_TITLE = {
+    # "Java Software Engineer (w/m/d) @ 08EINS Softwarehaus [CHF 90'000 - 110'000]" — the trailing
+    # salary band is optional, and the lazy company group hands it to `salary` when present.
+    "swissdevjobs": re.compile(r"\s@\s(?P<company>.+?)(?:\s\[(?P<salary>[^\[\]]+)\])?$"),
+    # "1Password: Senior Web Developer" — the separator is the FIRST colon *followed by a space*.
+    # A last-colon split invents employers out of role names ("Indigenous Climate Action: Request
+    # for Proposals: Website Developer"); requiring the space keeps a URL-shaped company whole
+    # ("https://shiperp.com/: PHP Web Developer").
+    "weworkremotely": re.compile(r"^(?P<company>.+?):\s"),
+    # "Senior iOS Engineer // Tandem"
+    "berlinstartupjobs": re.compile(r"\s//\s(?P<company>.+?)$"),
+}
+
+
+def rss_company_salary(source: str, title: str) -> tuple[str, str]:
+    """Split an RSS item title into ``(company, salary)`` using ``source``'s title convention.
+
+    Both are ``""`` when the feed has no known convention or the title does not follow it — an
+    unrecognized title must never yield a guessed employer, since ``company`` flows straight into
+    the relevance screen and the Companies-hiring tab.
+
+    ``salary`` is populated only where the feed carries a band (swissdevjobs); it is the
+    highest-signal Swiss feed and the band was previously discarded.
+    """
+    pat = _RSS_TITLE.get(source)
+    if pat is None:
+        return "", ""
+    m = pat.search(title)
+    if m is None:
+        return "", ""
+    return (m.group("company").strip(), (m.groupdict().get("salary") or "").strip())
+
+
 def canonical_url(url: str) -> str:
     """Drop tracking query params (utm_*, gclid, ...) for clean, stable URLs/ids."""
     if not url:
@@ -133,6 +169,7 @@ def record(**kw: object) -> dict[str, Any]:
         "url": "",
         "posted_at": "",
         "last_modified": "",
+        "salary": "",
         "description": "",
     }
     base.update(kw)
