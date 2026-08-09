@@ -1,6 +1,10 @@
 # Handoff 010 — screen quality + shortlist usability
 
-**State (2026-08-07): arc 009 closed, arc 010 opened with 10 items, none started.**
+**State (2026-08-09): item 1 shipped ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363)); 9 items open, 1 of them owner-gated.**
+Also merged: [#362](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/362) — the
+python-deps bump. It carried ruff **0.16**, which formats Python code blocks inside Markdown by
+default, so `ruff format --check .` now covers `docs/`. One plan snippet needed reformatting; expect
+`make check` to police code blocks in every doc you write from here on.
 Plan: [docs/plans/010-screen-quality-shortlist-usability.md](../plans/010-screen-quality-shortlist-usability.md).
 Arc 009 is closed — [its plan](../plans/009-renew-search-cv-letters.md) is history now; two items
 migrated here (Phase C, second tailor round) and nothing else is stranded there.
@@ -34,21 +38,23 @@ Current data state: corpus **8 459**, jobs-raw **5 807** (full text, max 25 392 
 
 ## How to run this arc
 
-**Order matters in exactly one place: item 1 before item 3.** The 558 RSS records were screened
-with no employer name; fixing that after Phase C means paying for Phase C twice.
+**The one ordering constraint (item 1 before item 3) is satisfied** — but item 1 shipped the *code*,
+not the data. The corpus still holds 558 blank `company` values until an `ingest --merge` runs; that
+pull is now a precondition for Phase C, and **item 4 must land before it** or the 5 `manual:`
+records die in the same run.
 
-Suggested sequence:
+Remaining sequence:
 
-1. **Item 1** (RSS company extraction) — highest leverage, purely deterministic, TDD-shaped. Three
-   feeds, three known patterns, plus the two tests that actually matter: an unmatched title must
-   yield `""` rather than a mangled name, and weworkremotely's `Company: Title` split must not
-   invent a company from a role name containing a colon.
-2. **Items 5, 6** (dashboard) — independent of everything else, small, and they make the rest of the
+1. **Item 4** (manual-JD durability) — promoted to first: the next `ingest` is no longer optional
+   (it carries the item-1 backfill), so this is what stands between that run and losing the
+   HumanLayer + Nomadic JDs their packs are grounded in.
+2. **`ingest --merge`** — backfills company/salary into the corpus. Confirm the Companies-hiring
+   "Unknown" row drops from 244.
+3. **Items 5, 6** (dashboard) — independent of everything else, small, and they make the rest of the
    arc easier to inspect. Needs `patchright install` first for e2e.
-3. **Item 4** (manual-JD durability) — do it before any `ingest` run or the 5 `manual:` records die.
 4. **Ask the owner for item 2** (`config/location.json`). It gates item 3's value, not its
    execution — Phase C runs fine without it, just without location flags.
-5. **Item 3** (Phase C, ~2.1M tokens) once 1 and 2 are settled.
+5. **Item 3** (Phase C, ~2.1M tokens) once the backfill pull and item 2 are settled.
 6. **Items 7, 8, 9** as capacity allows; **item 10** after 3.
 
 ## Decide-by-default
