@@ -54,7 +54,10 @@ Remaining sequence:
 3. **Item 3** (Phase C, ~2.1M tokens) once the backfill pull has landed. The owner chose to proceed
    **without** `config/location.json` (item 2 stays open); the advisory is inert and the screen
    behaves exactly as before.
-4. **Items 7, 8, 9** as capacity allows; **item 10** after 3.
+4. **Items 7, 8, 9** as capacity allows; **item 10** after 3. **Item 11**
+   ([#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), ADR-0002 +
+   hand-captured JDs) is drafted diff-ready in the plan's source map — it needs the owner to
+   approve the wording, then it is a 10-minute docs PR.
 
 **Owner decision 2026-08-09:** run Phase C without a location policy. Item 2 remains an open owner
 row — writing the file later costs one Phase C re-run, nothing else.
@@ -75,8 +78,12 @@ Every open decision has a default; proceed with it unattended and let the owner 
 ## Watch-outs that cost real time last session
 
 - **`--merge` on persist, always.** A bare `persist` overwrites 614 accrued shortlist rows.
-- **`env -u GH_TOKEN -u GITHUB_TOKEN`** on every `gh` and `git push` — a stale env token 401s.
-  Commit with `--no-gpg-sign`.
+- **`env -u GH_TOKEN -u GITHUB_TOKEN`** on every `gh` and `git push` — **both**, not just
+  `GH_TOKEN`. Unsetting one falls through to the other, and the devcontainer's `GITHUB_TOKEN` is an
+  installation token: reads succeed, writes fail `403 Resource not accessible by integration`. It
+  looks exactly like a revoked account (2026-08-10 cost two failed writes and a wrong diagnosis).
+  `gh auth status` is the tell — the stored `gho_` token shows `Active account: false` while a
+  shadowing token is set. Commit with `--no-gpg-sign`.
 - **`gh pr merge --squash --admin`** works for PRs you authored; bot-authored PRs (dependabot,
   github-actions) need `gh pr review --approve` first because the ruleset sets
   `require_code_owner_review: true`.
@@ -106,6 +113,9 @@ Every open decision has a default; proceed with it unattended and let the owner 
    PR [#357](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/357) was **closed,
    not merged** — superseded by #359. Deleting the branch discards that commit, so it was left
    alone. Confirm it can go.
+4. **A stray `MEMORY.md` sits untracked at the repo root** — a generic Claude Code memory template,
+   not project content, duplicating the profile memory dir. Recommend deleting it; left in place
+   because deleting files is the owner's call.
 
 ## Not this arc
 

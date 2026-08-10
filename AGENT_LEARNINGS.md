@@ -68,6 +68,28 @@ review and set up a fifth failed attempt. **When the verifying tool is unavailab
 question as open, not the guess as the answer** — the same hedge the sibling research file applies
 to its own ABSENT verdicts. Restoring the tool cost 177 MB and two minutes.
 
+## A shadowing env token reads as a revoked account
+
+**Pattern:** `gh` resolves credentials `GH_TOKEN` → `GITHUB_TOKEN` → the stored `hosts.yml` token,
+so unsetting *one* env var just falls through to the other. A devcontainer's injected `GITHUB_TOKEN`
+is an installation token: reads succeed, writes fail `403 Resource not accessible by integration`.
+Every signal then points at the wrong culprit — writes that worked an hour ago stop working,
+`gh auth status` shows a valid `gho_` token with `repo` scope, and `repos/…/permissions` reports
+`admin: true` (that is the *user's* role, not the token's grant). The plausible diagnosis — "the
+account lost write access, the owner must re-auth" — is wrong, and acting on it sends a human to
+fix a credential that is fine. Cost on 2026-08-10: two failed writes plus a wrong diagnosis
+committed into a plan.
+
+**Fix:** Unset **both** on every `gh` and `git push`:
+
+```bash
+env -u GH_TOKEN -u GITHUB_TOKEN gh pr merge <n> --squash --admin
+```
+
+The tell is `Active account: false` on the stored token in `gh auth status` — check that line, not
+the scope list, before concluding anything about permissions. Generally: when a write 403s but reads
+pass, suspect *which* credential is being used before suspecting what it is allowed to do.
+
 ## Stage workflows are name-invocable from `.claude/workflows/`
 
 **Pattern:** Long `Workflow({ scriptPath: '.claude/workflows/cc-workflow-*.js', … })` invocations.

@@ -135,10 +135,21 @@
   and derives an emerging/who's-hiring signal joined to the local corpus → `results/emerging-companies.json`
   (aggregate-only, **local-only**, never published).
 
+- Screen inputs — employer names and hand-captured postings (plan 010): RSS feeds carry the employer
+  only inside the item title, so all 558 `ats: rss` records were screened with no company and
+  collapsed into one "Unknown" dashboard row. `normalize.rss_company_salary` registers one title
+  convention per feed and recovers 557 of them (258 employers), plus the swissdevjobs salary band
+  into a new `salary` record field; an unrecognized title yields `""` rather than a guessed
+  employer (#363). Separately, `ingest` rewrites `results/jobs-raw.json` wholesale, so hand-captured
+  JDs vanished on the next pull — they now live in `config/manual-jds.json` (`models.ManualJd`) and
+  are injected into every pull, which is also what stops `merge_corpus` delisting them (#364).
+
 ## Next
 
 - Daily + monthly granularity in the trends dashboard (#187/#188 UI half: dropdown + same-origin
   bundles; the data layers are shipped).
+- Offer-pack provenance: `persist-offer` retains no source, so a hand-edited artifact silently
+  desyncs the pack (#365), and nothing detects the drift (#366).
 
 ## Later — hardening & reach
 

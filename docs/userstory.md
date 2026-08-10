@@ -17,6 +17,11 @@ postings.
 Accept: `ajoa-kit ingest` → scored `results/<lane>/shortlist.md`, each with a lane, a 0–5 score, and a
 one-line rationale.
 
+Some postings no adapter can reach — published behind a JS accordion, a login, or a page with no
+feed. Capture those by hand into `config/manual-jds.json`; `ingest` injects them into every pull, so
+they are screened alongside everything else and survive later pulls rather than being dropped as
+delisted.
+
 ## US3 — Keep my data private
 
 As a candidate, I want my evidence, inputs, and results kept out of git, so no personally identifiable
