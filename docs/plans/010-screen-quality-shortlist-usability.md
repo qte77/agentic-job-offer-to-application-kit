@@ -33,6 +33,7 @@ the location one that shipped in [#360](https://github.com/qte77/agentic-job-off
 | Tenure handling | Same shape as location — advisory | 009 review |
 | Phase D cap | 12 packs | 009 |
 | Non-survivor packs | Archive by `mv`, never delete | 009 |
+| `workatastartup` | **Wanted, but opt-in** — never in `config/default-seed.json` defaults | 010, 2026-08-11 |
 
 ## Shipped
 
@@ -58,7 +59,7 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 | 6 | UI: score-desc ordering across lanes | agent | `aggregate()` output is score-ordered; a new score-4 row is not below 400 |
 | 7 | Scoped extraction at chunk time | agent | batch text drops preamble/EEO/benefits; `_capped` still bounds at `DESC_CAP` |
 | 8 | Tenure advisory (`SeniorityPolicy`) | agent | inert without config; flags in `deal_breaker` + `tenure_flagged_count`; never drops or rescores |
-| 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; added to `config/default-seed.json` only if OK |
+| 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
 | 10 | Second tailor round for Phase C keepers *(migrated from 009)* | agent, after 3 | any fresh keeper outranking a survivor has a pack; slate still capped at 12 |
 | 11 | ADR-0002: scope hand-captured JDs + record their freshness blind spot | **owner** (approve the ADR text) | ADR-0002 carries the scope paragraph, the conduct subsection and the freshness consequence; quickstart advises a role-specific `url`; `changelog.d` fragment added |
 

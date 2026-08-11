@@ -1,6 +1,6 @@
 # Handoff 010 — screen quality + shortlist usability
 
-**State (2026-08-09): item 1 shipped ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363)); 9 items open, 1 of them owner-gated.**
+**State (2026-08-11): items 1 and 4 shipped ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364)); 9 items open, 2 of them owner-gated.**
 Also merged: [#362](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/362) — the
 python-deps bump. It carried ruff **0.16**, which formats Python code blocks inside Markdown by
 default, so `ruff format --check .` now covers `docs/`. One plan snippet needed reformatting; expect
@@ -11,7 +11,7 @@ migrated here (Phase C, second tailor round) and nothing else is stranded there.
 
 ## Read this first
 
-The plan has **exactly one remaining-work table** (10 rows). Everything else in it — source map,
+The plan has **exactly one remaining-work table** (9 rows). Everything else in it — source map,
 design notes, watch-outs — describes *how*, never *what is open*. If you find yourself building a
 second list of open work, stop: that is the failure mode the arc rules exist to prevent.
 
@@ -107,15 +107,14 @@ Every open decision has a default; proceed with it unattended and let the owner 
 
 1. `config/location.json` values — the advisory is inert until this exists (item 2). **Deferred by
    the owner 2026-08-09**; Phase C proceeds without it.
-2. Whether `workatastartup` is wanted as a source at all, given it yields one company per fetch
-   rather than a feed.
-3. `origin/chore/source-freshness-20260801` still exists with one unmerged commit (`20f19cb`) whose
-   PR [#357](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/357) was **closed,
-   not merged** — superseded by #359. Deleting the branch discards that commit, so it was left
-   alone. Confirm it can go.
-4. **A stray `MEMORY.md` sits untracked at the repo root** — a generic Claude Code memory template,
-   not project content, duplicating the profile memory dir. Recommend deleting it; left in place
-   because deleting files is the owner's call.
+
+**Resolved 2026-08-11.** `workatastartup` is wanted but **opt-in only** — see the plan's owner-decision
+table; item 9 tiers it and documents it, and it never enters the shipped `default-seed.json`. The
+stale `chore/source-freshness-20260801` branch is **deleted**: its only content beyond re-stampable
+`_date_verified` dates was the two Greenhouse boards (`fireworksai`, `dbtlabsinc`) that
+[#359](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/359) dropped as terminal
+404s, so merging it would have resurrected two dead sources. The stray root `MEMORY.md` is deleted
+and git-ignored.
 
 ## Not this arc
 
