@@ -50,6 +50,10 @@ the location one that shipped in [#360](https://github.com/qte77/agentic-job-off
   [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368). Hand capture is
   now bounded by **conduct, not destination**, and the ADR records that `refresh` can only expire a
   manual entry through its `url` — so capture the posting's URL, not a careers page.
+- **Item 2** — `config/location.json` written 2026-08-11 (owner: authorized in EU / Switzerland / US,
+  `remoteOk`). The advisory is active. Its `notes` ask the screen to surface a citizenship-or-visa-only
+  requirement verbatim in `deal_breaker` while never dropping or downscoring the role — the owner
+  wants the pack built anyway, with the blocker named in it.
 
 ## Remaining work
 
@@ -57,8 +61,7 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 
 | # | Item | Gate | Done when |
 |---|---|---|---|
-| 2 | `config/location.json` written so the advisory activates | **owner** | `ajoa-kit location` reports an active policy |
-| 3 | Phase C — relevance over the delta *(migrated from 009)* | agent, after 2 | `results/<lane>/shortlist.json` gains the delta's keepers; `jobs-scored.json` reflects them |
+| 3 | Phase C — relevance over the delta *(migrated from 009)* | agent | `results/<lane>/shortlist.json` gains the delta's keepers; `jobs-scored.json` reflects them |
 | 5 | UI: has-pack badge + filter | agent | a tailored row is visually distinct; filter shows only rows with `cv` |
 | 6 | UI: score-desc ordering across lanes | agent | `aggregate()` output is score-ordered; a new score-4 row is not below 400 |
 | 7 | Scoped extraction at chunk time | agent | batch text drops preamble/EEO/benefits; `_capped` still bounds at `DESC_CAP` |
@@ -94,15 +97,22 @@ blank values until an `ingest --merge` runs** — that pull is a precondition fo
 | Path | Role |
 |---|---|
 | `.claude/workflows/cc-workflow-relevance.js` | the screen; `LOCATION`/`LOCATION_ACTIVE` near the config block, prompt assembled in `gatePrompt()` |
-| `results/batches/manifest.json` | `{total_jobs: 825, batch_size: 40, batch_count: 21}` |
+| `results/batches/manifest.json` | read `batch_count` before every invocation — `chunk --new` rewrites it (2026-08-11: `{total_jobs: 366, batch_size: 40, batch_count: 10}`) |
 | `src/ajoa_kit/persist_scored.py:110` `write_shortlists` · `:122` `_union_by_id` · `:130` `_evict_ids` | the merge path |
 | `src/ajoa_kit/chunk.py:39` `_new_offers` · `:55` `main` | re-chunk if the delta must be rebuilt |
 
 ```text
+uv run ajoa-kit location --json                 # -> paste as args.location (see below)
 Workflow({ scriptPath: '.claude/workflows/cc-workflow-relevance.js',
-           args: { rootDir: '.', batchCount: 21 } })
+           args: { rootDir: '.', batchCount: <manifest.batch_count>,
+                   location: { ...ajoa-kit location --json... } } })
 uv run ajoa-kit persist <out.json> --merge      # --merge is MANDATORY, see watch-outs
 ```
+
+**`args.location` is not read from disk.** `LOCATION = cfg.location || null` — the workflow never
+opens `config/location.json`, so omitting the arg silently screens with the advisory inert even when
+the file exists and `ajoa-kit location` reports it active. Same for `args.lanes` (the hardcoded
+fallback happens to match `config/lanes.json` today; do not rely on it).
 
 ### Item 4 — manual-JD durability · SHIPPED #364
 
