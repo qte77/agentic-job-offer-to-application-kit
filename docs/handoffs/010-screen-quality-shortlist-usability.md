@@ -1,6 +1,6 @@
 # Handoff 010 — screen quality + shortlist usability
 
-**State (2026-08-11): items 1 and 4 shipped ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364)); 9 items open, 2 of them owner-gated.**
+**State (2026-08-11): items 1, 4 and 11 shipped ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368)); 8 items open, 1 of them owner-gated.**
 Also merged: [#362](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/362) — the
 python-deps bump. It carried ruff **0.16**, which formats Python code blocks inside Markdown by
 default, so `ruff format --check .` now covers `docs/`. One plan snippet needed reformatting; expect
@@ -11,7 +11,7 @@ migrated here (Phase C, second tailor round) and nothing else is stranded there.
 
 ## Read this first
 
-The plan has **exactly one remaining-work table** (9 rows). Everything else in it — source map,
+The plan has **exactly one remaining-work table** (8 rows). Everything else in it — source map,
 design notes, watch-outs — describes *how*, never *what is open*. If you find yourself building a
 second list of open work, stop: that is the failure mode the arc rules exist to prevent.
 
@@ -54,10 +54,7 @@ Remaining sequence:
 3. **Item 3** (Phase C, ~2.1M tokens) once the backfill pull has landed. The owner chose to proceed
    **without** `config/location.json` (item 2 stays open); the advisory is inert and the screen
    behaves exactly as before.
-4. **Items 7, 8, 9** as capacity allows; **item 10** after 3. **Item 11**
-   ([#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), ADR-0002 +
-   hand-captured JDs) is drafted diff-ready in the plan's source map — it needs the owner to
-   approve the wording, then it is a 10-minute docs PR.
+4. **Items 7, 8, 9** as capacity allows; **item 10** after 3.
 
 **Owner decision 2026-08-09:** run Phase C without a location policy. Item 2 remains an open owner
 row — writing the file later costs one Phase C re-run, nothing else.
