@@ -29,6 +29,12 @@ Recurring mistakes and their promoted fixes are logged in
   [docs/decisions/0002-source-tos-tiers.md](docs/decisions/0002-source-tos-tiers.md).
 - **Python**: target `pydantic` for structured config/models (no `TypedDict` / `dataclass`);
   keep pure logic importable without the network layer (lazy-import `polyfetch_scrape`).
+- **Parse on read, not only on write.** Structured data re-entering Python across a layer boundary
+  is parsed into its model at the read, never consumed as a raw `json.loads(...).get(...)` — a
+  contract enforced only on the write side rots silently at the next hop. Untyped boundaries that
+  predate this rule are ranked in
+  [ADR-0003](docs/decisions/0003-data-contract-enforcement.md); extend a model rather than adding a
+  bespoke `.get()` beside it.
 - **Network-touching subcommands** (`ingest` / `probe` / `refresh` / `verify-sources` /
   `discover`) import the fetch layer from the sibling
   [polyfetch-scrape](https://github.com/qte77/polyfetch-scrape) checkout — run them via the
