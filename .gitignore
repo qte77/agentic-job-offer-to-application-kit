@@ -27,7 +27,7 @@ __pycache__/
 # Local dotenv override read by AppSettings (env_file) — keep private AJOA_* paths out of git
 .env
 
-# Per-machine agent scratch memory. The repo's agent rulebook is CLAUDE.md/AGENTS.md and the
-# compound-learning log is AGENT_LEARNINGS.md; a root MEMORY.md is a local tool artifact and must
-# never shadow them in git.
+# Per-machine agent scratch memory. The repo's agent rulebook is AGENTS.md (CLAUDE.md imports
+# it) and the compound-learning log is AGENT_LEARNINGS.md; a root MEMORY.md is a local tool
+# artifact and must never shadow them in git.
 /MEMORY.md
