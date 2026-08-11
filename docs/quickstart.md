@@ -139,7 +139,10 @@ the JD by hand and add it to a git-ignored `config/manual-jds.json` — a list o
 of which only `id` (conventionally `manual:<company>:<role>`) and `title` are required.
 
 `ingest` injects every entry into each pull, so the record survives the wholesale rewrite of
-`results/jobs-raw.json` and is never delisted from the corpus. Manual entries skip the keyword
+`results/jobs-raw.json` and is never delisted from the corpus. That durability cuts both ways:
+`refresh` can only ever expire a manual entry through its `url`, so **prefer the posting's own URL
+over a careers page** — a careers page answers 200 long after the role is filled, and the entry then
+has no automatic way to go stale. Manual entries skip the keyword
 pre-filter — you already decided the posting is worth keeping. Removing an entry is how you retire
 one, and if a board later publishes the same `id` the **pulled** record wins. A malformed entry
 fails the run rather than being skipped silently. See

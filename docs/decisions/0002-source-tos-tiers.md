@@ -19,6 +19,12 @@ The loader (`sources.load_sources`) consumes **only** `feeds` + `ats` + `aggrega
 `_deferred` are documentation, never loaded — so this ADR governs what graduates *into* those loaded
 keys.
 
+`config/manual-jds.json` (#364) is **not** a source under this ADR. It holds individual postings a
+human read and captured by hand; it is loaded by `ingest.load_manual_jds`, never by
+`sources.load_sources`, and adds no adapter, endpoint or recurring poll to the registry. It is the
+mechanism for the **paste-only** outcome this ADR already prescribes for BLOCKED sources — not a
+fourth tier and not an exemption from the three.
+
 ## Decision
 
 Classify every candidate source into one of three tiers. Only **OK** sources ship in `feeds` / `ats`.
@@ -68,6 +74,22 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
   Klarna / Zalando (Workday), Hugging Face / Snyk (Workable), Cognigy (SmartRecruiters), DeepMind
   (Google/Workday).
 
+### Hand capture is bounded by conduct, not by destination
+
+A `config/manual-jds.json` entry may carry only text a human was entitled to read, obtained by a
+one-off read-only GET or render of a public page — including driving that page's own disclosure
+controls (clicking an accordion open) when that is simply what a reader does. It must never be used
+to:
+
+- bypass a login, paywall or rate limit;
+- run a recurring or bulk capture over a CAUTION/BLOCKED source — that is an ingest adapter wearing
+  a different name, and it belongs in the tier table above;
+- redistribute verbatim JD text. `config/` and `results/` are git-ignored and the published
+  dashboard emits only aggregate `{week,counts}` facts (Feist), which is what keeps the paste-only
+  path safe.
+
+The test is what was done to obtain the text, not which file it landed in.
+
 ### Legal backbone
 
 Reading a public, no-auth endpoint is not "unauthorized access" under the US CFAA (Van Buren, 2021;
@@ -97,6 +119,13 @@ hiring series stays local; ADR-0001 PII gate + #11). Full citations and the subm
   on-page backlink. jobicy / himalayas / remotive stay `_deferred` pending the robots/ToS resolutions
   above.
 - The kit stays **no-auth / no-key**; keyed aggregators are out of model (see Out of scope).
+- **Manual JDs sit largely outside the freshness loop.** They carry no `_date_verified` and
+  `verify-sources` never sees them (it walks `feeds` / `ats` only). `refresh` cannot expire them via
+  the corpus either — injection keeps `last_seen` at the newest pull date, so `is_delisted` is always
+  False. Its URL re-probe is the one channel that can still fire, and only when the entry's `url` is
+  the posting itself and the board answers 404/410; a careers-page or empty `url` is never
+  provable-gone. **Prefer a role-specific `url` when capturing, and expect to retire a manual posting
+  by deleting its entry.**
 
 ## Out of scope (future outlook)
 

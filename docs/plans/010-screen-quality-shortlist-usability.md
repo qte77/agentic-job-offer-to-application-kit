@@ -46,6 +46,10 @@ the location one that shipped in [#360](https://github.com/qte77/agentic-job-off
   `merge_corpus` delisting them. **The 5 in-flight records were migrated into the config and 2
   Lobby AI roles added — 7 entries, verified byte-identical to the live `jobs-raw.json` rows apart
   from the new `salary` key.** The next `ingest --merge` is now safe to run.
+- **Item 11** — ADR-0002 scope + the manual-JD freshness caveat,
+  [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368). Hand capture is
+  now bounded by **conduct, not destination**, and the ADR records that `refresh` can only expire a
+  manual entry through its `url` — so capture the posting's URL, not a careers page.
 
 ## Remaining work
 
@@ -61,7 +65,6 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 | 8 | Tenure advisory (`SeniorityPolicy`) | agent | inert without config; flags in `deal_breaker` + `tenure_flagged_count`; never drops or rescores |
 | 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
 | 10 | Second tailor round for Phase C keepers *(migrated from 009)* | agent, after 3 | any fresh keeper outranking a survivor has a pack; slate still capped at 12 |
-| 11 | ADR-0002: scope hand-captured JDs + record their freshness blind spot | **owner** (approve the ADR text) | ADR-0002 carries the scope paragraph, the conduct subsection and the freshness consequence; quickstart advises a role-specific `url`; `changelog.d` fragment added |
 
 **Ordering constraint — satisfied.** Item 1 had to land before item 3, and did (#363). Those 558
 JDs were screened with no employer name; re-screening them after the fix is free only if it happens
@@ -159,78 +162,17 @@ no LLM tier. **Two blockers:** the YC Terms have not been read (robots is only h
 and the page says "Sign up to see more" — unauthenticated access yields one company at a time, not
 a feed.
 
-### Item 11 — ADR-0002 and hand-captured JDs
+### Item 11 — ADR-0002 and hand-captured JDs · SHIPPED
 
-Fallout of item 4. #364 made hand capture a first-class path, and ADR-0002 — the ADR that governs
-what may be ingested — does not mention it. Filed as
-[#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368) with the full
-reasoning; the diff-ready text is duplicated below only because this is where the next session
-looks. It needs owner approval of the ADR wording, not more analysis.
+As built: ADR-0002 gained a Context paragraph scoping `config/manual-jds.json` out of the tiering, a
+"Hand capture is bounded by conduct, not by destination" subsection under Decision, and a
+Consequences bullet on the freshness asymmetry. The ADR is the single source — do not restate it
+here.
 
-| Path | Role |
-|---|---|
-| `docs/decisions/0002-source-tos-tiers.md` | the ADR to edit (Context ~line 20, Decision, Consequences) |
-| `src/ajoa_kit/refresh.py` `is_delisted:40` / `classify:53` / `mark:79` | the two staleness channels, verified below |
-| `docs/quickstart.md` §"Postings no adapter can reach" | already states "removing an entry is how you retire one" — add the `url` advice |
-
-**Two gaps.** *Scope:* a hand-captured JD is not a source under ADR-0002 — no adapter, no endpoint,
-no recurring poll; `load_manual_jds` is a different loader from `sources.load_sources`. It is the
-implementation of the **paste-only** outcome the ADR already prescribes for BLOCKED, so it needs no
-new tier. The real risk is "manual capture" becoming a label for automation the tier table would
-have refused, so the boundary must be drawn on **conduct, not destination**. *Freshness:* manual
-entries evade both staleness channels. The corpus channel can never fire — injection keeps
-`last_seen` at the newest pull date, so `is_delisted` is always False. The URL channel does fire
-(`mark` re-probes `probe(it.url)`; `classify` flags on `GONE_STATUSES = {404, 410}`) but only when
-`url` is the posting itself; a careers page returns 200 forever, and `url` is not a required
-`ManualJd` field, so an empty one probes inconclusive. All 7 current entries carry company/careers
-URLs, so today every manual entry is un-expirable automatically. `verify-sources` never sees them
-either (it walks `feeds` / `ats` only).
-
-Three diff-ready blocks. **Block 1** — Context, after the `load_sources` paragraph:
-
-```markdown
-`config/manual-jds.json` (#364) is **not** a source under this ADR. It holds individual postings a
-human read and captured by hand; it is loaded by `ingest.load_manual_jds`, never by
-`sources.load_sources`, and adds no adapter, endpoint or recurring poll to the registry. It is the
-mechanism for the **paste-only** outcome this ADR already prescribes for BLOCKED sources — not a
-fourth tier and not an exemption from the three.
-```
-
-**Block 2** — a new subsection under Decision, after the per-source findings:
-
-```markdown
-### Hand capture is bounded by conduct, not by destination
-
-A `config/manual-jds.json` entry may carry only text a human was entitled to read, obtained by a
-one-off read-only GET or render of a public page — including driving that page's own disclosure
-controls (clicking an accordion open) when that is simply what a reader does. It must never be used
-to:
-
-- bypass a login, paywall or rate limit;
-- run a recurring or bulk capture over a CAUTION/BLOCKED source — that is an ingest adapter wearing
-  a different name, and it belongs in the tier table above;
-- redistribute verbatim JD text. `config/` and `results/` are git-ignored and the published
-  dashboard emits only aggregate `{week,counts}` facts (Feist), which is what keeps the paste-only
-  path safe.
-
-The test is what was done to obtain the text, not which file it landed in.
-```
-
-**Block 3** — a Consequences bullet:
-
-```markdown
-- **Manual JDs sit largely outside the freshness loop.** They carry no `_date_verified` and
-  `verify-sources` never sees them (it walks `feeds` / `ats` only). `refresh` cannot expire them via
-  the corpus either — injection keeps `last_seen` at the newest pull date, so `is_delisted` is always
-  False. Its URL re-probe is the one channel that can still fire, and only when the entry's `url` is
-  the posting itself and the board answers 404/410; a careers-page or empty `url` is never
-  provable-gone. **Prefer a role-specific `url` when capturing, and expect to retire a manual posting
-  by deleting its entry.**
-```
-
-**Follow-on, not committed:** if a stale manual row ever costs something, the cheap mitigation is an
-age warning (flag manual entries whose `posted_at` exceeds N days) rather than new machinery. YAGNI
-until it bites.
+Verified against `refresh.py` rather than assumed: `is_delisted:40` can never fire for a manual
+entry (injection pins `last_seen` to the newest pull), while `mark:79` does re-probe `probe(it.url)`
+and `classify:53` still flags on `GONE_STATUSES = {404, 410}`. All 7 entries carried careers-page
+URLs at the time, so none could expire — hence the "capture the posting's URL" advice.
 
 ## Watch-outs
 
