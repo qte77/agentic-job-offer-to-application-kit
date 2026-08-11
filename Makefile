@@ -57,7 +57,7 @@ check_complexity: ## Complexipy cognitive-complexity gate (max 10)
 
 docs_lint: ## Markdown lint + link check (local)
 	markdownlint-cli2 "*.md" "docs/**/*.md" "examples/**/*.md"
-	lychee --config lychee.toml --no-progress *.md docs examples
+	lychee --config lychee.toml --no-progress *.md docs examples changelog.d
 
 # MARK: Pipeline
 
