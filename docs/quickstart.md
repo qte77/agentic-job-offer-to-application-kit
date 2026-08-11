@@ -146,6 +146,29 @@ fails the run rather than being skipped silently. See
 [examples/alexis-doe](../examples/alexis-doe/README.md#adding-a-posting-no-adapter-can-reach) for a
 worked entry.
 
+## Location + work-authorization advisory (optional)
+
+Drop a git-ignored `config/location.json` and the screen will flag postings whose stated location or
+work-authorization requirement you do not meet:
+
+```json
+{"basedIn": "Zurich, Switzerland", "authorizedIn": ["Switzerland", "EU"],
+ "remoteOk": true, "relocateTo": [], "notes": ""}
+```
+
+Emit it with `ajoa-kit location --json` and pass the payload as the relevance workflow's
+`args.location` (same hand-off as `style`). `ajoa-kit location` without `--json` reports whether a
+policy is active.
+
+**`authorizedIn` is the on-switch** — without it the policy is inert and the screen ignores location
+entirely, because there is no ground truth to test a posting against and it will not guess from
+`basedIn`. It is **advisory, never a filter**: a flagged posting keeps its score and stays on the
+shortlist, with the constraint quoted in its `deal_breaker`; sponsorship, remote exceptions and
+relocation are negotiable in ways a screen cannot judge. A posting that states no requirement is
+never flagged from the company's headquarters alone.
+
+Add it *before* a relevance run — applying it later means re-screening.
+
 ## Writing style (optional)
 
 Drop a git-ignored `config/style.json` with a `tone` string and/or paths to your own CV /
