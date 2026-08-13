@@ -30,6 +30,7 @@
     {"ats": "greenhouse", "slug": "vercel", "company": "Vercel", "lane": "engineering", "_date_verified": "2026-07-28"},
     {"ats": "greenhouse", "slug": "wayve", "company": "Wayve", "lane": "engineering", "_date_verified": "2026-07-28"},
     {"ats": "greenhouse", "slug": "webflow", "company": "Webflow", "lane": "engineering", "_date_verified": "2026-07-28"},
+    {"ats": "greenhouse", "slug": "workato", "company": "Workato", "lane": "engineering", "_date_verified": "2026-08-11"},
     {"ats": "greenhouse", "slug": "xai", "company": "xAI", "lane": "engineering", "_date_verified": "2026-07-28"},
     {"ats": "ashby", "slug": "airbyte", "company": "Airbyte", "lane": "engineering", "_date_verified": "2026-07-28"},
     {"ats": "ashby", "slug": "alan", "company": "Alan", "lane": "engineering", "_date_verified": "2026-07-28"},

@@ -54,6 +54,13 @@ the location one that shipped in [#360](https://github.com/qte77/agentic-job-off
   `remoteOk`). The advisory is active. Its `notes` ask the screen to surface a citizenship-or-visa-only
   requirement verbatim in `deal_breaker` while never dropping or downscoring the role — the owner
   wants the pack built anyway, with the blocker named in it.
+- **Item 3** — Phase C, run 2026-08-11 over the delta (not the full back-catalogue). `ingest --merge`
+  first: corpus 8 459 → 9 161, **0 blank companies among live records** (the #363 backfill landed) and
+  all 7 manual entries survived. `refresh` then flagged 146 of 614 rows stale. `chunk --new` cut the
+  delta to 366 (214 first seen that day, 152 content-changed) → 10 batches; the screen kept **84**,
+  dropped 282, and `persist --merge` folded them in with 0 malformed / 0 un-laned / 0 invalid-lane.
+  Shortlists 614 → 687 rows, 541 live. **Screened with the advisory inert** — `args.location` was
+  omitted, see the item-3 note below.
 
 ## Remaining work
 
@@ -61,18 +68,12 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 
 | # | Item | Gate | Done when |
 |---|---|---|---|
-| 3 | Phase C — relevance over the delta *(migrated from 009)* | agent | `results/<lane>/shortlist.json` gains the delta's keepers; `jobs-scored.json` reflects them |
 | 5 | UI: has-pack badge + filter | agent | a tailored row is visually distinct; filter shows only rows with `cv` |
 | 6 | UI: score-desc ordering across lanes | agent | `aggregate()` output is score-ordered; a new score-4 row is not below 400 |
 | 7 | Scoped extraction at chunk time | agent | batch text drops preamble/EEO/benefits; `_capped` still bounds at `DESC_CAP` |
 | 8 | Tenure advisory (`SeniorityPolicy`) | agent | inert without config; flags in `deal_breaker` + `tenure_flagged_count`; never drops or rescores |
 | 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
-| 10 | Second tailor round for Phase C keepers *(migrated from 009)* | agent, after 3 | any fresh keeper outranking a survivor has a pack; slate still capped at 12 |
-
-**Ordering constraint — satisfied.** Item 1 had to land before item 3, and did (#363). Those 558
-JDs were screened with no employer name; re-screening them after the fix is free only if it happens
-in the same Phase C run, so Phase C must not run until an `ingest --merge` has backfilled the
-company field into the corpus.
+| 10 | Second tailor round for Phase C keepers *(migrated from 009)* | agent | any fresh keeper outranking a survivor has a pack; slate still capped at 12 |
 
 ## Source map
 
@@ -92,7 +93,7 @@ whole and stops a role name's own colon from inventing an employer.
 added in #358 backfills them on the next pull with no re-screen. **The corpus still holds the old
 blank values until an `ingest --merge` runs** — that pull is a precondition for item 3.
 
-### Item 3 — Phase C
+### Item 3 — Phase C · SHIPPED 2026-08-11
 
 | Path | Role |
 |---|---|
