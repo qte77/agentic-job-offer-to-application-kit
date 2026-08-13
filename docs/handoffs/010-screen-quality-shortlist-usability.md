@@ -1,6 +1,6 @@
 # Handoff 010 — screen quality + shortlist usability
 
-**State (2026-08-11): items 1, 4 and 11 shipped ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368)); 8 items open, 1 of them owner-gated.**
+**State (2026-08-11): items 1, 2, 3, 4, 10 and 11 shipped ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368)); 8 items open, none owner-gated.**
 Also merged: [#362](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/362) — the
 python-deps bump. It carried ruff **0.16**, which formats Python code blocks inside Markdown by
 default, so `ruff format --check .` now covers `docs/`. One plan snippet needed reformatting; expect
@@ -11,7 +11,7 @@ migrated here (Phase C, second tailor round) and nothing else is stranded there.
 
 ## Read this first
 
-The plan has **exactly one remaining-work table** (8 rows). Everything else in it — source map,
+The plan has **exactly one remaining-work table** (8 rows: items 5-9 plus 12-14, the last three opened by this session's audits). Everything else in it — source map,
 design notes, watch-outs — describes *how*, never *what is open*. If you find yourself building a
 second list of open work, stop: that is the failure mode the arc rules exist to prevent.
 
@@ -38,26 +38,21 @@ Current data state: corpus **8 459**, jobs-raw **5 807** (full text, max 25 392 
 
 ## How to run this arc
 
-**The one ordering constraint (item 1 before item 3) is satisfied** — but item 1 shipped the *code*,
-not the data. The corpus still holds 558 blank `company` values until an `ingest --merge` runs; that
-pull is now a precondition for Phase C, and **item 4 must land before it** or the 5 `manual:`
-records die in the same run.
+Phases B/C/D are done. What remains is the arc's own backlog plus three findings this session opened.
 
-Remaining sequence:
+1. **Items 5, 6** (dashboard) — small, independent, and they make everything else easier to inspect.
+   `make ui_e2e` / `make ui_shots` work once the browser is installed (see watch-outs).
+2. **Item 13 first among the new rows** — one `ingest --merge` + `chunk --new` + relevance pass puts
+   the 5 unscored manual JDs (Cardinal ×2, Lobby AI ×2, Nomadic Chief of Staff) into a shortlist, and
+   the same pass sweeps whatever else the pull brings. Cheapest way to stop flying blind on them.
+3. **Item 12** (geo blind spot) before any further Swiss selection — six score-4 Swiss roles were
+   missed by a `location`-based filter because RSS records carry none. The six are captured in
+   `results/swiss-candidates-20260811.json` with language / EU-EEA blockers already flagged.
+4. **Items 7, 8, 9, 14** as capacity allows.
 
-1. **`ingest --merge`** — the next thing to run. It backfills company/salary into the corpus and is
-   now safe: item 4 shipped, and `config/manual-jds.json` carries all 7 manual records. Confirm the
-   Companies-hiring "Unknown" row drops from 244, and that the 7 `manual:` ids survive.
-2. **Items 5, 6** (dashboard) — independent of everything else, small, and they make the rest of the
-   arc easier to inspect. `patchright install` is **done** (2026-08-09), so `make ui_e2e` /
-   `make ui_shots` work again.
-3. **Item 3** (Phase C, ~2.1M tokens) once the backfill pull has landed. The owner chose to proceed
-   **without** `config/location.json` (item 2 stays open); the advisory is inert and the screen
-   behaves exactly as before.
-4. **Items 7, 8, 9** as capacity allows; **item 10** after 3.
-
-**Owner decision 2026-08-09:** run Phase C without a location policy. Item 2 remains an open owner
-row — writing the file later costs one Phase C re-run, nothing else.
+**Owner decisions carried in 2026-08-11:** location policy is EU / Switzerland / US with `remoteOk`,
+and a citizenship-or-visa-only requirement is surfaced in `deal_breaker` but never drops a role — the
+pack still gets built with the blocker named. `workatastartup` is wanted but opt-in only.
 
 ## Decide-by-default
 
@@ -84,19 +79,27 @@ Every open decision has a default; proceed with it unattended and let the owner 
 - **`gh pr merge --squash --admin`** works for PRs you authored; bot-authored PRs (dependabot,
   github-actions) need `gh pr review --approve` first because the ruleset sets
   `require_code_owner_review: true`.
-- **polyfetch's Chromium is restored** (2026-08-09) — but `patchright install` must run
-  **unsandboxed** (`dangerouslyDisableSandbox`). A sandboxed run reports success and downloads 177 MB,
-  then discards the writes to `~/.cache/ms-playwright`; the failure only surfaces later as
-  "Executable doesn't exist".
+- **polyfetch's Chromium keeps vanishing** — gone twice (2026-08-09, 2026-08-11), each time
+  surfacing only as "Executable doesn't exist" mid-fetch. `patchright install` must run
+  **unsandboxed** (`dangerouslyDisableSandbox`): a sandboxed run reports success, downloads 177 MB,
+  then discards the writes to `~/.cache/ms-playwright`. **Verify the binary path on disk afterwards**
+  — the installer's exit code lies.
 - **Disk.** The ~94 MB of `*.pre-*` backups listed in the plan are deleted. 1.7 GB free after the
   browser install; `results/` is down to 91 MB.
 - **Rendering is not interacting.** A rendered-but-still-thin page may be click-gated — drive it,
   don't re-fetch it. Escalation has three tiers (static → rendered → driven) and a tier can be
   necessary without being sufficient; on Lobby AI both were true, which is why four attempts failed.
   See [AGENT_LEARNINGS](../../AGENT_LEARNINGS.md).
-- **Background workflows die.** The evidence library needed 7 attempts; 5 of 12 tailor runs failed
-  on session limits. Resume is cheap — cached agents replay at ~0 tokens in ~300 ms — but **persist
-  each result as it lands**, because the task output files are wiped when the scratchpad is cleared.
+- **Never delegate a JSON filter to a subagent.** An audit agent asked to "load `results/corpus.json`"
+  used the Read tool line-by-line, fanned out to 12 children, estimated 1.4M tokens for one scan, and
+  died on the session limit. The same question is a `uv run python` one-liner costing no model tokens.
+  Delegate judgement, never deterministic data crunching — and say so in the prompt.
+- **Background workflows die — but resume cleanly.** The evidence library needed 7 attempts; 5 of 12
+  tailor runs died on session limits (2026-08-09) and 3 of 12 died with the parent process
+  (2026-08-11). `Workflow({scriptPath, resumeFromRunId})` replays finished agents from cache, but the
+  run ids survive only in the launch notification — capture them. **Persist each result as it lands**:
+  task output files are wiped when the scratchpad clears, and that is the only reason zero completed
+  work was lost both times.
 - **Judge pack liveness on the corpus join, never a URL probe or a slug join.** `meta.json` → `id`
   matched 29/29; `last_seen != max(last_seen)` is the reliable death signal and needs no network.
 
