@@ -61,6 +61,13 @@ the location one that shipped in [#360](https://github.com/qte77/agentic-job-off
   dropped 282, and `persist --merge` folded them in with 0 malformed / 0 un-laned / 0 invalid-lane.
   Shortlists 614 → 687 rows, 541 live. **Screened with the advisory inert** — `args.location` was
   omitted, see the item-3 note below.
+- **Item 10** — Phase D, 2026-08-11. **12 packs, all persisted** (`results/tailor-slate-20260811.json` is
+  the slate; per-offer JSON kept as `results/tailor-<company>-20260811.json`). Must-have coverage ran
+  86% (DeepJudge) down to 33% (Stripe); **screen score barely predicted pack quality** — the best pack
+  was a score-4 picked only for being the sole Swiss row, the two worst were a 5 and a 4. Recurring
+  non-technical blockers across the twelve: no production traffic/SLO/on-call (8), no employment
+  tenure to cite (5), no peer review (5), no customer-facing ownership (4). Three packs correctly
+  refused to guess at facts the repo cannot know (degree, C1 German, years employed).
 
 ## Remaining work
 
@@ -73,7 +80,9 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 | 7 | Scoped extraction at chunk time | agent | batch text drops preamble/EEO/benefits; `_capped` still bounds at `DESC_CAP` |
 | 8 | Tenure advisory (`SeniorityPolicy`) | agent | inert without config; flags in `deal_breaker` + `tenure_flagged_count`; never drops or rescores |
 | 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
-| 10 | Second tailor round for Phase C keepers *(migrated from 009)* | agent | any fresh keeper outranking a survivor has a pack; slate still capped at 12 |
+| 12 | Geo blind spot: RSS feeds carry no `location`, so Swiss roles are invisible to any geo filter | agent | selection treats feed provenance as a geo signal (`source == swissdevjobs` ⇒ CH); no fabricated `location` written into records |
+| 13 | 5 manual JDs carry no score (Cardinal ×2 absent from the corpus; Lobby AI ×2 never batched; Nomadic Chief of Staff batched-not-listed) | agent | an `ingest --merge` + `chunk --new` + relevance pass puts all 9 manual ids in a shortlist or provably drops them |
+| 14 | 5 manual descriptions are self-disclosed partial captures (HumanLayer + Nomadic ×4: body sits behind an unfetched "View job" link) | agent | each description carries the full role body, or the pack states the JD was partial |
 
 ## Source map
 
