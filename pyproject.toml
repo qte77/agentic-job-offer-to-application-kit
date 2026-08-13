@@ -10,13 +10,13 @@ classifiers = ["License :: OSI Approved :: Apache Software License"]
 dependencies = [
     "defusedxml>=0.7.1",
     "pydantic>=2.0",
-    "pydantic-settings>=2.14.2",
+    "pydantic-settings>=2.15.0",
 ]
 
 # Optional, lazy-imported extra (#275): `uv sync --extra pdf` enables `ajoa-kit render-pdf`.
 # Never core — render_pdf.py imports fpdf2/markdown-it inside functions so it loads without these.
 [project.optional-dependencies]
-pdf = ["fpdf2>=2.8", "markdown-it-py>=3.0"]
+pdf = ["fpdf2>=2.8.8", "markdown-it-py>=3.0"]
 
 [project.scripts]
 ajoa-kit = "ajoa_kit.__main__:main"
@@ -25,17 +25,17 @@ ajoa-kit = "ajoa_kit.__main__:main"
 dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.0",
-    "ruff>=0.16.1",
+    "ruff>=0.16.2",
     "scriv[toml]>=1.8",
-    "bump-my-version>=1.5.0",
+    "bump-my-version>=1.5.1",
     "pyright>=1.1.411",
     # Pinned <6: complexipy 6.0 changed its cognitive-complexity scoring and rates
     # persist_scored.main / refresh.main at 14 / 11 (were 9 / 8 under 5.x), breaking the ≤10 gate.
     # Adopting 6.x is a deliberate task (refactor those two mains), not a Dependabot drive-by.
     "complexipy>=5.6.1,<6",
-    "hypothesis>=6.165.1",
+    "hypothesis>=6.165.2",
     # PDF extra, in dev too so `make check` can live-render (render_pdf still lazy-imports them).
-    "fpdf2>=2.8",
+    "fpdf2>=2.8.8",
     "markdown-it-py>=3.0",
 ]
 
