@@ -76,10 +76,10 @@ set the branch segment in that URL (there is no separate `?branch=` switch — t
 | `src/style.css` | EyeRest tokens (light/dark/auto via `data-theme`) + components + tabs |
 | `src/app.js` | Orchestrator (sole `<script type="module">` entry): loads demo/real data, owns UI state (range/lane labels), wires listeners + WAI-ARIA tabs; composes the sibling modules below |
 | `src/dom-utils.js` | Shared helpers: `esc`/`safeUrl`/`cssVar`, the `sanitizeHtml` allowlist (the one sanctioned markdown→HTML path), score classing |
-| `src/shortlist.js` | Shortlist render + filter + expandable rows (tailored CV + cover letter), copy-to-clipboard packs, vendored-`marked` loader, local real-shortlist fetch |
+| `src/shortlist.js` | Shortlist render + filters (text · **Tailored only**) + `pack` badge on rows carrying a `cv` + expandable rows (tailored CV + cover letter), copy-to-clipboard packs, vendored-`marked` loader, local real-shortlist fetch |
 | `src/trends.js` | Chart.js line + stacked bars with the time-frame window, same-origin→data-branch trends loading, theme-flip invalidation (owns the chart instances) |
 | `src/theme.js` | `auto`/`light`/`dark` cycle toggle → `data-theme` on `<html>` (+ anti-flash) |
-| `public/data/demo.json` | Synthetic demo data — shortlist (Tab A) + fallback trends as `{week,counts}[]` records (Tab B) |
+| `public/data/demo.json` | Synthetic demo data — shortlist (Tab A, 8 rows with a tailor pack + 4 deliberately without, so the `pack` badge and the "Tailored only" filter are demonstrable) + fallback trends as `{week,counts}[]` records (Tab B) |
 | *(real trends)* | Not in `ui/` — fetched at runtime from the repo's `data` branch (`public-data/trends.ndjson`); refresh via `make trends_data` |
 | `public/favicon.svg` | qte77 brand mark (adaptive light/dark) — same as `paperverse` |
 | `public/vendor/` | Vendored Chart.js + Inter font TTFs (see [public/vendor/README.md](public/vendor/README.md)) |

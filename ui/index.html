@@ -102,6 +102,12 @@
             placeholder="Filter company / role / lane…"
             aria-label="Filter shortlist"
           />
+          <!-- Has-pack filter (plan 010 item 5): narrows the table to rows carrying a tailored
+               pack — the `pack` badge in the Role cell. Wired in app.js (no inline handler: CSP). -->
+          <label class="pack-filter" for="filter-pack" title="Show only offers with a tailored pack">
+            <input id="filter-pack" type="checkbox" />
+            Tailored only
+          </label>
         </div>
         <p class="count"><span id="shortlist-count">0</span> offers</p>
         <div class="table-wrap">

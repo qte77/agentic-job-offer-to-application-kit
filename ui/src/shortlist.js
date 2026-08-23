@@ -59,11 +59,16 @@ function tailorDoc(title, md, idx, field) {
           </section>`;
 }
 
-export function renderShortlist(items, laneLabel, filter = "") {
+// `packOnly` narrows the table to rows that carry a tailored pack (plan 010 item 5). `cv` is the
+// marker field — it is the first artifact attach_tailor_docs joins onto a row, so a row with a cv is
+// exactly a row that went through the tailor phase (most rows never do: 22 of 687 in real use).
+// Both filters compose (text AND has-pack); app.js repaints from both control values.
+export function renderShortlist(items, laneLabel, filter = "", packOnly = false) {
   const body = document.getElementById("shortlist-body");
   const f = filter.trim().toLowerCase();
   const rows = items
     .filter((it) => {
+      if (packOnly && !it.cv) return false;
       if (!f) return true;
       const hay = `${it.company} ${it.title} ${laneLabel[it.best_lane] || it.best_lane}`;
       return hay.toLowerCase().includes(f);
@@ -94,6 +99,7 @@ export function renderShortlist(items, laneLabel, filter = "") {
         <td>
           <div class="role-title"><a href="${esc(safeUrl(it.url))}" target="_blank" rel="noopener noreferrer">${esc(it.title)}</a></div>
           <div class="rationale">${esc(it.rationale)}</div>
+          ${it.cv ? `<span class="has-pack" title="Tailored pack ready: open the row for the CV and cover letter">pack</span>` : ""}
           ${it.deadline ? `<span class="due">due ${esc(it.deadline)}</span>` : ""}
           ${it.deal_breaker ? `<span class="deal-breaker">deal-breaker: ${esc(it.deal_breaker)}</span>` : ""}
         </td>
