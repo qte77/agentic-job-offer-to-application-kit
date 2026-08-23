@@ -15,6 +15,7 @@ ceiling) that also becomes the DRY seam the new checks plug into; and the **dash
 404 cleanup** the e2e surfaced.
 
 ## Constraints
+
 - **Strict TDD**: failing tests modelling desired behaviour first, then code to green.
 - **Non-trivial tests only**: test pure modules (parsers/checkers/reconciler decision core); NOT thin
   CLI handlers, trivial getters, or the network/Workflow orchestrators.
@@ -33,6 +34,7 @@ prefill L250-274; **return keys** `slug·lane·offer_id·match·must_haves·cv·
 L277-287. Relevance RESULT (`score` int 0-5, `verdict`) `cc-workflow-relevance.js` L68-98.
 
 **Selection inputs (greenfield — compose these):**
+
 - `persist_scored.load_shortlist(path)` L67-74 → `list[ScoredItem]`; per-lane `results/<lane>/shortlist.json`.
 - `ScoredItem` `models.py:115-145` (`score:int|float|None`, `extra="allow"`).
 - `persist_offer._load_offer_index(results_dir)` L275-285 → {JD id → offer dir} via `offers/*/meta.json`.
@@ -63,6 +65,7 @@ L90-103. Models home `models.py` (ADR-0003).
 ## Slices (each a topic branch; TDD; `make check` green before PR)
 
 ### Slice A — `chore/tailor-prompt-voice-mitigation` (prompt only, no CLI)
+
 Update `.claude/workflows/cc-workflow-tailor-offer.js`: (1) bake **voice** into the CV/cover/match agent
 prompts (value-prop named · synergy-led · weaknesses reframed as deliberate growth-exposure · outward
 never lists weaknesses); (2) reinforce the **honesty boundary** (never claim uncovered=covered; never
@@ -73,6 +76,7 @@ digest to `gap_report`. New keys OPTIONAL. No unit tests (JS Workflow prompt; va
 checks + a live tailor smoke). Docs: changelog + note in architecture (voice/mitigation now workflow-encoded).
 
 ### Slice B — `feat/pack-coverage-policy` (the user knob + guarantee)
+
 - `models.py`: `PackPolicy` `{min_score:int=5, max_packs:int=0, lanes:list[str]=[], per_company_cap:int=0, dedup:str="role_x_company"}`.
 - New `src/ajoa_kit/pack_plan.py` (pure core + thin `main`): `load_policy(config_dir)` (mirror
   `load_lanes`; `config/pack-policy.json` absent→default `PackPolicy()`); `select(shortlist_rows, policy)`
@@ -89,6 +93,7 @@ checks + a live tailor smoke). Docs: changelog + note in architecture (voice/mit
   precedence, no-pydantic-pack-model constraint.
 
 ### Slice C — `feat/pack-output-eval` (self-verify) + persist_offer hotspot refactor
+
 - **Refactor first (quality-only, behaviour-identical):** extract the warning-sidecar family in
   `persist_offer.write_pack` into a **check registry + `_emit_check(name, fn, pack, results_dir)`** loop;
   reduce `jd_truncation_warning` (complexity 10) by extracting a helper. Regression-pinned by the 22
@@ -104,6 +109,7 @@ checks + a live tailor smoke). Docs: changelog + note in architecture (voice/mit
   Fixture: `examples/alexis-doe/results/evidence-library.json`.
 
 ### Slice D — `fix/dashboard-console-404s` (clean console + network; e2e hardening)
+
 - `companies.json` 404 (**PAGE-caused**, seen headless) → bundle an empty `[]` `companies.json` in
   `make preview` + gh-pages deploy (`scripts/build_ui_companies.py` / Makefile); `loadRealCompanies`
   handles empty. Remote also 404s `shortlist.json` — **expected** (published site falls back to synthetic
@@ -125,11 +131,13 @@ checks + a live tailor smoke). Docs: changelog + note in architecture (voice/mit
     clip inside `.table-wrap` (scrolls within the container; no document overflow) — acceptable, worth a glance.
 
 ### Retrofit (data op, not a PR) — private mitigation layer on the 32 existing packs
+
 Subagent pass per pack: append "Gap Mitigation & Prep" to `gap-report.md` + enrich `coverage-report.md`
 resources, grounded in that pack's gaps + the portfolio plan + evidence library. **Verify no outward doc
 changed** (diff shows only gap-report/coverage-report; re-run `ats-check`). All under git-ignored `results/`.
 
 ## Docs & issues
+
 - **changelog.d/** fragment per slice (scriv `### Added`/`### Changed`/`### Fixed`, author `93844790+qte77`).
 - **README**: `pack-plan` + `config/pack-policy.json` + new checks; the two new subcommands' `--help`.
 - **architecture.md**: pack-selection/coverage flow + eval sidecars + voice/mitigation-in-workflow.
@@ -141,6 +149,7 @@ changed** (diff shows only gap-report/coverage-report; re-run `ats-check`). All 
   Claude-Code orchestration needs no API keys/DSL; BAML fits the direct-API product path). All gated on a valid token.
 
 ## Git workflow
+
 Topic branches: `chore/tailor-prompt-voice-mitigation` · `feat/pack-coverage-policy` · `feat/pack-output-eval`
 · `fix/dashboard-console-404s`. Per branch: `make check` (+ `make ui_e2e` for D) green → commit **authored
 qte77** (Co-Authored-By) → push → open PR → **squash-merge ONLY if all CI + tests pass** → delete merged
@@ -148,6 +157,7 @@ local+remote branch. **AUTH-GATED**: needs a valid token (`gh auth login`; dntyw
 then, local work + `make check` proceed and stop at "ready to push".
 
 ## Verification (end-to-end)
+
 1. `make check` green after each slice (ruff/format/pyright/complexipy≤10/pytest cov≥80).
 2. `uv run pytest tests/test_pack_plan.py tests/test_grounding.py tests/test_coverage.py -v`.
 3. Live: `ajoa-kit pack-plan --min-score 5 --json` → `results/pack-plan.json` lists exactly the score-5
@@ -159,6 +169,7 @@ then, local work + `make check` proceed and stop at "ready to push".
 7. After re-auth: 4 PRs, squash-merged only on green, stale branches deleted; FR issues filed.
 
 ## Gates (fail-closed)
+
 - **Voice/PII**: outward docs never carry weaknesses; mitigation/eval findings private; nothing under `results/` committed.
 - **Coverage guarantee**: `pack-plan` re-run must report `missing: []` before "done".
 - **Green-only merge**: no squash without green `make check` + e2e (+ CI when a valid token exists).
