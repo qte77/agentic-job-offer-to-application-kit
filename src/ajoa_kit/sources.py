@@ -63,6 +63,15 @@ def get_bytes(url: str) -> tuple[bytes, str]:
     return r.body, r.backend
 
 
+# Aggregator entries in the seed carry no ``url`` (one fixed endpoint spans many employers), so the
+# endpoint lives here — the single source of truth for both the adapter below and
+# ``verify-sources``' reachability re-probe, which has no other way to reach it (#217).
+AGGREGATOR_ENDPOINTS: dict[str, str] = {
+    "arbeitnow": "https://www.arbeitnow.com/api/job-board-api",
+    "themuse": "https://www.themuse.com/api/public/jobs",
+}
+
+
 # --- adapters (each yields normalized records) ----------------------------------------
 def from_greenhouse(c: dict[str, str]) -> Iterable[dict[str, Any]]:
     """Yield normalized records from a Greenhouse board."""
@@ -252,7 +261,7 @@ def from_arbeitnow(a: dict[str, str]) -> Iterable[dict[str, Any]]:
     Page 1 only (~100 jobs): a deliberate v1 cut honoring the source's courtesy rate limit;
     bounded pagination is a follow-up if recall proves thin.
     """
-    data, backend = get_json("https://www.arbeitnow.com/api/job-board-api")
+    data, backend = get_json(AGGREGATOR_ENDPOINTS["arbeitnow"])
     for j in data.get("data", []):
         yield record(
             id=f"arbeitnow:{j.get('slug', '')}",
@@ -287,7 +296,7 @@ def from_themuse(a: dict[str, str]) -> Iterable[dict[str, Any]]:
         ("category", "Engineering"),
         ("page", "1"),
     ]
-    data, backend = get_json(f"https://www.themuse.com/api/public/jobs?{urlencode(params)}")
+    data, backend = get_json(f"{AGGREGATOR_ENDPOINTS['themuse']}?{urlencode(params)}")
     for j in data.get("results", []):
         company = j.get("company") or {}
         locs = [loc.get("name", "") for loc in j.get("locations") or []]
