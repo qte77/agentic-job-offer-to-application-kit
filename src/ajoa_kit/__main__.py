@@ -159,6 +159,22 @@ def _discover(_args: argparse.Namespace) -> None:
     run()
 
 
+def _discover_yc(args: argparse.Namespace) -> None:
+    """Follow the yc-oss hiring feed to public YC job pages -> results/yc-jobs.json (local)."""
+    from ajoa_kit.yc_jobs import main as run
+
+    terms = [t for t in (args.terms or "").split(",") if t.strip()]
+    run(terms=terms, limit=args.limit)
+
+
+def _discover_slugs(args: argparse.Namespace) -> None:
+    """Discover new first-party ATS slugs from startups.gallery into results/emerging-slugs.json."""
+    from ajoa_kit.models import SgFilters
+    from ajoa_kit.startups_gallery import main as run
+
+    run(SgFilters(location=args.location, job_title=args.job_title, company_name=args.company_name))
+
+
 def _refresh(args: argparse.Namespace) -> None:
     """Reconcile per-lane shortlists: flag (or --delete) filled/closed offers (#214)."""
     from ajoa_kit.refresh import main as run
@@ -334,6 +350,44 @@ def main() -> None:
             "Requires polyfetch env (set POLYFETCH_DIR)."
         ),
     ).set_defaults(func=_discover)
+
+    dyc = sub.add_parser(
+        "discover-yc",
+        help=(
+            "Follow the yc-oss hiring feed to public YC job pages into results/yc-jobs.json "
+            "(local business data, never published). Requires polyfetch env."
+        ),
+    )
+    dyc.add_argument(
+        "--terms",
+        default="",
+        metavar="CSV",
+        help="Comma-separated relevance keywords to screen hiring companies (default: keep all).",
+    )
+    dyc.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Cap the number of companies followed (default: 0 = no cap).",
+    )
+    dyc.set_defaults(func=_discover_yc)
+
+    dsg = sub.add_parser(
+        "discover-slugs",
+        help=(
+            "Render a filtered startups.gallery jobs page and emit new first-party ATS slugs into "
+            "results/emerging-slugs.json (local, for human review). Requires polyfetch env."
+        ),
+    )
+    dsg.add_argument(
+        "--location", default="", metavar="LOC", help="Location filter (e.g. 'san francisco')."
+    )
+    dsg.add_argument(
+        "--job-title", default="", metavar="TITLE", help="Job-title filter (e.g. 'designer')."
+    )
+    dsg.add_argument("--company-name", default="", metavar="NAME", help="Company-name filter.")
+    dsg.set_defaults(func=_discover_slugs)
 
     args = parser.parse_args()
     args.func(args)

@@ -195,8 +195,8 @@
      "sources": [
        {"name": "hn-whoishiring", "_date_verified": "2026-07-14", "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&query=Ask%20HN%20Who%20is%20hiring",
         "_reason": "PHASE-2 LEAD. Public no-auth Algolia API; HN robots disallows only interactive endpoints (Crawl-delay:30); broader-than-YC + monthly recency. Deferred: signal is free-text comments (no schema) -> needs regex/LLM extraction, a real slice not a drop-in. Revisit if yc-oss proves too narrow."},
-       {"name": "startups-gallery", "_date_verified": "2026-07-14", "url": "https://startups.gallery",
-        "_reason": "CAUTION: robots Allow:/ but no findable ToS (absence != permission); HTML-only (no API/JSON), Framer side-project (brittle scrape); no per-company hiring flag + same VC population as yc-oss -> redundant, worse-parsed superset. Not worth adding even via polyfetch."},
+       {"name": "startups-gallery", "_date_verified": "2026-08-22", "url": "https://startups.gallery/jobs",
+        "_reason": "CAUTION discovery (reconsidered, ADR-0002/0004): robots Allow:/ but no findable ToS (absence != permission), so read-only public GET only. Broader than yc-oss (non-YC startups too); cards link straight to the company's own ATS (ashby/greenhouse/lever), so it is used as a DISCOVERY source -> recover new ATS slugs for first-party ingest (clean JDs, natural dedup), NOT scraped as terminal JDs. Implemented in ajoa_kit.startups_gallery (patchright-rendered, filter-driven via `ajoa-kit discover-slugs`); output is local-only (results/emerging-slugs.json) and human-reviewed before any seed change, so it stays here (documentation), not in a loaded key."},
        {"name": "startup-newsletters", "_date_verified": "2026-07-14",
         "_reason": "DEFERRED-WEAK: Harmonic Hot25 / Ramp reports / a16z Next-Play+Build / Early Days / Founders-You-Should-Know. Curated prose + Substacks (some paywalled); names embedded in text -> unreliable deterministic extraction (confirms #292 prose=weak)."}
      ]}

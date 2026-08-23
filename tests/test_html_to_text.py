@@ -14,6 +14,12 @@ def test_strips_tag_with_angle_bracket_in_attribute() -> None:
     assert out == "click"
 
 
+def test_strips_script_and_style_blocks_with_content() -> None:
+    # analytics/CSS must never leak into JD text; the '>' in the script body must not end it early
+    html = "<style>.x{color:red}</style><p>Real JD</p><script>track('a>b');</script>"
+    assert normalize.html_to_text(html) == "Real JD"
+
+
 def test_keeps_the_whole_posting_for_tailoring() -> None:
     """Ingest stores the full JD; ``DESC_CAP`` belongs to the relevance pass instead (#347).
 

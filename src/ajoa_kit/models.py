@@ -225,3 +225,58 @@ class OfferStatus(BaseModel):
     stage: str = ""
     date: str = ""
     notes: str = ""
+
+
+# --- discovery adapters (ADR-0004): CAUTION-tier read boundaries ---------------------------------
+
+
+class YcCompany(BaseModel):
+    """One YC company parsed from the yc-oss hiring feed at the network read boundary (ADR-0003).
+
+    yc-oss is a third-party daily mirror of YC's public Algolia directory -- company signal only, no
+    JDs. Parsed so the ``hiring`` flag + ``slug`` can be followed to the company's public
+    ``/companies/<slug>/jobs`` page. ``slug`` is required (the job-page URL cannot be built without
+    it); ``tags`` feeds the relevance pre-filter.
+    """
+
+    name: str
+    slug: str
+    batch: str = ""
+    hiring: bool = False
+    tags: list[str] = Field(default_factory=list)
+
+
+class AtsRef(BaseModel):
+    """A first-party ATS reference (``ats`` + board ``slug``) recovered from an apply URL.
+
+    The payoff of the startups.gallery discovery pass: an aggregator card links straight to the
+    company's own ATS, so the ``(ats, slug)`` goes to the first-party ingest (clean JDs, natural
+    dedup) instead of scraping the aggregator's coarse card as a terminal JD.
+    """
+
+    ats: str
+    slug: str
+    url: str = ""
+
+
+class SgFilters(BaseModel):
+    """Query filters for a startups.gallery ``/jobs`` request -- all optional, blank means unset."""
+
+    location: str = ""
+    job_title: str = ""
+    company_name: str = ""
+
+
+class SgJob(BaseModel):
+    """One parsed startups.gallery card: apply URL + derived ATS ref + best-effort display fields.
+
+    The title is a separate node that flattens in front of the ``Company · Location`` meta line, so
+    title/company cannot be split reliably: ``heading`` is the flattened role+company text; only
+    ``location`` and ``posted_at`` are cleanly delimited. The load-bearing field is ``ats_ref``.
+    """
+
+    apply_url: str = ""
+    ats_ref: AtsRef | None = None
+    heading: str = ""
+    location: str = ""
+    posted_at: str = ""
