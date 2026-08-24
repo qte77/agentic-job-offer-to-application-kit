@@ -112,3 +112,74 @@ def test_chunk_new_includes_changed(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     chunk.main(batch=40, new=True)
     batch = json.loads((results / "batches" / "batch-000.json").read_text())
     assert sorted(j["id"] for j in batch) == ["changed1", "new1"]  # unchanged1 skipped
+
+
+def test_chunk_scopes_description_to_the_substantive_body(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The relevance screen should see the role, not the employer-branding wrapper (arc-010 item 7).
+
+    87% of the corpus opens with an "About us" blurb (median 809 chars before the first substantive
+    marker) and many close with EEO/benefits boilerplate. Neither carries lane signal and both crowd
+    the body out from under ``DESC_CAP``. Scoping runs regardless of length: this description sits
+    well under the cap, so a cap-gated implementation would leave the preamble in.
+    """
+    results = _setup(tmp_path, monkeypatch)
+    desc = (
+        "About us\n\nWe are a category-defining unicorn. " + ("culture " * 40) + "\n\n"
+        "Requirements\n\n- 5 years of Python building distributed systems.\n" * 20 + "\n"
+        "Benefits\n\nFree snacks, a gym membership and unlimited PTO.\n"
+    )
+    raw = results / "jobs-raw.json"
+    raw.write_text(json.dumps([{"id": "a", "title": "role", "description": desc}]))
+
+    chunk.main(batch=40)
+
+    batched = json.loads((results / "batches" / "batch-000.json").read_text())[0]["description"]
+    assert len(desc) < DESC_CAP  # guards the premise: the cap drops nothing here
+    assert "5 years of Python" in batched  # the body survives
+    assert "About us" not in batched  # employer-branding preamble dropped
+    assert "Free snacks" not in batched  # trailing benefits boilerplate dropped
+    assert json.loads(raw.read_text())[0]["description"] == desc  # source stays whole
+
+
+def test_chunk_caps_the_scoped_slice_at_desc_cap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``DESC_CAP`` stays a hard backstop *after* scoping — never something scoping can overrun."""
+    results = _setup(tmp_path, monkeypatch)
+    desc = "About us\n\nbranding\n\nResponsibilities\n\n" + ("z" * (DESC_CAP + 500))
+    (results / "jobs-raw.json").write_text(
+        json.dumps([{"id": "a", "title": "role", "description": desc}]),
+    )
+
+    chunk.main(batch=40)
+
+    batched = json.loads((results / "batches" / "batch-000.json").read_text())[0]["description"]
+    assert len(batched) == DESC_CAP  # bounded
+    assert batched.startswith("Responsibilities")  # scoped first, then bounded
+
+
+def test_chunk_keeps_the_jd_whole_when_a_marker_lands_in_prose(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A marker word in running prose must not gut the posting.
+
+    99.9% of the corpus is one unbroken line, so markers are matched mid-string and a sentence like
+    "...who care about requirements gathering..." can look like a heading. Measured on the real
+    corpus this cut JDs to as little as 1.5% of their length. The retention floor is what makes
+    mid-string matching safe: a slice that keeps too little is treated as a spurious hit.
+    """
+    results = _setup(tmp_path, monkeypatch)
+    desc = "Our team builds tools for scientists. " * 60 + (
+        "we value people who care about requirements gathering and delivery."
+    )
+    (results / "jobs-raw.json").write_text(
+        json.dumps([{"id": "a", "title": "role", "description": desc}]),
+    )
+
+    chunk.main(batch=40)
+
+    batched = json.loads((results / "batches" / "batch-000.json").read_text())[0]["description"]
+    assert len(desc) < DESC_CAP  # the cap is not what is under test here
+    assert batched == desc  # the spurious match is rejected, the posting survives intact
