@@ -1,6 +1,8 @@
 ---
 # uv ecosystem variant (adopted from qte77/repo-baseline), with grouped updates so
 # related bumps land in a single PR per ecosystem instead of one PR per dependency.
+# Major bumps get their own group, separate from minor/patch: a bad major (e.g. #279/#288's
+# complexipy 5->6) previously blocked the whole ecosystem group and couldn't be cherry-picked out.
 version: 2
 updates:
   - package-ecosystem: "uv"
@@ -10,6 +12,10 @@ updates:
     groups:
       python-deps:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+      python-deps-major:
+        patterns: ["*"]
+        update-types: ["major"]
     commit-message:
       prefix: "chore(deps)"
     labels:
@@ -22,6 +28,10 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+      github-actions-major:
+        patterns: ["*"]
+        update-types: ["major"]
     commit-message:
       prefix: "chore(ci)"
     labels:
