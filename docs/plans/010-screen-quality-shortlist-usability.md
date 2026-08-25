@@ -281,7 +281,7 @@ entry (injection pins `last_seen` to the newest pull), while `mark:79` does re-p
 and `classify:53` still flags on `GONE_STATUSES = {404, 410}`. All 7 entries carried careers-page
 URLs at the time, so none could expire — hence the "capture the posting's URL" advice.
 
-### Item 14 — partial manual captures completed · SHIPPED
+### Item 14 — partial manual captures completed · SHIPPED #405
 
 As run, 2026-08-25: 5 of 9 manual JDs (arc 009's own captures) carried only a summary, with the
 full role body sitting behind an unfetched link. Resolved differently per source:

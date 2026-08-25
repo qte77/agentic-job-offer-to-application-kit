@@ -9,8 +9,9 @@
 > [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395),
 > [#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401),
 > [#403](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/403),
-> [#404](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/404), items 13/14 as
-> live pipeline runs, not PRs). Nothing migrates to a new arc — [arc 011](../plans/011-pack-coverage-and-output-eval.md)
+> [#404](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/404),
+> [#405](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/405), item 13 as a
+> live pipeline run, not a PR). Nothing migrates to a new arc — [arc 011](../plans/011-pack-coverage-and-output-eval.md)
 > is the active plan, scoped independently. This file is history — do not add work to it.
 >
 > **One real piece of follow-on work surfaced after closure, not part of this arc's own scope:**
