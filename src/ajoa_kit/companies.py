@@ -42,6 +42,12 @@ _MULTI = re.compile(r"[|•]")  # separators between *distinct* locations (not c
 # means only a trailing *word* is removed, never a mid-name substring.
 _ORG_SUFFIX = re.compile(r"\s+(?:hq|offices?|hub)$", re.IGNORECASE)
 
+# Feeds whose every listing is confined to one country (arc-010 item 12). RSS boards carry no
+# `location` field at all, so a feed this geographically narrow is otherwise pure Unknown noise. A
+# fallback, never an override — see parse_geo. One entry until a second feed needs it (AHA: extract
+# generality at the third use, not before).
+_SOURCE_REGION = {"swissdevjobs": "Switzerland"}
+
 _Key = tuple[str, str, str]  # (city, field, company)
 
 
@@ -50,15 +56,16 @@ def _is_remote(location: str, remote: object) -> bool:
     return "remote" in location.lower() or (not location.strip() and bool(remote))
 
 
-def parse_geo(location: str, remote: object = None) -> tuple[str, str]:
+def parse_geo(location: str, remote: object = None, source: str = "") -> tuple[str, str]:
     """Parse a free-text ``location`` into a canonical ``(city, region)`` — lossless by design.
 
     ``city`` is the group key: a trailing org suffix (``Office``/``HQ``/``Hub``) is stripped, then
     duplicate spellings and placeholder junk (``LOCATION``/``N/A`` -> ``Unknown``) collapse via
     :data:`_CITY_ALIASES`. ``region`` keeps the source's verbatim next qualifier (state/country),
-    ``""`` when absent. ``remote`` is the record's flag: an empty location with it set is the
-    ``Remote`` bucket, a fully empty location is ``Unknown``. Multi-location strings (``|`` / ``•``)
-    take the primary location.
+    falling back to :data:`_SOURCE_REGION` by feed ``source`` when the text gives none — a fill for
+    a gap, never an override of a stated qualifier. ``remote`` is the record's flag: an empty
+    location with it set is the ``Remote`` bucket, a fully empty location is ``Unknown``.
+    Multi-location strings (``|`` / ``•``) take the primary location.
     """
     loc = location or ""
     if _is_remote(loc, remote):
@@ -67,8 +74,8 @@ def parse_geo(location: str, remote: object = None) -> tuple[str, str]:
     parts = [p.strip() for p in primary.split(",")]
     city = _ORG_SUFFIX.sub("", parts[0]).strip()  # strip trailing Office/HQ/Hub first
     if not city:
-        return "Unknown", ""
-    region = parts[1] if len(parts) > 1 and parts[1] else ""
+        return "Unknown", _SOURCE_REGION.get(source, "")
+    region = parts[1] if len(parts) > 1 and parts[1] else _SOURCE_REGION.get(source, "")
     return _CITY_ALIASES.get(city.lower(), city), region
 
 
@@ -132,7 +139,7 @@ def aggregate_companies(
     for rec in corpus:
         if not _is_active(rec, ref, active_days):
             continue
-        city, region = parse_geo(rec.get("location", ""), rec.get("remote"))
+        city, region = parse_geo(rec.get("location", ""), rec.get("remote"), rec.get("source", ""))
         key: _Key = (city, _field(rec, lanes), rec.get("company", ""))
         counts[key] += 1
         if region:

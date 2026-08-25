@@ -21,6 +21,7 @@ def _jd(
     lane_hint: str = "engineering",
     first_seen: str = "2026-07-01",
     last_seen: str = "2026-07-10",
+    source: str = "",
 ) -> dict:
     return {
         "id": jid,
@@ -30,6 +31,7 @@ def _jd(
         "lane_hint": lane_hint,
         "first_seen": first_seen,
         "last_seen": last_seen,
+        "source": source,
     }
 
 
@@ -86,6 +88,25 @@ def test_parse_geo_strips_trailing_org_suffix_keeping_region() -> None:
 def test_parse_geo_suffix_strip_composes_with_city_alias() -> None:
     # Strip runs before the alias lookup: "New York City Office" -> "New York City" -> "New York".
     assert companies.parse_geo("New York City Office")[0] == "New York"
+
+
+def test_parse_geo_uses_source_as_a_region_fallback_when_location_is_blank() -> None:
+    # arc-010 item 12: swissdevjobs carries no `location` at all (391/391 in the live corpus), so
+    # every one of those roles collapsed into the Unknown bucket with no geo signal whatsoever. The
+    # feed itself is 100% Swiss listings — city stays honestly Unknown (we don't know which one),
+    # but the one geo fact provenance DOES tell us (the country) is no longer silently dropped.
+    assert companies.parse_geo("", source="swissdevjobs") == ("Unknown", "Switzerland")
+
+
+def test_parse_geo_source_fallback_never_overrides_a_stated_region() -> None:
+    # A real qualifier in the text is ground truth; provenance only fills a gap, never overwrites.
+    assert companies.parse_geo("Zug, ZG", source="swissdevjobs") == ("Zug", "ZG")
+
+
+def test_parse_geo_source_fallback_is_inert_for_unrecognized_sources() -> None:
+    # No fabrication for anything not on the known list — an unmapped source changes nothing.
+    assert companies.parse_geo("", source="weworkremotely") == ("Unknown", "")
+    assert companies.parse_geo("") == ("Unknown", "")  # source omitted entirely: unchanged default
 
 
 # --- aggregate_companies ---------------------------------------------------------------
@@ -150,6 +171,14 @@ def test_aggregate_momentum_lights_up_as_heating_once_history_is_deep() -> None:
     ]
     row = next(r for r in companies.aggregate_companies(corpus) if r.company == "Heat")
     assert row.momentum == "heating"
+
+
+def test_aggregate_surfaces_source_region_for_blank_location_swissdevjobs_rows() -> None:
+    corpus = [_jd("a", company="Rockstar", location="", source="swissdevjobs")]
+    rows = companies.aggregate_companies(corpus)
+    row = next(r for r in rows if r.company == "Rockstar")
+    assert row.city == "Unknown"  # no fabricated city
+    assert row.region == "Switzerland"  # the one geo fact provenance actually gives us
 
 
 def test_aggregate_output_is_deterministically_ordered() -> None:

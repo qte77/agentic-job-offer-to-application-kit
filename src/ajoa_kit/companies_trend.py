@@ -52,7 +52,7 @@ def geo_field_key(job: dict, lane_by_id: dict[str, str]) -> str:
     :func:`ajoa_kit.companies._field` (scored lane -> ``lane_hint`` -> ``"unscored"``). Carries no
     company name by construction — this is what may reach the ``data`` branch.
     """
-    city, region = parse_geo(job.get("location", ""), job.get("remote"))
+    city, region = parse_geo(job.get("location", ""), job.get("remote"), job.get("source", ""))
     geo = f"{city}, {region}" if region else city
     return f"{geo}{_SEP}{_field(job, lane_by_id)}"
 

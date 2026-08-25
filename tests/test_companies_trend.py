@@ -31,6 +31,10 @@ def test_geo_field_key_format() -> None:
     assert companies_trend.geo_field_key({"id": "x", "location": "Berlin, DE"}, {"x": "ml"}) == (
         "Berlin, DE · ml"
     )
+    # arc-010 item 12: a blank-location swissdevjobs job still surfaces a region via provenance,
+    # instead of publishing an all-Swiss slice of the geo trend under a bare "Unknown" bucket.
+    sdj = {"location": "", "source": "swissdevjobs"}
+    assert companies_trend.geo_field_key(sdj, {}) == "Unknown, Switzerland · unscored"
 
 
 def test_bucket_by_day_counts_jobs_once_and_skips_undated() -> None:
