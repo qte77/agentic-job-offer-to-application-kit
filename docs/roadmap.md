@@ -161,6 +161,12 @@
   now fit under it whole. Markers match mid-string (99.9% of the corpus carries no newline at all),
   guarded by a preamble window, a tail fraction, and a minimum-retention floor so a marker landing in
   running prose can't gut a posting.
+- Tenure advisory (plan 010 item 8): `config/tenure.json` (`models.SeniorityPolicy`) mirrors the
+  location advisory — a candidate's longest single-employer tenure, surfaced to the relevance screen
+  as `args.tenure`. Advisory only: when a JD states a minimum-tenure requirement the candidate's
+  figure doesn't meet, the constraint lands verbatim in `deal_breaker` and is tallied in
+  `tenure_flagged_count`, never dropping the JD or changing its score. Inert without a
+  `longestTenureYears` above zero, same as location without `authorizedIn`.
 
 ## Next
 

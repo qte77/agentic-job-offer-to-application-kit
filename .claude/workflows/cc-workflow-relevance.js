@@ -53,6 +53,11 @@ const LIBRARY_INLINE = cfg.library || null
 const LOCATION = cfg.location || null
 const LOCATION_ACTIVE = !!(LOCATION && LOCATION.authorizedIn && LOCATION.authorizedIn.length)
 
+// Mirrors LOCATION exactly (arc-010 item 8): unconfigured or longestTenureYears <= 0, it is inert
+// and the screen ignores tenure exactly as before.
+const TENURE = cfg.tenure || null
+const TENURE_ACTIVE = !!(TENURE && TENURE.longestTenureYears > 0)
+
 // Honor cfg.lanes (the runtime SSOT) by deriving the keys from it — so overriding lanes in one place
 // can't desync the two workflows. CANONICAL lane defs live in config/lanes.json (#195); emit them
 // with `ajoa-kit lanes --json` and pass as args.lanes. The hardcoded list below is only the no-config
@@ -93,6 +98,9 @@ const RESULT = {
     // Advisory: these stay in `relevant` at their earned score — this is a "look at these" tally,
     // never a count of exclusions.
     location_flagged_count: { type: 'integer' },
+    // Same shape, for a JD's stated tenure requirement the candidate's longest single-employer
+    // tenure does not meet. Advisory: never a count of exclusions.
+    tenure_flagged_count: { type: 'integer' },
   },
   required: ['relevant', 'dropped_count'],
 }
@@ -124,15 +132,36 @@ When the JD states no location or authorization requirement, leave deal_breaker 
 and do not mention location — never infer a constraint from the company's headquarters alone.
 `
     : ''
+  // Inert unless config/tenure.json declares a longestTenureYears > 0 — see TENURE_ACTIVE above.
+  const tenure = TENURE_ACTIVE
+    ? `
+EMPLOYMENT TENURE — ADVISORY ONLY. Surface it, never act on it:
+- Candidate's longest continuous tenure at a single employer: ${TENURE.longestTenureYears} years
+${TENURE.notes ? `- Notes: ${TENURE.notes}` : ''}
+
+This NEVER drops a JD and NEVER changes a score. Score purely on requirement overlap as you would
+without this section; the human weighs a short tenure themselves, because an acquisition, a layoff
+or a fixed-term contract are all context a screen cannot judge.
+
+What it DOES change: when a JD states a minimum tenure or "linear career progression at one
+company" requirement the candidate's longest tenure does not meet, put that constraint verbatim in
+deal_breaker (e.g. "requires 3+ years in a single role") and name it in the rationale. Count those
+JDs in tenure_flagged_count.
+
+When the JD states no tenure requirement, leave deal_breaker for other concerns and do not mention
+tenure.
+`
+    : ''
   return `You are screening job descriptions for ONE candidate against the target lanes (${LANES.join(', ')}). Read the JSON file at ${path} with the Read tool — it is an array of ~40 job descriptions, each {id, title, company, location, url, description, ...}.
 
 ${brief}
 ${location}
+${tenure}
 Judge on REAL requirement overlap, NOT keyword presence; be strict and honest about gaps.
 
 DROP (do not return) any JD that: is a non-engineering function (sales, marketing, recruiting, legal, finance, support, people/HR, pure visual design); is junior/intern; hard-requires years of people-management or large-team leadership; hard-requires deep cloud-infra-at-scale (AWS/GCP/Azure/Kubernetes/Terraform) or production-at-scale ops as a must-have; or has no genuine overlap with any lane.
 
-For each KEPT JD return: id, title, company, url, best_lane (single best fit), score 0-5 (5 = strong fit, 3 = plausible stretch, <3 = drop), verdict ("shortlist" for score>=4, "maybe" for 3), and a one-line rationale that names, in prose, the fit across skill, experience, culture/location, career progression, and motivation AND the main gap. Also set deadline to the JD's stated application deadline verbatim if one is given (else ""), and deal_breaker to one short phrase for a hard concern the human must weigh — e.g. on-site-only location, security clearance, mandated stack (else ""). Only return JDs scoring >=3. Also return dropped_count (how many you dropped) and dropped_reason_sample (one short phrase of why the bulk were dropped)${LOCATION_ACTIVE ? ', plus location_flagged_count (how many KEPT JDs you flagged with a location/authorization constraint — report 0 if none; these are never dropped)' : ''}.`
+For each KEPT JD return: id, title, company, url, best_lane (single best fit), score 0-5 (5 = strong fit, 3 = plausible stretch, <3 = drop), verdict ("shortlist" for score>=4, "maybe" for 3), and a one-line rationale that names, in prose, the fit across skill, experience, culture/location, career progression, and motivation AND the main gap. Also set deadline to the JD's stated application deadline verbatim if one is given (else ""), and deal_breaker to one short phrase for a hard concern the human must weigh — e.g. on-site-only location, security clearance, mandated stack (else ""). Only return JDs scoring >=3. Also return dropped_count (how many you dropped) and dropped_reason_sample (one short phrase of why the bulk were dropped)${LOCATION_ACTIVE ? ', plus location_flagged_count (how many KEPT JDs you flagged with a location/authorization constraint — report 0 if none; these are never dropped)' : ''}${TENURE_ACTIVE ? ', plus tenure_flagged_count (how many KEPT JDs you flagged with a tenure constraint — report 0 if none; these are never dropped)' : ''}.`
 }
 
 phase('Screen')

@@ -39,6 +39,12 @@ flagged posting keeps its score and stays on the shortlist, with the constraint 
 `deal_breaker`. The file is git-ignored on purpose (it describes you, not the project), so create
 it locally; without it the screen ignores location entirely.
 
+Optionally add `config/tenure.json` to have the screen flag a JD's stated tenure requirement
+against your own longest single-employer tenure — `{longestTenureYears, notes}`, emitted with
+`ajoa-kit tenure --json` and passed as the workflow's `args.tenure`. Same shape as location: it is
+**advisory** (a flagged posting keeps its score, with the constraint quoted in `deal_breaker`) and
+inert without a `longestTenureYears` above zero. Also git-ignored.
+
 Optionally add `config/manual-jds.json` for postings no adapter can reach — a role published only
 behind a JS accordion, a login, or a page with no feed. Each entry is
 `{id, title, company, companySlug, location, url, description, laneHint, postedAt, remote}`, and

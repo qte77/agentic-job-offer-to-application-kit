@@ -116,10 +116,11 @@ built).
 | App settings | `settings.AppSettings` | **pydantic-settings** | every entry point | — (env / cwd) |
 | Position lanes | `ingest.load_lanes` / `models.Lane` | **pydantic** | human → relevance / evidence (`cfg.lanes`) | `config/lanes.json` |
 | Location policy | `ingest.load_location` / `models.LocationPolicy` | **pydantic** | human → relevance (`args.location`; advisory, inert without `authorizedIn`) | `config/location.json` |
+| Tenure policy | `ingest.load_tenure` / `models.SeniorityPolicy` | **pydantic** | human → relevance (`args.tenure`; advisory, inert without `longestTenureYears > 0`) | `config/tenure.json` |
 | Manual JDs | `ingest.load_manual_jds` / `models.ManualJd` | **pydantic** | human → ingest (injected into every pull) | `config/manual-jds.json` |
 | seed / keywords / style | `sources.load_sources` / `ingest.load_keywords`, `models.StyleBrief` | untyped / **pydantic** | human → ingest / tailor | `config/*.json` |
 
-**Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` + `LocationPolicy` + `ManualJd` (config), `StyleBrief` (tailor), and the
+**Typed today:** `AppSettings`, `WeekCounts` (write), `Lane` + `LocationPolicy` + `SeniorityPolicy` + `ManualJd` (config), `StyleBrief` (tailor), and the
 shortlist items (`ScoredItem`, parse-on-read through persist + merge/refresh, #271). **JS-schema'd at the `agent()`
 boundary but untyped on Python re-read:** offer pack, `must_haves`, evidence library.
 **Untyped:** the JD/corpus records (the highest-volume boundary), batches, and the remaining config

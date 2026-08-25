@@ -124,6 +124,25 @@ def _location(args: argparse.Namespace) -> None:
     print(f"relocate_to\t{', '.join(policy.relocate_to) or '-'}")
 
 
+def _tenure(args: argparse.Namespace) -> None:
+    """Emit the candidate tenure policy (config/tenure.json) as the workflow `tenure` arg."""
+    import json
+
+    from ajoa_kit.ingest import load_tenure
+    from ajoa_kit.settings import AppSettings
+
+    policy = load_tenure(AppSettings().config_dir)
+    if args.json:
+        print(json.dumps(policy.model_dump(by_alias=True), indent=2, ensure_ascii=False))
+        return
+    if not policy.is_active:
+        print("no tenure policy — the relevance screen will not flag tenure")
+        print("create config/tenure.json (untracked; see README) to enable it")
+        return
+    print(f"longest_tenure_years\t{policy.longest_tenure_years}")
+    print(f"notes\t{policy.notes or '-'}")
+
+
 def _prefill_fields(args: argparse.Namespace) -> None:
     """Print the application-field checklist for an offer (Greenhouse schema or generic)."""
     from ajoa_kit.prefill import main as run
@@ -308,6 +327,17 @@ def main() -> None:
         help="Emit the JSON `args.location` payload (else a readable summary).",
     )
     location_p.set_defaults(func=_location)
+
+    tenure_p = sub.add_parser(
+        "tenure",
+        help="Emit the candidate tenure policy (config/tenure.json) as the workflow arg.",
+    )
+    tenure_p.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the JSON `args.tenure` payload (else a readable summary).",
+    )
+    tenure_p.set_defaults(func=_tenure)
 
     prefill_p = sub.add_parser(
         "prefill-fields",
