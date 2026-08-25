@@ -76,7 +76,6 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 | # | Item | Gate | Done when |
 |---|---|---|---|
 | 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
-| 12 | Geo blind spot: RSS feeds carry no `location`, so Swiss roles are invisible to any geo filter | agent | selection treats feed provenance as a geo signal (`source == swissdevjobs` ⇒ CH); no fabricated `location` written into records |
 | 14 | 5 manual descriptions are self-disclosed partial captures (HumanLayer + Nomadic ×4: body sits behind an unfetched "View job" link) | agent | each description carries the full role body, or the pack states the JD was partial |
 
 ## Source map
@@ -208,6 +207,29 @@ no LLM tier. **Two blockers:** the YC Terms have not been read (robots is only h
 and the page says "Sign up to see more" — unauthenticated access yields one company at a time, not
 a feed.
 
+### Item 12 — geo blind spot · SHIPPED
+
+As built: `companies.parse_geo(location, remote, source)` gained a `source` parameter — when the
+text carries no region qualifier, it falls back to `_SOURCE_REGION.get(source, "")` (one entry:
+`{"swissdevjobs": "Switzerland"}`), a fallback for a gap, never an override of a stated qualifier.
+`city` is never touched by the fallback — it stays honestly `"Unknown"` when the text gives no city,
+satisfying "no fabricated `location` written into records" precisely: the record itself is never
+mutated, and even the derived `city` bucket is never invented, only `region`, and only from a feed
+whose every listing is verifiably one country. Both call sites (`aggregate_companies`,
+`companies_trend.geo_field_key`) now pass `rec.get("source", "")` through.
+
+Measured on the live corpus: 391 of 391 `swissdevjobs` records carry a blank `location` (confirmed,
+not assumed — the premise holds, unlike item 7's). Post-fix, `aggregate_companies` output: 187
+active-record rows moved from `(Unknown, "")` to `(Unknown, "Switzerland")`; 64 rows remain
+genuinely unresolved (other blank-location sources with no known feed-geo mapping) — expected
+residual, not a regression.
+
+| Path | Role |
+|---|---|
+| `src/ajoa_kit/companies.py` `parse_geo` / `_SOURCE_REGION` | the fallback and its one-entry map |
+| `src/ajoa_kit/companies.py` `aggregate_companies` | passes `rec.get("source", "")` through |
+| `src/ajoa_kit/companies_trend.py` `geo_field_key` | passes `job.get("source", "")` through — this is the publishable geo-by-field path, so the fix also corrects `public-data/hiring-*.ndjson`, not just the local Companies tab |
+
 ### Item 13 — manual JDs scored · SHIPPED
 
 As run: `ingest --merge` (corpus 9 161 → 10 148, all 9 manual ids present, 143/143 sources ok) →
@@ -277,6 +299,10 @@ URLs at the time, so none could expire — hence the "capture the posting's URL"
   (`tests/test_ingest.py`) — inert-without-a-file, and alias round-trip. The prompt-block change in
   `cc-workflow-relevance.js` has no unit coverage (same as `location`'s — it is exercised live, not
   in CI, since the relevance pass needs an LLM)
+- Item 12, as shipped: `tests/test_companies.py` (`parse_geo`'s fallback, non-override, inert-for-
+  unmapped-sources, and one `aggregate_companies` integration case) + `test_companies_trend.py`
+  (`geo_field_key`'s publishable-key format). Also verified against the live corpus — 391/391
+  swissdevjobs blank, 187 rows fixed
 - Item 13, as shipped: no unit test (it's a live pipeline run, not code) — verified by re-checking
   all 9 manual ids against `results/<lane>/shortlist.json` post-persist; `persist --merge` reported
   0 malformed / 0 un-laned / 0 invalid-lane

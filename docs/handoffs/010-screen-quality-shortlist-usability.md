@@ -1,6 +1,6 @@
 # Handoff 010 — screen quality + shortlist usability
 
-**State (2026-08-25): items 1, 2, 3, 4, 5, 6, 7, 8, 10, 11 and 13 shipped** ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384), [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385), [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395), [#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401)); **3 items open, none owner-gated.**
+**State (2026-08-25): items 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12 and 13 shipped** ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384), [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385), [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395), [#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401)); **2 items open, none owner-gated.**
 Also merged: [#362](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/362) — the
 python-deps bump. It carried ruff **0.16**, which formats Python code blocks inside Markdown by
 default, so `ruff format --check .` now covers `docs/`. One plan snippet needed reformatting; expect
@@ -11,7 +11,7 @@ migrated here (Phase C, second tailor round) and nothing else is stranded there.
 
 ## Read this first
 
-The plan has **exactly one remaining-work table** (3 rows: items 9, 12, 14 — the last two opened by an earlier session's audits). Everything else in it — source map,
+The plan has **exactly one remaining-work table** (2 rows: items 9, 14). Everything else in it — source map,
 design notes, watch-outs — describes *how*, never *what is open*. If you find yourself building a
 second list of open work, stop: that is the failure mode the arc rules exist to prevent.
 
@@ -38,19 +38,14 @@ Current data state: corpus **8 459**, jobs-raw **5 807** (full text, max 25 392 
 
 ## How to run this arc
 
-Phases B/C/D are done. Items 5, 6, 7, 8, 13 (dashboard usability + scoped extraction + tenure
-advisory + manual-JD scoring) are also done —
+Phases B/C/D are done. Items 5, 6, 7, 8, 12, 13 (dashboard usability + scoped extraction + tenure
+advisory + geo blind spot + manual-JD scoring) are also done —
 [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384),
 [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385),
 [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395),
-[#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401), item 13 (live
-pipeline run, not a PR — see plan source map). What remains is the arc's own backlog plus two
-findings an earlier session's audits opened.
-
-1. **Item 12** (geo blind spot) before any further Swiss selection — six score-4 Swiss roles were
-   missed by a `location`-based filter because RSS records carry none. The six are captured in
-   `results/swiss-candidates-20260811.json` with language / EU-EEA blockers already flagged.
-2. **Items 9, 14** as capacity allows.
+[#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401), item 12 (this
+session — see plan source map for the PR), item 13 (live pipeline run, not a PR). What remains is
+just items 9 and 14, both capacity-allows, no priority order between them.
 
 **Owner decisions carried in 2026-08-11:** location policy is EU / Switzerland / US with `remoteOk`,
 and a citizenship-or-visa-only requirement is surfaced in `deal_breaker` but never drops a role — the

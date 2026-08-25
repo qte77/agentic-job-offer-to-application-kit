@@ -167,6 +167,13 @@
   figure doesn't meet, the constraint lands verbatim in `deal_breaker` and is tallied in
   `tenure_flagged_count`, never dropping the JD or changing its score. Inert without a
   `longestTenureYears` above zero, same as location without `authorizedIn`.
+- Geo blind spot for source-confined feeds (plan 010 item 12): RSS boards carry no `location` field
+  at all, so all 391 `swissdevjobs` corpus records (100% Swiss listings) collapsed into an
+  unqualified "Unknown" bucket in the Companies-hiring tab and the publishable geo-by-field hiring
+  trend. `companies.parse_geo` now falls back to a feed's known country (`swissdevjobs` -> `CH`)
+  only when the text gives no region, and only fills the gap — a stated qualifier always wins, and
+  the fabricated-data line is held exactly: `city` is never invented, `location` records themselves
+  are never touched. 187 active-record rows moved out of the bare-Unknown bucket.
 - Manual JDs scored (plan 010 item 13): 5 of the 9 hand-captured postings had never reached a
   shortlist — Cardinal ×2 were absent from the corpus, Lobby AI ×2 were never batched, Nomadic Chief
   of Staff was batched but never listed. A fresh `ingest --merge` + a one-off small batch (only the
