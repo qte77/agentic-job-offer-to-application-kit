@@ -207,7 +207,7 @@ no LLM tier. **Two blockers:** the YC Terms have not been read (robots is only h
 and the page says "Sign up to see more" — unauthenticated access yields one company at a time, not
 a feed.
 
-### Item 12 — geo blind spot · SHIPPED
+### Item 12 — geo blind spot · SHIPPED #403
 
 As built: `companies.parse_geo(location, remote, source)` gained a `source` parameter — when the
 text carries no region qualifier, it falls back to `_SOURCE_REGION.get(source, "")` (one entry:
