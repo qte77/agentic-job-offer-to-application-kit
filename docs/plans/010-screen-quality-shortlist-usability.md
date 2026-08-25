@@ -33,7 +33,7 @@ the location one that shipped in [#360](https://github.com/qte77/agentic-job-off
 | Tenure handling | Same shape as location — advisory | 009 review |
 | Phase D cap | 12 packs | 009 |
 | Non-survivor packs | Archive by `mv`, never delete | 009 |
-| `workatastartup` | **Wanted, but opt-in** — never in `config/default-seed.json` defaults | 010, 2026-08-11 |
+| `workatastartup` | ~~Wanted, but opt-in~~ — item 9's ADR-0002 evaluation (2026-08-25) found BLOCKED, not opt-in-able: no listings feed without auth, YC's own ToU bars scraping/data-mining. **Superseded**: paste-only hand capture only (already the case for HumanLayer) | 010, 2026-08-11; corrected 2026-08-25 |
 
 ## Shipped
 
@@ -75,7 +75,6 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 
 | # | Item | Gate | Done when |
 |---|---|---|---|
-| 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
 | 14 | 5 manual descriptions are self-disclosed partial captures (HumanLayer + Nomadic ×4: body sits behind an unfetched "View job" link) | agent | each description carries the full role body, or the pack states the JD was partial |
 
 ## Source map
@@ -192,20 +191,39 @@ duplicated, only if a third constraint (comp floor, clearance) appears.
 | `.claude/workflows/cc-workflow-relevance.js` | `TENURE`/`TENURE_ACTIVE` + the `tenure` prompt block + `tenure_flagged_count` |
 | `config/tenure.json` | untracked, mirrors `config/location.json`; absent file is inert |
 
-### Item 9 — workatastartup under ADR-0002
+### Item 9 — workatastartup under ADR-0002 · SHIPPED
+
+**Tiered BLOCKED, not opt-in-able — the plan's own "wanted, but opt-in" framing above is
+superseded.** Two independent grounds, either alone sufficient:
+
+- **Structural.** Unauthenticated access serves one company at a time behind "Sign up to see more"
+  — no listings feed exists to poll. ADR-0002's own BLOCKED definition includes "there is no public
+  listings API"; this is that case regardless of the ToS question below.
+- **Legal.** `robots.txt` stayed permissive on re-verification (2026-08-25, unchanged from
+  2026-08-07). But Y Combinator's own Terms of Use (`ycombinator.com/legal#tou`, fetched this
+  session) states verbatim: *"You agree not to...engage in or use any data mining, robots, scraping
+  or similar data gathering or extraction methods."* `workatastartup.com/terms` self-titles as "Y
+  Combinator's Work at a Startup" terms, and YC's own legal hub lists no separate WaS terms document.
+
+**One gap, disclosed rather than glossed over:** `workatastartup.com/terms`'s own page body could
+not be directly read — it is client-rendered with no server-side text (confirmed: the raw HTML
+payload contains zero occurrences of "scraping"/"robots"/"automated"/"data mining" — the terms text
+loads via JS after load), and the local headless-Chromium reinstall needed to render it failed on
+`ENOSPC` (disk space in this session's container, not a site block or a ToS restriction). The
+structural ground doesn't depend on resolving this gap.
+
+**What this actually changes:** nothing operational — `config/default-seed.json` never carried this
+source and still doesn't. What changes is the plan's own owner-decision row above, which pre-dated
+this evaluation and assumed an eventual opt-in path; BLOCKED forecloses that. The correct path for
+a wanted workatastartup posting is unchanged from what already happened for HumanLayer: paste-only
+hand capture into `config/manual-jds.json`, governed by "conduct, not destination" (ADR-0002),
+never a recurring adapter.
 
 | Path | Role |
 |---|---|
-| `docs/decisions/0002-source-tos-tiers.md` | the tiering rationale to extend |
-| `config/default-seed.json` → `discovery` | holds `yc-oss` today — **discovery only, inert to the ingest loader** |
-| `src/ajoa_kit/verify_sources.py` `_reachable` | treats 3xx as live; the reachability convention |
-
-Verified 2026-08-07: `workatastartup.com/robots.txt` is `User-Agent: * / Disallow:` — nothing
-disallowed. `ycombinator.com/robots.txt` disallows `/companies?*`. The page is structurally
-consistent (one page per company; roles with title, location, comp, equity) so it would parse with
-no LLM tier. **Two blockers:** the YC Terms have not been read (robots is only half of ADR-0002),
-and the page says "Sign up to see more" — unauthenticated access yields one company at a time, not
-a feed.
+| `docs/decisions/0002-source-tos-tiers.md` | the tiering rationale, now extended with this finding |
+| `config/default-seed.json` → `discovery` | holds `yc-oss` today — **discovery only, inert to the ingest loader**; unaffected by this finding (a different YC surface, ADR-0004 governs it) |
+| `src/ajoa_kit/verify_sources.py` `_reachable` | treats 3xx as live; the reachability convention — not applicable here, this source never enters `feeds`/`ats` |
 
 ### Item 12 — geo blind spot · SHIPPED #403
 
@@ -299,6 +317,9 @@ URLs at the time, so none could expire — hence the "capture the posting's URL"
   (`tests/test_ingest.py`) — inert-without-a-file, and alias round-trip. The prompt-block change in
   `cc-workflow-relevance.js` has no unit coverage (same as `location`'s — it is exercised live, not
   in CI, since the relevance pass needs an LLM)
+- Item 9, as shipped: no test (governance research, not code) — verified `robots.txt` fresh via
+  WebFetch, YC's Terms of Use fetched and quoted verbatim, the WaS-specific terms-page gap disclosed
+  in the ADR rather than assumed away
 - Item 12, as shipped: `tests/test_companies.py` (`parse_geo`'s fallback, non-override, inert-for-
   unmapped-sources, and one `aggregate_companies` integration case) + `test_companies_trend.py`
   (`geo_field_key`'s publishable-key format). Also verified against the live corpus — 391/391

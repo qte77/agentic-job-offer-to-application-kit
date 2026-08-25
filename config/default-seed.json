@@ -176,6 +176,8 @@
      "_reason": "No public API/RSS (JobCloud); ToS bars crawlers/scrapers/automation; robots.txt disallows /api + detail pages — paste only."},
     {"_platform": "google-for-jobs", "_date_verified": "2026-06-20",
      "_reason": "Search surface, not a data source — no public candidate-side listings API; the only path is scraping SERPs, which violates Google ToS + robots.txt (Disallow: /search). See ADR-0002."},
+    {"_platform": "workatastartup", "_date_verified": "2026-08-25",
+     "_reason": "No listings feed without auth (one company at a time behind a signup gate) + YC's own Terms of Use bars data mining/robots/scraping — exclude. Hand-capture (paste-only) remains fine. See ADR-0002."},
     {"name": "wellfound", "_kind": "discovery", "_date_verified": "2026-07-14",
      "_reason": "Discovery candidate (company signal, not ingest): startup/job directory whose bulk data sits behind login; the read-only-public-GET rule forbids it, as with YC Work-at-a-Startup. BLOCKED (#292, ADR-0004)."},
     {"name": "crunchbase", "_kind": "discovery", "_date_verified": "2026-07-14",
