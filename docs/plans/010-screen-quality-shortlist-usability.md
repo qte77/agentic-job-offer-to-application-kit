@@ -75,8 +75,6 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 
 | # | Item | Gate | Done when |
 |---|---|---|---|
-| 5 | UI: has-pack badge + filter | agent | a tailored row is visually distinct; filter shows only rows with `cv` |
-| 6 | UI: score-desc ordering across lanes | agent | `aggregate()` output is score-ordered; a new score-4 row is not below 400 |
 | 8 | Tenure advisory (`SeniorityPolicy`) | agent | inert without config; flags in `deal_breaker` + `tenure_flagged_count`; never drops or rescores |
 | 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
 | 12 | Geo blind spot: RSS feeds carry no `location`, so Swiss roles are invisible to any geo filter | agent | selection treats feed provenance as a geo signal (`source == swissdevjobs` ⇒ CH); no fabricated `location` written into records |
@@ -130,14 +128,27 @@ which appends manual records to the pull and reuses `dedupe`, so a pulled record
 wins on order alone. **`merge_corpus` needed no change** — injecting on every run means a manual
 record is never "absent from today's pull", so the delisting branch never sees it.
 
-### Items 5–6 — dashboard
+### Items 5–6 — dashboard · SHIPPED #384 #385
+
+As built (#384 — score ordering): `build_ui_shortlist._score_key` sorts `aggregate()`'s output by
+`score` descending, stably, after the source-path collection — equal scores keep their prior
+(lane-path, then in-file) order, so the snapshot stays deterministic. `bool` is excluded explicitly
+(it subclasses `int`; a stray `true` would otherwise rank as score 1); missing/`None`/non-numeric
+`score` sorts to `-inf` (bottom), never raises, never displaces a real row.
+
+As built (#385 — has-pack badge + filter): `renderShortlist(items, laneLabel, filter, packOnly)`
+gained a fourth param — `it.cv` is the marker field (the first artifact `attach_tailor_docs` joins
+onto a row), so `packOnly` narrows to rows that actually went through tailoring. A `pack` badge
+renders next to any row carrying `cv`. The text filter and the pack toggle **compose**: `app.js`
+repaints from both control values together on every keystroke/click, rather than each listener
+reading only its own event target (which would drop the other control's state).
 
 | Path | Role |
 |---|---|
-| `scripts/build_ui_shortlist.py:20` `aggregate` | orders by `sorted(glob(...))` then in-file score — the burial cause |
-| `src/ajoa_kit/persist_offer.py:298` `attach_tailor_docs` | joins packs by JD id via `meta.json`; already correct, needs no change |
-| `ui/src/shortlist.js` `tailorDoc()` | renders CV/cover-letter panes when `it.cv` is present |
-| `ui/src/dom-utils.js` | the sanitiser allowlist for pack markdown |
+| `scripts/build_ui_shortlist.py` `_score_key` / `aggregate` | the score-desc sort (#384) |
+| `src/ajoa_kit/persist_offer.py:298` `attach_tailor_docs` | joins packs by JD id via `meta.json`; unchanged — already correct |
+| `ui/src/shortlist.js` `renderShortlist` | `packOnly` filter + `pack` badge render (#385) |
+| `ui/src/app.js` | wires `#filter` + `#filter-pack` to a shared repaint (#385) |
 | `Makefile` → `preview` | copies `ui/` to a temp dir and injects real data there; source `ui/` stays data-free |
 
 ### Item 7 — scoped extraction · SHIPPED #395
@@ -232,7 +243,9 @@ URLs at the time, so none could expire — hence the "capture the posting's URL"
 
 - `make check` — ruff lint + format, pyright, complexipy, offline pytest at CI parity
 - `make docs_lint` — markdownlint + lychee (429 now accepted; see #360)
-- Items 5–6 are rendering/wiring: `make ui_check` / `make ui_e2e`, not unit tests
+- Items 5–6, as shipped: #384's `_score_key` sort got unit tests (`tests/test_build_ui_shortlist.py`)
+  since it's pure Python; #385's badge/filter is rendering/wiring, covered by `make ui_check` /
+  `make ui_e2e`, not unit tests
 - Item 3's precondition (the item-1 backfill): re-run `ingest --merge` and confirm the
   Companies-hiring "Unknown" row drops from 244
 - Item 3: `results/<lane>/shortlist.json` row counts grow; spot-check that `deal_breaker` carries
