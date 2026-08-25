@@ -167,6 +167,13 @@
   figure doesn't meet, the constraint lands verbatim in `deal_breaker` and is tallied in
   `tenure_flagged_count`, never dropping the JD or changing its score. Inert without a
   `longestTenureYears` above zero, same as location without `authorizedIn`.
+- `workatastartup` tiered BLOCKED under ADR-0002 (plan 010 item 9): no listings feed exists without
+  auth (one company at a time behind a signup gate — ADR-0002's own "no public listings API"
+  criterion on its own), and Y Combinator's own Terms of Use bars "data mining, robots, scraping or
+  similar data gathering or extraction methods." Supersedes the plan's earlier "wanted, but opt-in"
+  framing — BLOCKED forecloses any adapter, including an opt-in one a user could add to their own
+  `config/seed.json`. Hand capture (paste-only, human-read) stays available, unchanged from how
+  HumanLayer's posting was already captured.
 - Geo blind spot for source-confined feeds (plan 010 item 12): RSS boards carry no `location` field
   at all, so all 391 `swissdevjobs` corpus records (100% Swiss listings) collapsed into an
   unqualified "Unknown" bucket in the Companies-hiring tab and the publishable geo-by-field hiring

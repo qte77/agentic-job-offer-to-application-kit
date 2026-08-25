@@ -35,7 +35,7 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
 | --- | --- | --- |
 | **OK — ship/ingest** | Greenhouse, Lever, Ashby, Personio (no-auth public GET board APIs); RSS/Atom feeds (built for consumption); the arbeitnow + The Muse aggregator APIs (robots-allowed, attribution requested) | Documented public endpoints; Lever README states postings "may be scraped by third parties" |
 | **CAUTION — keep in `_blocked` / `_deferred`, do not ship** | Recruitee, Workable; JSON aggregators jobicy / himalayas / remotive | API exists but a robots/ToS conflict is unresolved (see per-source) |
-| **BLOCKED — never ingest (paste-only or structurally impossible)** | LinkedIn, Indeed, StepStone, jobs.ch, RemoteOK, Google for Jobs | ToS bars automation, robots disallows job/api paths, or there is no public listings API |
+| **BLOCKED — never ingest (paste-only or structurally impossible)** | LinkedIn, Indeed, StepStone, jobs.ch, RemoteOK, Google for Jobs, Work at a Startup (workatastartup.com) | ToS bars automation, robots disallows job/api paths, or there is no public listings API |
 
 ### Per-source findings (read-only polyfetch probes, 2026-06-20)
 
@@ -62,6 +62,24 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
   → BLOCKED.
 - **LinkedIn / Indeed** — `robots.txt` disallows `/jobs*` + `/api/*`, and the User Agreement / ToS bar
   automation (see research.md §Delivery) → paste-only, BLOCKED.
+- **Work at a Startup (workatastartup.com)** — re-verified 2026-08-25. `robots.txt` is fully
+  permissive (`User-Agent: * / Disallow:`, unchanged from the 2026-08-07 finding), but that is only
+  half of the test. Two independent grounds land BLOCKED:
+  - **Structural.** Unauthenticated access serves one company's roles at a time behind a "Sign up to
+    see more" gate — there is no public listings feed to poll, satisfying this ADR's own BLOCKED
+    definition ("no public listings API") on its own.
+  - **Legal.** Y Combinator's own Terms of Use (`ycombinator.com/legal#tou`, fetched 2026-08-25)
+    states verbatim: *"You agree not to...engage in or use any data mining, robots, scraping or
+    similar data gathering or extraction methods."* `workatastartup.com/terms` self-titles as
+    *"Terms of Use | Y Combinator's Work at a Startup"* and YC's own legal hub lists no separate
+    terms document for the product — strong evidence the same ToU governs. **One link in that chain
+    is unverified**: `workatastartup.com/terms`'s own page body could not be directly read this
+    session (it is client-rendered with no server-side text, and the local headless-Chromium
+    reinstall needed to render it failed on `ENOSPC` — disk space, not a site or ToS block). The
+    structural ground alone is sufficient for BLOCKED regardless of how that gap resolves.
+  - **Hand capture remains available**, unchanged by this finding — a human reading and pasting one
+    posting they were entitled to see is governed by conduct, not destination (see below), and this
+    is exactly how HumanLayer's `config/manual-jds.json` entry was already captured.
 - **Berlin Startup Jobs** (#212, 2026-06-30) — `berlinstartupjobs.com/feed/?cat=engineering-tech` RSS;
   `robots.txt` allows `/feed` (GPTBot/ClaudeBot permitted, 10s crawl-delay); ToS §3.13 acknowledges
   crawlers over public listings (only registered *customers* are barred from extraction scripts).
@@ -105,7 +123,11 @@ hiring series stays local; ADR-0001 PII gate + #11). Full citations and the subm
   `_reason` is corrected to match the probe (API 200 + attribution; AI-crawlers blocked — not a blanket
   403). Every `_blocked` / `_deferred` entry carries a `_date_verified` stamp (date of the last
   ToS/reachability check). crewai / latticeflow stay `_blocked` via the #96 re-probe, where their
-  reasons are verified.
+  reasons are verified. `_blocked` also gains `workatastartup` (2026-08-25, plan-010 item 9) — no
+  listings feed without auth, and YC's own Terms of Use bars data mining/robots/scraping; the
+  plan's own prior "wanted, but opt-in" framing is superseded, since BLOCKED forecloses any adapter
+  including one added to a user's personal `config/seed.json` — the sanctioned path stays paste-only
+  hand capture under "conduct, not destination" below.
 - **Freshness upkeep (#217).** Every `feeds` / `ats` entry now also carries a `_date_verified` stamp
   (previously only `_blocked` / `_deferred` did), and it is **expected on new `feeds` / `ats`
   entries**. `ajoa-kit verify-sources [--dry-run]` re-probes them read-only (no auth) and re-stamps the
