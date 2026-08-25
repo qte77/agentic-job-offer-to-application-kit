@@ -1,5 +1,5 @@
 {
-  "_synthetic": "DEMO DATA ONLY — synthetic, fictional companies/roles, no real job postings and no PII. Mirrors the shortlist + trend shapes the pipeline produces, including the tailor-pack cv/cover_letter (real packs stay local in results/offers/<slug>/, gated on #52). See ui/README.md.",
+  "_synthetic": "DEMO DATA ONLY — synthetic, fictional companies/roles, no real job postings and no PII. Mirrors the shortlist + trend shapes the pipeline produces, including the tailor-pack cv/cover_letter (real packs stay local in results/offers/<slug>/, gated on #52). Four rows deliberately carry NO cv/cover_letter/prefill_pack: untailored rows are the overwhelming majority in real use, and telling them apart is what the has-pack badge and the 'Tailored only' filter are for. See ui/README.md.",
   "generated": "2026-06-17",
   "lanes": [
     { "key": "cxo", "label": "(fractional) CxO" },
@@ -107,6 +107,47 @@
       "rationale": "Domain (health) is adjacent; role leans team-scale ownership over IC depth.",
       "cv": "# Alexis Doe — Senior Software Engineer\n\n## Summary\nPragmatic IC who ships typed, tested features end-to-end and keeps systems coherent under change.\n\n## Selected experience\n- Delivered features across backend, CLI, and a static UI in a single coherent codebase.\n- Maintained strong test discipline (TDD, value-add tests) and a clean quality gate.\n- Handled adjacent domains by leaning on contracts and documentation.\n\n## Skills\nPython, TypeScript, testing/TDD, vanilla web, pydantic, cross-domain delivery.",
       "cover_letter": "Dear Vela Health team,\n\nSenior Software Engineer is squarely in my lane: ship typed, tested features and keep the system honest as it grows.\n\nHealth is an adjacent domain for me rather than a background, and the role leans toward team-scale ownership, so I would be ramping on both. If you value an IC who works contract-first and documents decisions, I would contribute quickly.\n\nBest,\nAlexis Doe"
+    },
+    {
+      "id": "greenhouse:lumen-grid:611",
+      "title": "Senior Platform Engineer",
+      "company": "Lumen Grid",
+      "url": "https://example.com/lumen-grid/jobs/611",
+      "best_lane": "cloud",
+      "score": 5,
+      "verdict": "shortlist",
+      "rationale": "Infrastructure-as-code and release automation map straight across; multi-region failover is the open gap."
+    },
+    {
+      "id": "lever:tessera:148",
+      "title": "Backend Engineer, Data Platform",
+      "company": "Tessera Labs",
+      "url": "https://example.com/tessera/jobs/148",
+      "best_lane": "engineering",
+      "score": 3,
+      "verdict": "maybe",
+      "rationale": "Typed pipelines and contract-first APIs fit; the role leans warehouse modelling, which is thin."
+    },
+    {
+      "id": "ashby:corvid:905",
+      "title": "Head of Engineering",
+      "company": "Corvid Analytics",
+      "url": "https://example.com/corvid/jobs/905",
+      "best_lane": "cxo",
+      "score": 3,
+      "verdict": "maybe",
+      "deadline": "2026-09-01",
+      "rationale": "Systems-level leadership framing matches; no evidence of hiring or budget ownership at this scale."
+    },
+    {
+      "id": "workable:pico-foundry:062",
+      "title": "Founding Backend Engineer",
+      "company": "Pico Foundry",
+      "url": "https://example.com/pico-foundry/jobs/062",
+      "best_lane": "founding",
+      "score": 2,
+      "verdict": "maybe",
+      "rationale": "0->1 breadth fits, but the stack is Rust-first while the evidence library is Python/TypeScript."
     }
   ],
   "trends": [

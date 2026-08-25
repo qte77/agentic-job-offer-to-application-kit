@@ -106,10 +106,16 @@ async function init() {
 
   await loadMarkdownRenderer();
 
-  renderShortlist(data.shortlist, laneLabel);
-  document
-    .getElementById("filter")
-    .addEventListener("input", (e) => renderShortlist(data.shortlist, laneLabel, e.target.value));
+  // Shortlist controls: the text filter and the "Tailored only" (has-pack) toggle COMPOSE, so both
+  // listeners repaint from both control values — reading one from the event target alone would drop
+  // the other's state on the next keystroke/click.
+  const filterEl = document.getElementById("filter");
+  const packOnlyEl = document.getElementById("filter-pack");
+  const paintShortlist = () =>
+    renderShortlist(data.shortlist, laneLabel, filterEl.value, packOnlyEl.checked);
+  paintShortlist();
+  filterEl.addEventListener("input", paintShortlist);
+  packOnlyEl.addEventListener("change", paintShortlist);
 
   // Delegated once on the tbody (survives renderShortlist re-renders): click / Enter / Space
   // toggles a row's tailored CV + cover-letter detail.

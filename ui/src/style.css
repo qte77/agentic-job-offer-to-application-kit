@@ -168,8 +168,33 @@ h2 {
   font: inherit;
   font-size: 0.875rem;
   min-width: 12rem;
+  /* Keep the two shortlist controls clustered at the right of the space-between .section-head
+     (h2 | filter + toggle) instead of the toggle being pushed away from the search box. */
+  margin-left: auto;
 }
 #filter:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+/* Has-pack filter (plan 010 item 5) — a checkbox chip beside the search box, same inset
+   (--bg on --surface) look as #filter; ticking it narrows the table to rows carrying a tailored
+   pack. accent-color paints the tick in the brand amber and follows color-scheme, so it reads
+   correctly in both themes without a per-theme override. */
+.pack-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pack-filter:hover { border-color: var(--primary); color: var(--primary); }
+.pack-filter:focus-within { outline: 2px solid var(--primary); outline-offset: 1px; }
+.pack-filter input { margin: 0; accent-color: var(--primary); cursor: pointer; }
 
 /* Trends granularity + time-frame pickers — both `.range-picker` selects share one look (the
    styling targets the class, not an id, so #trends-gran and #trends-range match). */
@@ -352,9 +377,13 @@ td.empty-state {
 }
 
 /* Offer flags (#283) — outlined pills in the Role cell, mirroring .lane: a soft deadline (caution)
-   and a hard deal-breaker (negative). Rendered only when the ScoredItem field is present. */
+   and a hard deal-breaker (negative). Rendered only when the ScoredItem field is present.
+   .has-pack (plan 010 item 5) joins the same idiom in the data-arc's positive: the row went through
+   the tailor phase and carries a CV + cover letter. Both themes come free — every color here is a
+   --data-* token, redefined under prefers-dark and :root[data-theme="dark"]. */
 .due,
-.deal-breaker {
+.deal-breaker,
+.has-pack {
   display: inline-block;
   margin: 0.3rem 0.35rem 0 0;
   padding: 0.1rem 0.55rem;
@@ -364,6 +393,12 @@ td.empty-state {
 }
 .due { border-color: var(--data-caution); color: var(--data-caution); white-space: nowrap; }
 .deal-breaker { border-color: var(--data-negative); color: var(--data-negative); }
+.has-pack {
+  border-color: var(--data-positive);
+  color: var(--data-positive);
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 /* Score chip — data-arc by band: >=4 positive, 3 caution, <=2 negative. */
 .score {
