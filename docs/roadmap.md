@@ -149,6 +149,11 @@
   employer (#363). Separately, `ingest` rewrites `results/jobs-raw.json` wholesale, so hand-captured
   JDs vanished on the next pull — they now live in `config/manual-jds.json` (`models.ManualJd`) and
   are injected into every pull, which is also what stops `merge_corpus` delisting them (#364).
+- Shortlist usability (plan 010 items 5-6, #384/#385): 22 of 467 rows carried a tailored pack with
+  nothing marking which, and ordering by lane-file glob then score buried good offers hundreds of
+  rows down (`engineering` alone held 369 of 467). `aggregate()` now sorts by score descending,
+  stably, treating a missing/non-numeric score as unusable rather than an error; the dashboard gained
+  a `pack` badge plus a "tailored only" filter that composes with the existing text filter.
 - Scoped extraction at chunk time (plan 010 item 7, #395): `chunk` now trims each posting to its
   substantive body — dropping the "About us" preamble and trailing EEO/benefits boilerplate — before
   `DESC_CAP` applies, instead of capping the raw text. Measured on the 9,159-record corpus: 86.6% of

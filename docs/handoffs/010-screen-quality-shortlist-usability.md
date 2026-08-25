@@ -1,6 +1,6 @@
 # Handoff 010 — screen quality + shortlist usability
 
-**State (2026-08-11): items 1, 2, 3, 4, 10 and 11 shipped ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368)); 8 items open, none owner-gated.**
+**State (2026-08-25): items 1, 2, 3, 4, 5, 6, 7, 10 and 11 shipped** ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384), [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385), [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395)); **5 items open, none owner-gated.**
 Also merged: [#362](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/362) — the
 python-deps bump. It carried ruff **0.16**, which formats Python code blocks inside Markdown by
 default, so `ruff format --check .` now covers `docs/`. One plan snippet needed reformatting; expect
@@ -11,7 +11,7 @@ migrated here (Phase C, second tailor round) and nothing else is stranded there.
 
 ## Read this first
 
-The plan has **exactly one remaining-work table** (8 rows: items 5-9 plus 12-14, the last three opened by this session's audits). Everything else in it — source map,
+The plan has **exactly one remaining-work table** (5 rows: items 8, 9, 12, 13, 14 — the last three opened by an earlier session's audits). Everything else in it — source map,
 design notes, watch-outs — describes *how*, never *what is open*. If you find yourself building a
 second list of open work, stop: that is the failure mode the arc rules exist to prevent.
 
@@ -38,17 +38,19 @@ Current data state: corpus **8 459**, jobs-raw **5 807** (full text, max 25 392 
 
 ## How to run this arc
 
-Phases B/C/D are done. What remains is the arc's own backlog plus three findings this session opened.
+Phases B/C/D are done. Items 5, 6, 7 (dashboard usability + scoped extraction) are also done —
+[#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384),
+[#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385),
+[#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395). What remains is the
+arc's own backlog plus three findings an earlier session's audits opened.
 
-1. **Items 5, 6** (dashboard) — small, independent, and they make everything else easier to inspect.
-   `make ui_e2e` / `make ui_shots` work once the browser is installed (see watch-outs).
-2. **Item 13 first among the new rows** — one `ingest --merge` + `chunk --new` + relevance pass puts
-   the 5 unscored manual JDs (Cardinal ×2, Lobby AI ×2, Nomadic Chief of Staff) into a shortlist, and
-   the same pass sweeps whatever else the pull brings. Cheapest way to stop flying blind on them.
-3. **Item 12** (geo blind spot) before any further Swiss selection — six score-4 Swiss roles were
+1. **Item 13 first among the remaining rows** — one `ingest --merge` + `chunk --new` + relevance pass
+   puts the 5 unscored manual JDs (Cardinal ×2, Lobby AI ×2, Nomadic Chief of Staff) into a shortlist,
+   and the same pass sweeps whatever else the pull brings. Cheapest way to stop flying blind on them.
+2. **Item 12** (geo blind spot) before any further Swiss selection — six score-4 Swiss roles were
    missed by a `location`-based filter because RSS records carry none. The six are captured in
    `results/swiss-candidates-20260811.json` with language / EU-EEA blockers already flagged.
-4. **Items 8, 9, 14** as capacity allows. (Item 7 shipped in #395.)
+3. **Items 8, 9, 14** as capacity allows.
 
 **Owner decisions carried in 2026-08-11:** location policy is EU / Switzerland / US with `remoteOk`,
 and a citizenship-or-visa-only requirement is surfaced in `deal_breaker` but never drops a role — the
@@ -78,9 +80,13 @@ Every open decision has a default; proceed with it unattended and let the owner 
   looks exactly like a revoked account (2026-08-10 cost two failed writes and a wrong diagnosis).
   `gh auth status` is the tell — the stored `gho_` token shows `Active account: false` while a
   shadowing token is set. Commit with `--no-gpg-sign`.
-- **`gh pr merge --squash --admin`** works for PRs you authored; bot-authored PRs (dependabot,
-  github-actions) need `gh pr review --approve` first because the ruleset sets
-  `require_code_owner_review: true`.
+- **`gh pr merge --squash --admin`** works for PRs authored by the sole code owner (qte77); every
+  other author — bots (dependabot, github-actions) **and other human accounts** (e.g. dntywntme) —
+  hits `Waiting on code owner review from qte77` and needs a real `gh pr review --approve` from
+  qte77 first (a comment saying "approved" does not count — check `gh pr view <n> --json reviews`
+  before trusting it). The `require_code_owner_review: true` ruleset rule drives this; `reviewDecision`
+  does not reliably reflect it (it reflects classic branch protection) — the merge attempt itself, or
+  the `reviews` array, is the authoritative check.
 - **polyfetch's Chromium keeps vanishing** — gone twice (2026-08-09, 2026-08-11), each time
   surfacing only as "Executable doesn't exist" mid-fetch. `patchright install` must run
   **unsandboxed** (`dangerouslyDisableSandbox`): a sandboxed run reports success, downloads 177 MB,
@@ -145,4 +151,5 @@ policy (AGENTS.md: no automated submission).
 | Nomadic AI | **none** — never tailored | 3 rows (360, 361, 467), score 3 / `maybe`, empty detail; `chief-of-staff` is on no shortlist at all |
 | Lobby AI | none | **0 rows** — captured but not yet ingested or screened |
 
-HumanLayer sitting at 417 and Nomadic ML dead last at 467 is precisely what items 5–6 fix.
+HumanLayer sitting at 417 and Nomadic ML dead last at 467 is precisely what items 5–6 fixed
+(#384/#385) — pack state above is the 2026-08-09 snapshot that motivated the fix, not current.
