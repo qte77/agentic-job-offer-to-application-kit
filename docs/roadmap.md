@@ -143,6 +143,13 @@
   employer (#363). Separately, `ingest` rewrites `results/jobs-raw.json` wholesale, so hand-captured
   JDs vanished on the next pull — they now live in `config/manual-jds.json` (`models.ManualJd`) and
   are injected into every pull, which is also what stops `merge_corpus` delisting them (#364).
+- Scoped extraction at chunk time (plan 010 item 7, #395): `chunk` now trims each posting to its
+  substantive body — dropping the "About us" preamble and trailing EEO/benefits boilerplate — before
+  `DESC_CAP` applies, instead of capping the raw text. Measured on the 9,159-record corpus: 86.6% of
+  postings scope (median 34.4% of characters dropped), and 2,636 JDs previously truncated by the cap
+  now fit under it whole. Markers match mid-string (99.9% of the corpus carries no newline at all),
+  guarded by a preamble window, a tail fraction, and a minimum-retention floor so a marker landing in
+  running prose can't gut a posting.
 
 ## Next
 
