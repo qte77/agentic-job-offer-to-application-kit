@@ -17,18 +17,42 @@ import sys
 from ajoa_kit.persist_offer import attach_tailor_docs
 
 
+def _score_key(item: dict) -> float:
+    """Sort key for one row: its numeric ``score``, or ``-inf`` when there is none to trust.
+
+    ``bool`` is excluded deliberately — it is an ``int`` subclass, so a stray ``true`` would
+    otherwise rank as a score of 1 instead of being treated as unusable.
+    """
+    score = item.get("score")
+    if isinstance(score, bool) or not isinstance(score, int | float):
+        return float("-inf")
+    return float(score)
+
+
 def aggregate(results_glob: str = "results/*/shortlist.json") -> list[dict]:
-    """Flatten per-lane shortlist arrays into one list, ordered by source path.
+    """Flatten per-lane shortlist arrays into one list, ordered by ``score`` descending.
+
+    Rows are collected in source-path order and then **stably** re-ordered by score, so equal-score
+    rows keep that lane-path (and within a file, in-file) order — the output is snapshot-compared,
+    so it has to stay deterministic. Ordering by path alone buried good offers: ``engineering``
+    holds the large majority of rows, so a high-scoring row in a later lane landed hundreds of
+    positions down the dashboard.
+
+    A ``score`` that is missing, ``None`` or non-numeric is not an error here (this boundary reads
+    raw JSON, and ``score`` is optional in :class:`ajoa_kit.models.ScoredItem`): such a row sorts to
+    the bottom, below every scored row, rather than raising or displacing a real one.
 
     Skips entries the refresh sweep flagged ``stale`` (#214) so the dashboard never shows a
     filled/closed offer; the flagged row stays in ``results/<lane>/shortlist.json`` (audit trail).
     """
-    return [
+    items = [
         item
         for path in sorted(glob.glob(results_glob))
         for item in json.loads(pathlib.Path(path).read_text())
         if not item.get("stale")
     ]
+    items.sort(key=_score_key, reverse=True)
+    return items
 
 
 def main(out_path: str) -> None:
