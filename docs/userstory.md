@@ -22,6 +22,12 @@ feed. Capture those by hand into `config/manual-jds.json`; `ingest` injects them
 they are screened alongside everything else and survive later pulls rather than being dropped as
 delisted.
 
+Beyond the seeded ATS/feeds, two read-only **discovery** adapters widen reach without a login:
+`ajoa-kit discover-yc` follows the yc-oss hiring feed to public YC company job pages
+(`results/yc-jobs.json`), and `ajoa-kit discover-slugs` mines a filtered startups.gallery page for new
+first-party ATS slugs to add to the seed (`results/emerging-slugs.json`) — both CAUTION-tier,
+public-GET-only, local-only (ADR-0004 Phase 2).
+
 ## US3 — Keep my data private
 
 As a candidate, I want my evidence, inputs, and results kept out of git, so no personally identifiable

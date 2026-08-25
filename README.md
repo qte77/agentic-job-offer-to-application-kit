@@ -110,6 +110,10 @@ once installed — both run the LLM phases via the **Claude Code** Workflow tool
   `ajoa-kit chunk --new` → `persist --merge` re-screens only the newly-seen offers into your shortlist,
   and `ajoa-kit refresh` flags filled/closed offers (or removes them with `--delete`);
   `ajoa-kit verify-sources` re-probes the seed and re-stamps `_date_verified` on the sources still live.
+  Optionally, `ajoa-kit discover-yc` follows the yc-oss hiring feed into public YC company JDs
+  (`results/yc-jobs.json`), and `ajoa-kit discover-slugs --location/--job-title/--company-name` mines
+  startups.gallery for new first-party ATS slugs (`results/emerging-slugs.json`) to review before adding
+  to your seed — both read-only public GET, CAUTION-tier ([ADR-0004](docs/decisions/0004-discovery-source-tiers.md)), local-only.
 
 End-users: **[docs/quickstart.md](docs/quickstart.md)** narrates the full run end-to-end (prerequisites
 plus the keyword-trends and writing-style options). Contributors: **[CONTRIBUTING.md](CONTRIBUTING.md)**
@@ -126,7 +130,7 @@ the repo (see [docs/architecture.md §Data layout](docs/architecture.md#data-lay
 - [docs/roadmap.md](docs/roadmap.md) — what's built, what's next, what's deferred
 - [docs/userstory.md](docs/userstory.md) — user stories with acceptance criteria
 - [docs/research.md](docs/research.md) — fetching, ATS, and positioning research
-- Decisions (ADRs): [ADR-0001 layering](docs/decisions/0001-backend-cli-ui-separation.md) · [ADR-0002 source ToS tiers](docs/decisions/0002-source-tos-tiers.md) · [ADR-0003 data contracts](docs/decisions/0003-data-contract-enforcement.md)
+- Decisions (ADRs): [ADR-0001 layering](docs/decisions/0001-backend-cli-ui-separation.md) · [ADR-0002 source ToS tiers](docs/decisions/0002-source-tos-tiers.md) · [ADR-0003 data contracts](docs/decisions/0003-data-contract-enforcement.md) · [ADR-0004 discovery source tiers](docs/decisions/0004-discovery-source-tiers.md)
 - [examples/alexis-doe/](examples/alexis-doe/) — synthetic end-to-end example
 - [CONTRIBUTING.md](CONTRIBUTING.md) — command reference (run/dev/release), setup, testing, and PRs
 - [AGENTS.md](AGENTS.md) — operating rules for AI coding agents

@@ -92,6 +92,12 @@
   rest for manual triage. A one-pass backfill dated all 142 seed sources (2026-07-04); `_date_verified`
   is now expected on new `feeds`/`ats` entries too (ADR-0002). A scheduled re-probe is **deferred**
   (low-stakes — `ingest` already lists dead sources); the verb is run by hand for now.
+- Discovery → JDs + ATS slugs (ADR-0004 Phase 2): `ajoa-kit discover-yc` follows the yc-oss hiring
+  feed to public YC company job pages (`results/yc-jobs.json`); `ajoa-kit discover-slugs
+  --location/--job-title/--company-name` renders a filtered startups.gallery page and recovers
+  first-party ATS slugs (`results/emerging-slugs.json`, human-reviewed before seeding). Both
+  CAUTION-tier read-only public GET, local-only, network lazy-imported; pure parse/derive logic is
+  offline-tested; new `YcCompany`/`AtsRef`/`SgFilters`/`SgJob` contracts (`models.py`).
 - Forward-compat scored fields (#197): `ScoredItem` now uses `extra="allow"`, so a relevance-result
   field beyond the known set round-trips into `jobs-scored.json` + the per-lane shortlists instead of
   being dropped on the persist re-write.
@@ -157,6 +163,11 @@
   bundles; the data layers are shipped).
 - Offer-pack provenance: `persist-offer` retains no source, so a hand-edited artifact silently
   desyncs the pack (#365), and nothing detects the drift (#366).
+- Pack-coverage policy + output-eval (plan 011, ADR-0005): a config-driven pack policy
+  (`config/pack-policy.json` + `ajoa-kit pack-plan`) that guarantees every `score>=N` shortlist JD gets a
+  full pack; deterministic grounding + honesty checks as `persist-offer` sidecars; the tailor prompt
+  encodes the synergy-forward / growth-as-intent voice + a private mitigation/prep layer; dashboard
+  console/network 404 cleanup.
 
 ## Later — hardening & reach
 
@@ -176,3 +187,7 @@
   weekly, ~130 KB/yr daily) — fine for years (cheap O(n) upsert + whole-file dashboard fetch). If they
   ever get too large, split by month/year (e.g. `trends-YYYY.ndjson`) and have the dashboard fetch the
   needed range.
+- Naming: consider renaming `results/offers/<slug>/` → `results/packs/<slug>/` — "offer" is used loosely
+  for a job *posting*, which reads oddly (a pack is the application package, not an offer extended to you).
+  Cross-cutting: `persist_offer.write_pack`, the dashboard JD-id join, and docs; note existing `__jobs`
+  backup snapshots use the old path. Mechanical but repo-wide — low priority.

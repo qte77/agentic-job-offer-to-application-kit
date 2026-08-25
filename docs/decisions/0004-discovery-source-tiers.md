@@ -1,6 +1,6 @@
 # ADR-0004 — Discovery-source tiers (emerging-company signal)
 
-**Status:** Accepted (2026-07-13)
+**Status:** Accepted (2026-07-13); amended 2026-08-22 (Phase 2 — discovery → JDs + ATS slugs; see Amendment)
 
 **Relates to:** [ADR-0002](0002-source-tos-tiers.md) (the OK/CAUTION/BLOCKED ToS/ToU tiering this ADR
 extends to the discovery layer, and whose "slug-discovery … deferred" out-of-scope note this partially
@@ -58,11 +58,26 @@ expand to chase "market intel."
 - Partially reopens the ADR-0002 slug-discovery deferral: this reads a public directory to derive
   *company signal*, not to auto-derive ATS board tokens — the latter stays deferred (ADR-0002 §Out of scope).
 
+## Amendment — Phase 2 (2026-08-22): discovery → JDs + first-party ATS slugs
+
+Phase 2 promotes two slices the phase-1 "Out of scope" list deferred, because both proved reachable
+**read-only without a login** (unlike the WaaS board) and both keep the phase-1 boundary (read-only
+public GET, local-only output, never published, tiered). The "kept small / not a market-intel moat"
+caveat still holds — this is personal-tool *reach* with a human in the loop, not breadth-as-a-moat.
+
+| Tier | Source | Rationale |
+|---|---|---|
+| **CAUTION (shipped)** | **yc-oss → public YC JDs** (`ajoa_kit.yc_jobs`, `ajoa-kit discover-yc`) | Follows the yc-oss `hiring` flag to each company's PUBLIC `ycombinator.com/companies/<slug>/jobs` page. YC `robots.txt` disallows `/companies?*` (query URLs) but **not** the clean `/companies/<slug>/jobs` path, so a read-only GET of that path is permitted. Emits normalized JD records (`yc:<slug>:<jobid>`) to local-only `results/yc-jobs.json`. Reachability + structure verified 2026-08-22. |
+| **CAUTION (shipped)** | **startups.gallery** (`ajoa_kit.startups_gallery`, `ajoa-kit discover-slugs`) | A second discovery source **and** ATS-slug resolution. Broader than yc-oss (non-YC startups too); `robots.txt` is `Allow: /` but there is no published ToS (**absence ≠ permission**), so read-only public GET only, patchright-rendered. Cards link straight to the company's own ATS, so it is used to recover **first-party `(ats, slug)` refs** (ashby/greenhouse/lever) → local-only `results/emerging-slugs.json`, **human-reviewed before any seed change** — discovery *into* first-party ingest, not terminal scraping. |
+
+Both stay **inert to ingest** (no loaded seed key); they are explicit, filter-driven CLI subcommands.
+The pure parse/select/derive logic is offline-testable; the network fetch/render lazy-imports
+`polyfetch_scrape`. YC **Work at a Startup** stays **BLOCKED** (login-walled) — Phase 2 does not touch it.
+
 ## Out of scope (own follow-on slices)
 
-- ATS-slug resolution for discovered companies (name→slug probe already exists in `slug_probe.py`; wiring
-  discovery into it is a later slice).
-- A second discovery source; publishing any discovery output (forbidden by the boundary above).
+- Auto-adding discovered `emerging-slugs.json` refs to the seed (stays human-reviewed by design).
+- Publishing any discovery output (forbidden by the boundary above).
 
 ## References
 

@@ -24,6 +24,9 @@ if TYPE_CHECKING:
     from typing import Any
 
 # --- helpers --------------------------------------------------------------------------
+# Remove <script>/<style> blocks (tag + content) before tag-stripping, so analytics/CSS never leak
+# into JD text. Run on the raw input (real tags), before unescape turns an escaped &lt; into '<'.
+_SCRIPT_STYLE = re.compile(r"<(script|style)\b[^>]*>.*?</\1\s*>", re.I | re.S)
 # Quote-aware so a '>' inside a quoted attribute value doesn't end the tag early.
 _TAG = re.compile(r"<(?:\"[^\"]*\"|'[^']*'|[^'\">])*>")
 _WS = re.compile(r"\s+")
@@ -96,6 +99,7 @@ def html_to_text(s: str | None) -> str:
     """
     if not s:
         return ""
+    s = _SCRIPT_STYLE.sub(" ", s)
     s = html.unescape(s)
     s = _TAG.sub(" ", s)
     return _WS.sub(" ", s).strip()
