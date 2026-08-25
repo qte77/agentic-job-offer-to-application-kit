@@ -1,5 +1,11 @@
 # Plan 010 — screen quality + shortlist usability
 
+> **CLOSED 2026-08-25.** All 13 items shipped. Nothing migrates — every open thread this arc raised
+> is resolved (including item 9's finding, which reversed the arc's own earlier assumption; see
+> that item's source-map entry). This file is history — do not add work to it.
+> [Arc 011](011-pack-coverage-and-output-eval.md) is the active plan for anyone picking up work
+> next; it was scoped independently, not as a continuation of this arc's backlog.
+
 **Opened 2026-08-07**, migrating the one unfinished item from
 [arc 009](009-renew-search-cv-letters.md) (Phase C) plus the defects and deferred work that arc
 surfaced. Handoff: [docs/handoffs/010-screen-quality-shortlist-usability.md](../handoffs/010-screen-quality-shortlist-usability.md).
@@ -71,11 +77,9 @@ the location one that shipped in [#360](https://github.com/qte77/agentic-job-off
 
 ## Remaining work
 
-One table. Source map and design notes below describe HOW; they never re-list WHAT is open.
-
-| # | Item | Gate | Done when |
-|---|---|---|---|
-| 14 | 5 manual descriptions are self-disclosed partial captures (HumanLayer + Nomadic ×4: body sits behind an unfetched "View job" link) | agent | each description carries the full role body, or the pack states the JD was partial |
+**None — this arc is closed.** Item 14 shipped 2026-08-25. Source map and design notes below
+describe HOW each item was built; the "Shipped" section above and the source map's `· SHIPPED`
+markers are the record of WHAT.
 
 ## Source map
 
@@ -277,6 +281,37 @@ entry (injection pins `last_seen` to the newest pull), while `mark:79` does re-p
 and `classify:53` still flags on `GONE_STATUSES = {404, 410}`. All 7 entries carried careers-page
 URLs at the time, so none could expire — hence the "capture the posting's URL" advice.
 
+### Item 14 — partial manual captures completed · SHIPPED
+
+As run, 2026-08-25: 5 of 9 manual JDs (arc 009's own captures) carried only a summary, with the
+full role body sitting behind an unfetched link. Resolved differently per source:
+
+- **Nomadic AI ×4** (ML, Backend, Frontend, Chief of Staff) — the marketing site's "Apply" buttons
+  turned out to link straight to **public, no-auth Ashby postings**
+  (`jobs.ashbyhq.com/Pear-VC/...`) — an OK-tier ATS this project already fetches, not a login wall.
+  Fetched all 4 directly (`polyfetch fetch <url> --tier patchright --show-body`, no click-automation
+  needed), confirmed each title matched before trusting the link order, and replaced the partial
+  `description` in `config/manual-jds.json` with the full body. Re-ran `ingest --merge` afterward so
+  `results/jobs-raw.json` carries the fuller text too (corpus 10 148 → 10 154, all 9 manual ids
+  still present). No existing pack referenced any of the 4 (`results/offers/` has no `nomadic*`
+  dir), so nothing needed regenerating.
+- **HumanLayer** — genuinely blocked, not just unattempted. `workatastartup.com`'s "View job" click
+  was tried (`render_session` + `click_text("View job")`): same URL, same body text before and
+  after — a no-op, meaning the full JD requires a login this ADR (item 9, same session) already
+  found the site's own Terms of Use bars automating around. Stayed on the done-when's other branch:
+  its pack (`results/offers/humanlayer-founding-product-engineer/`) already discloses the partial
+  capture across `match.md`, `gap-report.md`, `prefill-pack.md` and `coverage-report.md` — verified
+  present, not assumed.
+
+**Watch-out for whoever hits a `.pre-*`/browser-blocked task next:** the local headless-Chromium
+reinstall this required (`polyfetch doctor --fix`, unsandboxed) failed once on `ENOSPC` before
+succeeding on retry — disk fluctuated between 362 MB and 714 MB free over the session with no
+action from this session freeing it (other, unrelated projects' `/tmp` data). Re-check `df` before
+concluding a browser-install failure means the target site is blocking you.
+
+`config/manual-jds.json` is git-ignored (describes a person) — this change has no commit of its
+own; the record of it lives here and in the corpus/jobs-raw.json regen.
+
 ## Watch-outs
 
 - **`--merge` is mandatory on persist.** A bare `persist` overwrites the accrued shortlists — 614
@@ -327,6 +362,11 @@ URLs at the time, so none could expire — hence the "capture the posting's URL"
 - Item 13, as shipped: no unit test (it's a live pipeline run, not code) — verified by re-checking
   all 9 manual ids against `results/<lane>/shortlist.json` post-persist; `persist --merge` reported
   0 malformed / 0 un-laned / 0 invalid-lane
+- Item 14, as shipped: no unit test (config data, not code) — verified via `ingest.load_manual_jds`
+  loading all 9 through the real `ManualJd` pydantic model post-edit, a byte-diff confirming only
+  the 4 Nomadic `description` fields changed (every other field and every other entry untouched),
+  and `results/jobs-raw.json` re-checked post-`ingest --merge` to confirm the fuller text actually
+  propagated, not just the config source
 - Item 3's precondition (the item-1 backfill): re-run `ingest --merge` and confirm the
   Companies-hiring "Unknown" row drops from 244
 - Item 3: `results/<lane>/shortlist.json` row counts grow; spot-check that `deal_breaker` carries
