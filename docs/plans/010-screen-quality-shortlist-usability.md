@@ -191,7 +191,7 @@ duplicated, only if a third constraint (comp floor, clearance) appears.
 | `.claude/workflows/cc-workflow-relevance.js` | `TENURE`/`TENURE_ACTIVE` + the `tenure` prompt block + `tenure_flagged_count` |
 | `config/tenure.json` | untracked, mirrors `config/location.json`; absent file is inert |
 
-### Item 9 — workatastartup under ADR-0002 · SHIPPED
+### Item 9 — workatastartup under ADR-0002 · SHIPPED #404
 
 **Tiered BLOCKED, not opt-in-able — the plan's own "wanted, but opt-in" framing above is
 superseded.** Two independent grounds, either alone sufficient:

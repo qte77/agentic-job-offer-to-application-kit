@@ -1,6 +1,6 @@
 # Handoff 010 — screen quality + shortlist usability
 
-**State (2026-08-25): items 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 and 13 shipped** ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384), [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385), [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395), [#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401), [#403](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/403)); **1 item open, not owner-gated.**
+**State (2026-08-25): items 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 and 13 shipped** ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384), [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385), [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395), [#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401), [#403](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/403), [#404](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/404)); **1 item open, not owner-gated.**
 Also merged: [#362](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/362) — the
 python-deps bump. It carried ruff **0.16**, which formats Python code blocks inside Markdown by
 default, so `ruff format --check .` now covers `docs/`. One plan snippet needed reformatting; expect
@@ -44,9 +44,9 @@ advisory + workatastartup tiering + geo blind spot + manual-JD scoring) are also
 [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385),
 [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395),
 [#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401),
-[#403](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/403), item 9 (this
-session — see plan source map for the PR), item 13 (live pipeline run, not a PR). **Item 14 is all
-that remains.**
+[#403](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/403),
+[#404](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/404), item 13 (live
+pipeline run, not a PR). **Item 14 is all that remains.**
 
 **Owner decisions carried in 2026-08-11, one now corrected:** location policy is EU / Switzerland /
 US with `remoteOk`, and a citizenship-or-visa-only requirement is surfaced in `deal_breaker` but
