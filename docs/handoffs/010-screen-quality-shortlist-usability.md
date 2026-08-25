@@ -1,23 +1,41 @@
 # Handoff 010 — screen quality + shortlist usability
 
-**State (2026-08-25): items 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 and 13 shipped** ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384), [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385), [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395), [#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401), [#403](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/403), [#404](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/404)); **1 item open, not owner-gated.**
-Also merged: [#362](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/362) — the
-python-deps bump. It carried ruff **0.16**, which formats Python code blocks inside Markdown by
-default, so `ruff format --check .` now covers `docs/`. One plan snippet needed reformatting; expect
-`make check` to police code blocks in every doc you write from here on.
+> **CLOSED 2026-08-25.** All 13 items shipped
+> ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363),
+> [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364),
+> [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368),
+> [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384),
+> [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385),
+> [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395),
+> [#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401),
+> [#403](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/403),
+> [#404](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/404),
+> [#405](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/405), item 13 as a
+> live pipeline run, not a PR). Nothing migrates to a new arc — [arc 011](../plans/011-pack-coverage-and-output-eval.md)
+> is the active plan, scoped independently. This file is history — do not add work to it.
+>
+> **One real piece of follow-on work surfaced after closure, not part of this arc's own scope:**
+> the shortlist is ~2,047 corpus records behind the freshest `ingest --merge` (run 2026-08-25
+> 09:35) — a `chunk --new` → relevance pass → `persist --merge` would clear it. Deferred by the
+> owner 2026-08-25; not this arc's job to run unprompted.
+
 Plan: [docs/plans/010-screen-quality-shortlist-usability.md](../plans/010-screen-quality-shortlist-usability.md).
 Arc 009 is closed — [its plan](../plans/009-renew-search-cv-letters.md) is history now; two items
 migrated here (Phase C, second tailor round) and nothing else is stranded there.
 
-## Read this first
+## What this arc shipped, in order
 
-The plan has **exactly one remaining-work table** (1 row: item 14). Everything else in it — source map,
-design notes, watch-outs — describes *how*, never *what is open*. If you find yourself building a
-second list of open work, stop: that is the failure mode the arc rules exist to prevent.
+1–4, 10, 11: RSS company extraction, location advisory, Phase C delta screen, manual-JD durability,
+Phase D (12 packs), ADR-0002 scope for hand capture — all from earlier sessions, see the plan's own
+"Shipped" section and source map for the as-built detail on each.
+5–9, 12–14 (this session): dashboard score-ordering + has-pack badge, scoped extraction at chunk
+time, a tenure advisory mirroring location, `workatastartup` tiered BLOCKED under ADR-0002 (reverses
+this handoff's own earlier "wanted, opt-in" framing — see below), a geo-provenance fallback for
+source-confined RSS feeds, all 9 manual JDs reaching a real score, and the last 4 partial manual
+captures completed via their ATS's actual Ashby postings.
 
-**The plan's source map is complete.** Every file, function and line ref you need is in it, verified
-on `main` after #354/#355/#358/#359/#360 merged. You should not have to re-map the codebase. If a
-line number has drifted, grep the symbol — the symbol names are stable.
+**The plan's source map is complete and closed.** Every file, function and line ref for how each
+item was built is there, each section marked `· SHIPPED`. Nothing further needs mapping.
 
 ## What shipped in 009 (context, not work)
 
@@ -35,18 +53,6 @@ line number has drifted, grep the symbol — the symbol names are stable.
 
 Current data state: corpus **8 459**, jobs-raw **5 807** (full text, max 25 392 chars), shortlists
 **614 rows / 467 live**, packs **22 live / 8 archived**, batches **21 / 825 JDs** staged.
-
-## How to run this arc
-
-Phases B/C/D are done. Items 5, 6, 7, 8, 9, 12, 13 (dashboard usability + scoped extraction + tenure
-advisory + workatastartup tiering + geo blind spot + manual-JD scoring) are also done —
-[#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384),
-[#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385),
-[#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395),
-[#401](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/401),
-[#403](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/403),
-[#404](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/404), item 13 (live
-pipeline run, not a PR). **Item 14 is all that remains.**
 
 **Owner decisions carried in 2026-08-11, one now corrected:** location policy is EU / Switzerland /
 US with `remoteOk`, and a citizenship-or-visa-only requirement is surfaced in `deal_breaker` but
@@ -111,14 +117,16 @@ Every open decision has a default; proceed with it unattended and let the owner 
 - **Judge pack liveness on the corpus join, never a URL probe or a slug join.** `meta.json` → `id`
   matched 29/29; `last_seen != max(last_seen)` is the reliable death signal and needs no network.
 
-## Open questions for the owner
+## Open questions for the owner — all resolved, kept for history
 
 1. `config/location.json` values — the advisory is inert until this exists (item 2). **Deferred by
-   the owner 2026-08-09**; Phase C proceeds without it.
+   the owner 2026-08-09**; Phase C proceeded without it, then item 2 shipped it 2026-08-11.
 
-**Resolved 2026-08-11.** `workatastartup` is wanted but **opt-in only** — see the plan's owner-decision
-table; item 9 tiers it and documents it, and it never enters the shipped `default-seed.json`. The
-stale `chore/source-freshness-20260801` branch is **deleted**: its only content beyond re-stampable
+**Resolved 2026-08-11, then corrected 2026-08-25.** `workatastartup` was recorded here as "wanted,
+opt-in only" — item 9's actual evaluation found it BLOCKED under ADR-0002 instead (no listings feed
+without auth; YC's own Terms of Use bars scraping/data-mining), which forecloses any adapter, opt-in
+or otherwise. See the plan's item-9 source-map entry for the full finding; paste-only hand capture
+remains available and unaffected. The stale `chore/source-freshness-20260801` branch is **deleted**: its only content beyond re-stampable
 `_date_verified` dates was the two Greenhouse boards (`fireworksai`, `dbtlabsinc`) that
 [#359](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/359) dropped as terminal
 404s, so merging it would have resurrected two dead sources. The stray root `MEMORY.md` is deleted
@@ -140,8 +148,11 @@ policy (AGENTS.md: no automated submission).
   JDs captured (`lobby-ai-jds.md`, screenshot `lobby-ai-careers-expanded.png`) and now entries 6–7
   of `config/manual-jds.json`. Adds `$2.2M led by Founderful`, the three founders, and the JD's own
   "Evals as a Discipline" / "Minimum 8 years" / "Swiss-Based/Local" must-haves
-- `nomadic-ai.md` — Understanding Layer for Physical AI, 6 SF on-site roles, 3 screened at score 3,
-  all scored on company context only because the role bodies were never fetched
+- `nomadic-ai.md` — Understanding Layer for Physical AI, 6 SF on-site roles. **Stale as of
+  2026-08-25**: item 13 scored all 4 tracked roles (ML 3, Backend 3, Frontend 3, Chief of Staff
+  dropped <3) and item 14 replaced 4 of the 4 role bodies with the full text (fetched from their
+  actual Ashby postings) — the "company context only" framing here no longer applies. None have
+  been re-screened against the fuller text or tailored into a pack.
 
 **Pack state as of 2026-08-09** — 22 packs on disk, all 22 rendering in the dashboard:
 

@@ -187,6 +187,14 @@
   5 unscored ids, not the full ~1,960-JD pull delta) resolved all of them: 4 landed on a shortlist
   (Lobby AI ×2, Cardinal Founding Engineer, Cardinal Founding Product Engineer), 1 was provably
   dropped by the same screen (Nomadic Chief of Staff, score below 3).
+- Manual JD captures completed (plan 010 item 14): 4 of 5 partial captures resolved in full — the
+  Nomadic AI marketing site's "Apply" buttons turned out to link straight to public, no-auth Ashby
+  postings (an OK-tier ATS this project already fetches), not a login wall, so all 4 role bodies
+  were fetched directly and `config/manual-jds.json` now carries the full text. The 5th
+  (HumanLayer) stays a documented partial: `workatastartup.com` genuinely requires login past the
+  summary shown — confirmed by attempting the site's own "View job" control, which no-opped rather
+  than revealing anything — consistent with item 9's finding that this site's own Terms of Use bar
+  automated access. **Arc-010 closes with this item — all 13 items shipped.**
 
 ## Next
 
