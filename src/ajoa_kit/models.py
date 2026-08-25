@@ -77,6 +77,42 @@ class LocationPolicy(BaseModel):
         return bool(self.authorized_in)
 
 
+class SeniorityPolicy(BaseModel):
+    """The candidate's longest single-employer tenure — **advisory** input to the relevance screen.
+
+    Phase D of arc 009 found 5 of 12 tailored packs had no employment tenure to cite against a
+    JD's stated "minimum N years in a single role" requirement — the same blind spot
+    :class:`LocationPolicy` closed for authorization. Mirrors it exactly: a ``deal_breaker`` phrase
+    already existed on the screen result, but nothing told the model what the candidate's own
+    tenure actually was.
+
+    This deliberately does **not** drop or rescore anything — a short tenure is often explained
+    (acquisition, layoff, fixed-term contract) in ways a screen cannot judge, so the policy
+    annotates and the human decides.
+
+    **Not committed.** Describes a person, so it stays untracked under the ``config/`` ignore, same
+    as ``config/location.json``.
+
+    An empty policy is inert: :attr:`is_active` is False and the screen behaves exactly as before.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    longest_tenure_years: float = Field(default=0.0, alias="longestTenureYears")
+    """The candidate's longest continuous tenure at a single employer, in years."""
+    notes: str = ""
+    """Free text passed verbatim to the screen (a gap explanation, a career change, etc.)."""
+
+    @property
+    def is_active(self) -> bool:
+        """True when there is a real figure to test a JD's stated tenure ask against.
+
+        Zero (the default) means no ground truth was configured, so the screen is told to skip
+        tenure flagging entirely rather than treat "unset" as "no tenure".
+        """
+        return self.longest_tenure_years > 0
+
+
 class ManualJd(BaseModel):
     """One hand-captured JD from ``config/manual-jds.json`` — a posting no adapter can reach.
 

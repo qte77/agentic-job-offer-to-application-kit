@@ -92,6 +92,30 @@ def test_load_location_reads_policy_and_round_trips_the_workflow_aliases(tmp_pat
     assert policy.model_dump(by_alias=True) == written  # emitted shape == args.location shape
 
 
+def test_load_tenure_is_inert_without_a_policy_file(tmp_path: Path) -> None:
+    """Mirrors location (arc-010 item 8): absence must never fail or filter.
+
+    Phase D found 5 of 12 packs had no employment tenure to cite against a JD's stated
+    requirement. Same shape as location: the file is untracked (describes a person), so a fresh
+    clone has none, and ``is_active`` False tells the screen to skip tenure flagging entirely.
+    """
+    policy = ingest.load_tenure(tmp_path)
+    assert policy.is_active is False
+    assert policy.longest_tenure_years == 0
+
+
+def test_load_tenure_reads_policy_and_round_trips_the_workflow_aliases(tmp_path: Path) -> None:
+    """The camelCase alias must survive both directions — one file feeds Python and the JS arg."""
+    written = {"longestTenureYears": 2.5, "notes": "two roles cut short by acquisitions"}
+    (tmp_path / "tenure.json").write_text(json.dumps(written))
+    policy = ingest.load_tenure(tmp_path)
+    assert (
+        policy.is_active is True
+    )  # a real figure -> the screen can now flag a JD's ask against it
+    assert policy.longest_tenure_years == 2.5
+    assert policy.model_dump(by_alias=True) == written  # emitted shape == args.tenure shape
+
+
 def test_shipped_lanes_json_matches_in_code_defaults() -> None:
     # The shipped config/lanes.json is the SSOT; DEFAULT_LANES is the in-code fallback that must
     # mirror it (equality guards the two from silently drifting apart).

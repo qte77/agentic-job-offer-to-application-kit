@@ -84,6 +84,8 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `ats-check` | `FILE` — a CV markdown file |
 | `render-pdf` | `FILE` — a tailored markdown file · `--out <path>` (default `<file>.pdf`) — optional Markdown→PDF export; needs the `[pdf]` extra (`uv sync --extra pdf`) |
 | `lanes` | `--json` — emit the workflow `lanes` arg from `config/lanes.json` (the canonical 7 lanes) |
+| `location` | `--json` — emit the workflow `location` arg from `config/location.json` (advisory; absent file is inert) |
+| `tenure` | `--json` — emit the workflow `tenure` arg from `config/tenure.json` (advisory; absent file is inert, mirrors `location`) |
 | `style` | `--json` — emit the tailor `style` arg from `config/style.json` |
 | `prefill-fields` | `--ats <name> --slug <board> --job-id <id>` (Greenhouse schema lookup) |
 | `probe` | — (probe candidate slugs across ATS platforms) |

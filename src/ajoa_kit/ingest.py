@@ -25,7 +25,7 @@ from pydantic import ValidationError
 
 from ajoa_kit.corpus import merge_corpus, render_daily_summary, summarize_changes
 from ajoa_kit.defaults import DEFAULT_LANES, INTEREST, TITLE_ROLES
-from ajoa_kit.models import Lane, LocationPolicy, ManualJd
+from ajoa_kit.models import Lane, LocationPolicy, ManualJd, SeniorityPolicy
 from ajoa_kit.normalize import _INTEREST, _TITLE_ROLES, build_patterns, keep, record
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.sources import AGGREGATORS, ATS, from_rss, load_sources
@@ -92,6 +92,25 @@ def load_location(config_dir: Path) -> LocationPolicy:
     if not path.is_file():
         return LocationPolicy()
     return LocationPolicy.model_validate(json.loads(path.read_text()))
+
+
+def load_tenure(config_dir: Path) -> SeniorityPolicy:
+    """Return the candidate's tenure policy; an absent ``config_dir/tenure.json`` is inert.
+
+    Mirrors :func:`load_location` exactly (arc-010 item 8): emitted via ``ajoa-kit tenure --json``,
+    deliberately **not** committed (describes a person), and an absent file is the normal case for
+    a fresh clone — never a failure.
+
+    Args:
+        config_dir: The config root (from ``AppSettings``).
+
+    Returns:
+        The validated policy, or an empty (inert) one when the file is absent.
+    """
+    path = config_dir / "tenure.json"
+    if not path.is_file():
+        return SeniorityPolicy()
+    return SeniorityPolicy.model_validate(json.loads(path.read_text()))
 
 
 def load_manual_jds(config_dir: Path) -> list[dict[str, Any]]:

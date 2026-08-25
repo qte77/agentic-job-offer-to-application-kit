@@ -75,7 +75,6 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 
 | # | Item | Gate | Done when |
 |---|---|---|---|
-| 8 | Tenure advisory (`SeniorityPolicy`) | agent | inert without config; flags in `deal_breaker` + `tenure_flagged_count`; never drops or rescores |
 | 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
 | 12 | Geo blind spot: RSS feeds carry no `location`, so Swiss roles are invisible to any geo filter | agent | selection treats feed provenance as a geo signal (`source == swissdevjobs` ⇒ CH); no fabricated `location` written into records |
 | 13 | 5 manual JDs carry no score (Cardinal ×2 absent from the corpus; Lobby AI ×2 never batched; Nomadic Chief of Staff batched-not-listed) | agent | an `ingest --merge` + `chunk --new` + relevance pass puts all 9 manual ids in a shortlist or provably drops them |
@@ -170,20 +169,30 @@ which rejects any slice retaining too little. The floor is load-bearing — with
 The earlier pre-#358 measurement quoted here (median 809 chars of preamble, 87% "About us") used a
 loose marker regex and a line-anchored reading; treat the figures above as the current ground truth.
 
-### Item 8 — tenure advisory
+### Item 8 — tenure advisory · SHIPPED
 
-Mirror the location implementation exactly, all shipped in #360:
+As built: `models.SeniorityPolicy` (`longest_tenure_years: float`, `notes: str`, `is_active` =
+`longest_tenure_years > 0`) — a near-literal copy of `LocationPolicy`, deliberately smaller (tenure
+needed one figure, not four fields, so the mirror is in shape and pattern, not field-for-field).
+`ingest.load_tenure` / `__main__._tenure` / the `tenure` subparser copy `load_location` /
+`_location` exactly. The relevance workflow gained `TENURE`/`TENURE_ACTIVE` beside
+`LOCATION`/`LOCATION_ACTIVE`, a `tenure` prompt block mirroring the `location` one verbatim in
+structure ("NEVER drops a JD and NEVER changes a score" / flags `deal_breaker` + counts in
+`tenure_flagged_count`), and the trailing prompt sentence extended the same way
+`LOCATION_ACTIVE` was.
+
+The AHA extraction question this section originally raised (`CandidateConstraints` shared model) is
+now moot in its original form: two constraints exist (`LocationPolicy`, `SeniorityPolicy`) but they
+were duplicated, not extracted, per the repo rule (extract at the *third* use) — still correctly
+duplicated, only if a third constraint (comp floor, clearance) appears.
 
 | Path | Role |
 |---|---|
-| `src/ajoa_kit/models.py:34` `LocationPolicy` | the model to copy (aliases, `is_active`) |
-| `src/ajoa_kit/ingest.py:73` `load_location` | the loader to copy |
-| `src/ajoa_kit/__main__.py:106` `_location` | the CLI to copy |
-| `.claude/workflows/cc-workflow-relevance.js` | the prompt block + `location_flagged_count` to copy |
-
-**AHA caution:** two constraint models will tempt an extraction into a shared `CandidateConstraints`.
-The repo rule is extract at the *third* use. Duplicate for tenure; extract only if a third
-constraint (comp floor, clearance) appears.
+| `src/ajoa_kit/models.py` `SeniorityPolicy` | the model, next to `LocationPolicy` |
+| `src/ajoa_kit/ingest.py` `load_tenure` | the loader, next to `load_location` |
+| `src/ajoa_kit/__main__.py` `_tenure` | the CLI, next to `_location` |
+| `.claude/workflows/cc-workflow-relevance.js` | `TENURE`/`TENURE_ACTIVE` + the `tenure` prompt block + `tenure_flagged_count` |
+| `config/tenure.json` | untracked, mirrors `config/location.json`; absent file is inert |
 
 ### Item 9 — workatastartup under ADR-0002
 
@@ -221,9 +230,11 @@ URLs at the time, so none could expire — hence the "capture the posting's URL"
   evidence library (before 2026-07-29). Phase C scores under the current one. A "5" from June and a
   "5" from Phase C are not the same judgement. Re-screening the back catalogue is ~16 batches
   (~1.6M tokens) if that ever matters enough.
-- **`--admin` merges your own PRs, not bot-authored ones.** The `default` ruleset sets
-  `require_code_owner_review: true`; admin override clears it for PRs you authored but not for
-  dependabot/github-actions PRs, which need an explicit `gh pr review --approve`.
+- **`--admin` merges PRs authored by the sole code owner (qte77), not any other author.** The
+  `default` ruleset sets `require_code_owner_review: true`; this blocks bots (dependabot,
+  github-actions) **and other human accounts** (e.g. dntywntme) identically — all need an explicit
+  `gh pr review --approve` from qte77 first. A comment saying "approved" does not count; verify with
+  `gh pr view <n> --json reviews` before trusting a claim that one landed.
 - **`env -u GH_TOKEN -u GITHUB_TOKEN` on every `gh` and `git push` — both, always.** Unsetting only
   `GH_TOKEN` falls through to the devcontainer's `GITHUB_TOKEN`, an installation token whose writes
   fail `403 Resource not accessible by integration` while reads succeed. It reads as a revoked
@@ -246,6 +257,10 @@ URLs at the time, so none could expire — hence the "capture the posting's URL"
 - Items 5–6, as shipped: #384's `_score_key` sort got unit tests (`tests/test_build_ui_shortlist.py`)
   since it's pure Python; #385's badge/filter is rendering/wiring, covered by `make ui_check` /
   `make ui_e2e`, not unit tests
+- Item 8, as shipped: `load_tenure` got the same two-test pattern as `load_location`
+  (`tests/test_ingest.py`) — inert-without-a-file, and alias round-trip. The prompt-block change in
+  `cc-workflow-relevance.js` has no unit coverage (same as `location`'s — it is exercised live, not
+  in CI, since the relevance pass needs an LLM)
 - Item 3's precondition (the item-1 backfill): re-run `ingest --merge` and confirm the
   Companies-hiring "Unknown" row drops from 244
 - Item 3: `results/<lane>/shortlist.json` row counts grow; spot-check that `deal_breaker` carries

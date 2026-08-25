@@ -1,6 +1,6 @@
 # Handoff 010 — screen quality + shortlist usability
 
-**State (2026-08-25): items 1, 2, 3, 4, 5, 6, 7, 10 and 11 shipped** ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384), [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385), [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395)); **5 items open, none owner-gated.**
+**State (2026-08-25): items 1, 2, 3, 4, 5, 6, 7, 8, 10 and 11 shipped** ([#363](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/363), [#364](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/364), [#368](https://github.com/qte77/agentic-job-offer-to-application-kit/issues/368), [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384), [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385), [#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395)); **4 items open, none owner-gated.**
 Also merged: [#362](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/362) — the
 python-deps bump. It carried ruff **0.16**, which formats Python code blocks inside Markdown by
 default, so `ruff format --check .` now covers `docs/`. One plan snippet needed reformatting; expect
@@ -11,7 +11,7 @@ migrated here (Phase C, second tailor round) and nothing else is stranded there.
 
 ## Read this first
 
-The plan has **exactly one remaining-work table** (5 rows: items 8, 9, 12, 13, 14 — the last three opened by an earlier session's audits). Everything else in it — source map,
+The plan has **exactly one remaining-work table** (4 rows: items 9, 12, 13, 14 — the last three opened by an earlier session's audits). Everything else in it — source map,
 design notes, watch-outs — describes *how*, never *what is open*. If you find yourself building a
 second list of open work, stop: that is the failure mode the arc rules exist to prevent.
 
@@ -38,11 +38,12 @@ Current data state: corpus **8 459**, jobs-raw **5 807** (full text, max 25 392 
 
 ## How to run this arc
 
-Phases B/C/D are done. Items 5, 6, 7 (dashboard usability + scoped extraction) are also done —
-[#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384),
+Phases B/C/D are done. Items 5, 6, 7, 8 (dashboard usability + scoped extraction + tenure advisory)
+are also done — [#384](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/384),
 [#385](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/385),
-[#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395). What remains is the
-arc's own backlog plus three findings an earlier session's audits opened.
+[#395](https://github.com/qte77/agentic-job-offer-to-application-kit/pull/395), item 8 (this
+session, not yet a merged PR at time of writing — see plan source map). What remains is the arc's
+own backlog plus three findings an earlier session's audits opened.
 
 1. **Item 13 first among the remaining rows** — one `ingest --merge` + `chunk --new` + relevance pass
    puts the 5 unscored manual JDs (Cardinal ×2, Lobby AI ×2, Nomadic Chief of Staff) into a shortlist,
@@ -50,7 +51,7 @@ arc's own backlog plus three findings an earlier session's audits opened.
 2. **Item 12** (geo blind spot) before any further Swiss selection — six score-4 Swiss roles were
    missed by a `location`-based filter because RSS records carry none. The six are captured in
    `results/swiss-candidates-20260811.json` with language / EU-EEA blockers already flagged.
-3. **Items 8, 9, 14** as capacity allows.
+3. **Items 9, 14** as capacity allows.
 
 **Owner decisions carried in 2026-08-11:** location policy is EU / Switzerland / US with `remoteOk`,
 and a citizenship-or-visa-only requirement is surfaced in `deal_breaker` but never drops a role — the
