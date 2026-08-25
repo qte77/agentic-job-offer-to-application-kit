@@ -167,6 +167,12 @@
   figure doesn't meet, the constraint lands verbatim in `deal_breaker` and is tallied in
   `tenure_flagged_count`, never dropping the JD or changing its score. Inert without a
   `longestTenureYears` above zero, same as location without `authorizedIn`.
+- Manual JDs scored (plan 010 item 13): 5 of the 9 hand-captured postings had never reached a
+  shortlist — Cardinal ×2 were absent from the corpus, Lobby AI ×2 were never batched, Nomadic Chief
+  of Staff was batched but never listed. A fresh `ingest --merge` + a one-off small batch (only the
+  5 unscored ids, not the full ~1,960-JD pull delta) resolved all of them: 4 landed on a shortlist
+  (Lobby AI ×2, Cardinal Founding Engineer, Cardinal Founding Product Engineer), 1 was provably
+  dropped by the same screen (Nomadic Chief of Staff, score below 3).
 
 ## Next
 

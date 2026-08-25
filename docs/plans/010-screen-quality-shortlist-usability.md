@@ -77,7 +77,6 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 |---|---|---|---|
 | 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
 | 12 | Geo blind spot: RSS feeds carry no `location`, so Swiss roles are invisible to any geo filter | agent | selection treats feed provenance as a geo signal (`source == swissdevjobs` ⇒ CH); no fabricated `location` written into records |
-| 13 | 5 manual JDs carry no score (Cardinal ×2 absent from the corpus; Lobby AI ×2 never batched; Nomadic Chief of Staff batched-not-listed) | agent | an `ingest --merge` + `chunk --new` + relevance pass puts all 9 manual ids in a shortlist or provably drops them |
 | 14 | 5 manual descriptions are self-disclosed partial captures (HumanLayer + Nomadic ×4: body sits behind an unfetched "View job" link) | agent | each description carries the full role body, or the pack states the JD was partial |
 
 ## Source map
@@ -209,6 +208,23 @@ no LLM tier. **Two blockers:** the YC Terms have not been read (robots is only h
 and the page says "Sign up to see more" — unauthenticated access yields one company at a time, not
 a feed.
 
+### Item 13 — manual JDs scored · SHIPPED
+
+As run: `ingest --merge` (corpus 9 161 → 10 148, all 9 manual ids present, 143/143 sources ok) →
+`chunk --new` (49 batches from the delta — only Cardinal ×2 landed there; Nomadic Chief of Staff
+and Lobby AI ×2 had unchanged content, so their `last_changed` predated this pull and they never
+entered the `--new` delta). Re-screening all 49 batches to reach 3 records would have cost
+~4.9M tokens for a goal only about these ids, so instead: a standalone one-off batch
+(`results/batches-manual/batch-000.json`, built with the same `chunk._capped` transform every other
+batch gets) held exactly the 5 unscored ids, screened via one relevance-workflow call
+(`batchDir` override, `batchCount: 1`, ~94k tokens) and persisted with `--merge`.
+
+**Result — 8 of 9 in a shortlist, 1 provably dropped:** HumanLayer (4, pre-existing), Nomadic ML/BE/FE
+(3 each, pre-existing), Lobby AI Founding Senior Engineer (4/founding), Lobby AI Founding AI Engineer
+(4/ml), Cardinal Founding Engineer (4/founding), Cardinal Founding Product Engineer (3/founding,
+maybe). **Nomadic Chief of Staff scored below 3** in the same screen — a real LLM judgement, not a
+silent gap — closing the item.
+
 ### Item 11 — ADR-0002 and hand-captured JDs · SHIPPED
 
 As built: ADR-0002 gained a Context paragraph scoping `config/manual-jds.json` out of the tiering, a
@@ -261,6 +277,9 @@ URLs at the time, so none could expire — hence the "capture the posting's URL"
   (`tests/test_ingest.py`) — inert-without-a-file, and alias round-trip. The prompt-block change in
   `cc-workflow-relevance.js` has no unit coverage (same as `location`'s — it is exercised live, not
   in CI, since the relevance pass needs an LLM)
+- Item 13, as shipped: no unit test (it's a live pipeline run, not code) — verified by re-checking
+  all 9 manual ids against `results/<lane>/shortlist.json` post-persist; `persist --merge` reported
+  0 malformed / 0 un-laned / 0 invalid-lane
 - Item 3's precondition (the item-1 backfill): re-run `ingest --merge` and confirm the
   Companies-hiring "Unknown" row drops from 244
 - Item 3: `results/<lane>/shortlist.json` row counts grow; spot-check that `deal_breaker` carries
