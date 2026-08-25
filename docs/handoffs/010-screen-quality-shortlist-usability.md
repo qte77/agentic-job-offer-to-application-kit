@@ -48,7 +48,7 @@ Phases B/C/D are done. What remains is the arc's own backlog plus three findings
 3. **Item 12** (geo blind spot) before any further Swiss selection — six score-4 Swiss roles were
    missed by a `location`-based filter because RSS records carry none. The six are captured in
    `results/swiss-candidates-20260811.json` with language / EU-EEA blockers already flagged.
-4. **Items 7, 8, 9, 14** as capacity allows.
+4. **Items 8, 9, 14** as capacity allows. (Item 7 shipped in #395.)
 
 **Owner decisions carried in 2026-08-11:** location policy is EU / Switzerland / US with `remoteOk`,
 and a citizenship-or-visa-only requirement is surfaced in `deal_breaker` but never drops a role — the
@@ -64,8 +64,10 @@ Every open decision has a default; proceed with it unattended and let the owner 
   ~1.6M tokens to change a decision about 12 packs.
 - **workatastartup ToS unread** → tier it CAUTION and do not add it to `feeds`/`ats`. Robots being
   permissive is only half of ADR-0002.
-- **Scoped extraction ambiguity** → keep `DESC_CAP` as a hard backstop after extraction. Never let
-  the batch exceed it.
+- **Scoped extraction ambiguity** → settled in #395: `DESC_CAP` is applied after extraction as the
+  hard backstop, and the batch never exceeds it. Note for anything else that parses JD text —
+  descriptions are flat single-line prose (99.9% carry no newline, HTML is stripped at ingest), so
+  line-anchored patterns match nothing. Measure against `results/corpus.json`, not just unit tests.
 
 ## Watch-outs that cost real time last session
 

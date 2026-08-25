@@ -77,7 +77,6 @@ One table. Source map and design notes below describe HOW; they never re-list WH
 |---|---|---|---|
 | 5 | UI: has-pack badge + filter | agent | a tailored row is visually distinct; filter shows only rows with `cv` |
 | 6 | UI: score-desc ordering across lanes | agent | `aggregate()` output is score-ordered; a new score-4 row is not below 400 |
-| 7 | Scoped extraction at chunk time | agent | batch text drops preamble/EEO/benefits; `_capped` still bounds at `DESC_CAP` |
 | 8 | Tenure advisory (`SeniorityPolicy`) | agent | inert without config; flags in `deal_breaker` + `tenure_flagged_count`; never drops or rescores |
 | 9 | `workatastartup` ADR-0002 evaluation | agent, **ToS read required** | tiered OK/CAUTION/BLOCKED with rationale recorded in ADR-0002; documented as an opt-in a user adds to their own `config/seed.json` — **never** added to the shipped `default-seed.json` |
 | 12 | Geo blind spot: RSS feeds carry no `location`, so Swiss roles are invisible to any geo filter | agent | selection treats feed provenance as a geo signal (`source == swissdevjobs` ⇒ CH); no fabricated `location` written into records |
@@ -141,16 +140,24 @@ record is never "absent from today's pull", so the delisting branch never sees i
 | `ui/src/dom-utils.js` | the sanitiser allowlist for pack markdown |
 | `Makefile` → `preview` | copies `ui/` to a temp dir and injects real data there; source `ui/` stays data-free |
 
-### Item 7 — scoped extraction
+### Item 7 — scoped extraction · SHIPPED #395
 
-| Path | Role |
-|---|---|
-| `src/ajoa_kit/chunk.py:26` `_capped` | applies `DESC_CAP` when writing batches — extend here, keep the cap as backstop |
+As built: `chunk._scoped()` trims to the substantive body, then `_capped()` applies `DESC_CAP` as
+the backstop. Over the 9 159-record corpus: 86.6% of postings scope (median 34.4% of chars dropped,
+p90 55.8%, max 75.0%) and **2 636 JDs that the cap previously truncated now fit under it whole**.
 
-Measured on the 4 632 capped JDs of the pre-#358 corpus: median **809 chars** before the first
-substantive marker (`responsibilities|requirements|qualifications|what you'll do|who you are`), mean
-978, p75 1 360, **p90 2 010**. 87% carry an "About us" blurb. EEO (10%), benefits (11%) and comp
-(16%) are rare *because they sat past the old cap*. Marker regex was loose, biasing the offset low.
+**The plan's premise was wrong and the corpus corrected it.** This section originally assumed
+section headings. In fact **99.9% of descriptions contain no newline at all** (5 of 9 159 — HTML is
+stripped at ingest), so a line-anchored pattern matched **0.0%** of the corpus; the first
+implementation was a silent no-op that only the corpus measurement caught. Markers must be matched
+mid-string, which makes a prose hit the live risk. Three guards bound it: `PREAMBLE_WINDOW` (2 500)
+for the opening marker, `TAIL_FRACTION` (0.6) for the closing one, and `MIN_KEEP_RATIO` (0.25),
+which rejects any slice retaining too little. The floor is load-bearing — without it a stray
+"...your role, keeping our systems running..." cut a 3 165-char JD to 64 chars; bare `the role` /
+`your role` / `your mission` were dropped from the pattern for the same reason.
+
+The earlier pre-#358 measurement quoted here (median 809 chars of preamble, 87% "About us") used a
+loose marker regex and a line-anchored reading; treat the figures above as the current ground truth.
 
 ### Item 8 — tenure advisory
 
