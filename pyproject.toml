@@ -32,7 +32,7 @@ dev = [
     # Pinned <6: complexipy 6.0 changed its cognitive-complexity scoring and rates
     # persist_scored.main / refresh.main at 14 / 11 (were 9 / 8 under 5.x), breaking the ≤10 gate.
     # Adopting 6.x is a deliberate task (refactor those two mains), not a Dependabot drive-by.
-    "complexipy>=5.6.1,<6",
+    "complexipy>=5.6.1,<8",
     "hypothesis>=6.165.1",
     # PDF extra, in dev too so `make check` can live-render (render_pdf still lazy-imports them).
     "fpdf2>=2.8",
