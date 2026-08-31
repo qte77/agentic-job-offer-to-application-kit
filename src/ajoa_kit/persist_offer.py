@@ -8,8 +8,11 @@ returned JSON into on-disk markdown artifacts a human reviews before submitting.
 Writes ``results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md`` (plus a
 ``coverage-report.md`` when the pack carries ``must_haves``, a ``cv-ats-check.md`` when the CV
 trips the parse-safety pass, #75, a ``cv-stuffing-check.md`` when it trips the keyword-stuffing
-pass, #272, and a ``jd-truncation-check.md`` when the source JD sat at the ingest description
-cap, #347), and a ``meta.json`` recording the JD id so the local dashboard
+pass, #272, a ``jd-truncation-check.md`` when the source JD sat at the ingest description cap,
+#347, a ``lane-grounding-check.md`` when the evidence library lacks the pack's lane angle, #348, a
+``cv-grounding-check.md`` when the CV cites a distinctive number absent from the evidence library,
+and an ``honesty-check.md`` when a must-have looks marked covered without real evidence — arc-011
+Slice C), and a ``meta.json`` recording the JD id so the local dashboard
 can join the pack back to its shortlist row (#209). The results root comes from
 ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate workspace works.
 
@@ -27,8 +30,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ajoa_kit.ats_check import parse_safety_warnings
-from ajoa_kit.coverage import coverage_summary
+from ajoa_kit.coverage import coverage_summary, honesty_warnings
 from ajoa_kit.defaults import DESC_CAP
+from ajoa_kit.grounding import grounding_warnings
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.stuffing import stuffing_warnings
 
@@ -208,15 +212,28 @@ def _lane_grounding_check(pack: dict, results_dir: Path) -> list[str]:
     return [warning] if warning else []
 
 
+def _cv_grounding_check(pack: dict, results_dir: Path) -> list[str]:
+    try:
+        library = json.loads((results_dir / "evidence-library.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        return []
+    return grounding_warnings(pack["cv"], library)
+
+
+def _honesty_check(pack: dict, results_dir: Path) -> list[str]:
+    return honesty_warnings(pack.get("must_haves") or [])
+
+
 # (sidecar title, filename, check) — each check takes (pack, results_dir) and returns warnings;
 # an empty list writes nothing. Registry so a new deterministic check is one more entry, not a
-# new inline block (arc-011 Slice C) — see cv_grounding_check/honesty_check below for the
-# same-shaped additions.
+# new inline block (arc-011 Slice C).
 CHECKS: list[tuple[str, str, Callable[[dict, Path], list[str]]]] = [
     ("CV ATS parse-safety", "cv-ats-check.md", _cv_ats_check),
     ("CV keyword-stuffing check", "cv-stuffing-check.md", _cv_stuffing_check),
     ("Source JD truncation check", "jd-truncation-check.md", _jd_truncation_check),
     ("Lane grounding check", "lane-grounding-check.md", _lane_grounding_check),
+    ("CV grounding check", "cv-grounding-check.md", _cv_grounding_check),
+    ("Honesty check", "honesty-check.md", _honesty_check),
 ]
 
 
@@ -237,12 +254,11 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
 
     Validation happens before any write, so an incomplete pack leaves the disk untouched.
     When the pack carries ``must_haves``, a ``coverage-report.md`` is also written — outside
-    the all-or-nothing artifact set, so packs without it are unaffected. A ``cv-ats-check.md`` is
-    written whenever the tailored CV trips the parse-safety check (#75), a
-    ``cv-stuffing-check.md`` whenever it trips the keyword-stuffing check (#272), a
-    ``jd-truncation-check.md`` whenever the source JD sat at the legacy ingest description cap
-    (#347), and a ``lane-grounding-check.md`` whenever the evidence library lacks the pack's
-    ``{lane}Angle`` (#348) — all non-blocking review aids, also outside the all-or-nothing set.
+    the all-or-nothing artifact set, so packs without it are unaffected. :data:`CHECKS` then runs
+    each deterministic review-aid check (CV parse-safety #75, keyword-stuffing #272, source-JD
+    truncation #347, lane grounding #348, CV number-grounding and honesty, both arc-011 Slice C),
+    writing its sidecar only when it flags something — all non-blocking, outside the
+    all-or-nothing set.
 
     Args:
         pack: The tailor result.
