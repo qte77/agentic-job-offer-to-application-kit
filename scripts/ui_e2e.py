@@ -2,6 +2,10 @@
 
 A heavier companion to scripts/ui_check.py (the fast single-viewport smoke). For each target it:
   * loads the page and captures console / page errors,
+  * captures the PAGE's own network layer (context-level `response` listeners) and fails on any
+    unexpected 404 — a sourcemap 404 is DevTools-only (Chromium fetches `.map` files only when
+    DevTools is open) so a headless run never sees one regardless; remote's `shortlist.json` 404 is
+    whitelisted (falls back to synthetic `demo.json` by design, #52 PII gate) — arc-011 Slice D,
   * drives every interactive element — tabs, the theme cycle (auto/light/dark), the trends
     time-frame and granularity dropdowns, the Companies-tab sortable headers, and an offer-row
     expand,
@@ -9,10 +13,11 @@ A heavier companion to scripts/ui_check.py (the fast single-viewport smoke). For
   * iterates VIEWPORTS (desktop / tablet / mobile) + a real mobile DEVICE descriptor, asserting the
     layout renders with no horizontal body overflow.
 
-LOCAL serves a throwaway ui/ copy seeded with a synthetic companies.json ({snapshot, rows}) + trends
-NDJSON so all three tabs are live; it is the HARD gate. REMOTE hits the published gh-pages site
-(Companies tab hidden by design) and is BEST-EFFORT — a blocked network / unreachable host never
-fails the run (CI has no browser and this is a local dev tool).
+LOCAL serves a throwaway ui/ copy seeded with a real-shaped shortlist.json (so loadRealShortlist's
+actual fetch path is exercised, not the demo.json fallback), a synthetic companies.json
+({snapshot, rows}), and trends NDJSON so all three tabs are live; it is the HARD gate. REMOTE hits
+the published gh-pages site (Companies tab hidden by design) and is BEST-EFFORT — a blocked network
+/ unreachable host never fails the run (CI has no browser and this is a local dev tool).
 
 Run through the sibling polyfetch-scrape venv (patchright + Chromium), same as ui_check.py::
 
@@ -88,6 +93,25 @@ def _ndjson(key: str, labels: list[str], keys: list[str]) -> str:
 GEO_KEYS = ["Berlin, DE · backend", "Remote · ml", "Munich, Bayern · frontend", "SF · engineering"]
 COMPANY_KEYS = ["Acme", "Bolt", "Zeta", "Nova"]
 
+# A minimal real-shaped shortlist.json (bare array — build_ui_shortlist.py's real output shape) so
+# LOCAL exercises loadRealShortlist's actual fetch path, not the demo.json fallback (arc-011 Slice
+# D) — without this, shortlist.json 404s locally too and only the (also-loaded) synthetic demo
+# renders, silently passing the "has shortlist rows" check without testing the real path.
+SHORTLIST_ROWS = [
+    {
+        "id": "ashby:acme-ai:102",
+        "title": "Founding Engineer",
+        "company": "Acme AI",
+        "url": "https://example.com/acme-ai/jobs/102",
+        "best_lane": "founding",
+        "score": 5,
+        "verdict": "shortlist",
+        "rationale": "0->1 product surface, ships end-to-end solo.",
+        "cv": "# Test CV\n\n## Summary\nSynthetic e2e-seed CV body.",
+        "cover_letter": "Dear team,\n\nSynthetic e2e-seed cover letter body.",
+    },
+]
+
 
 def seed_local(dst: Path) -> None:
     """Copy ui/ into dst and seed the local-only data so all tabs + all four charts render."""
@@ -97,6 +121,7 @@ def seed_local(dst: Path) -> None:
     days = [f"2026-06-{d:02d}" for d in range(1, 15)]
     months = ["2026-04", "2026-05", "2026-06"]
     kw = ["python", "rust"]
+    (data / "shortlist.json").write_text(json.dumps(SHORTLIST_ROWS))
     (data / "companies.json").write_text(json.dumps({"snapshot": SNAPSHOT, "rows": COMPANY_ROWS}))
     (data / "trends.ndjson").write_text(_ndjson("week", weeks, kw))
     (data / "trends-daily.ndjson").write_text(_ndjson("date", days, kw))
@@ -250,14 +275,33 @@ def drive_responsive(context, url: str, tag: str, fails: list[str]) -> None:
     page.close()
 
 
+def _is_expected_404(url: str, local: bool) -> bool:
+    """Remote ``shortlist.json`` 404s by design (falls back to synthetic ``demo.json``, #52 PII
+    gate) — everything else, on either target, is an unexpected PAGE 404 (arc-011 Slice D)."""
+    return not local and url.endswith("shortlist.json")
+
+
 def check_target(p, url: str, local: bool) -> list[str]:
-    """Run the full interaction + responsive + device suite against one URL."""
+    """Run the full interaction + responsive + device suite against one URL.
+
+    Captures the PAGE's own network layer (``context.on("response")``, attached before each
+    context's first ``goto`` so nothing is missed) and fails on any unexpected 404 — a sourcemap
+    404 is DevTools-only (Chromium fetches ``.map`` files only when DevTools is open) so a headless
+    run never sees one regardless; this only ever catches a real page-caused 404.
+    """
     tag = "local" if local else "remote"
     fails: list[str] = []
     console: list[str] = []
+    network_404s: list[str] = []
+
+    def on_response(response) -> None:
+        if response.status == 404 and not _is_expected_404(response.url, local):
+            network_404s.append(f"{response.status} {response.url}")
+
     browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
 
     ctx = browser.new_context(viewport={"width": 1280, "height": 800})
+    ctx.on("response", on_response)
     page = ctx.new_page()
     page.on(
         "console",
@@ -270,11 +314,13 @@ def check_target(p, url: str, local: bool) -> list[str]:
     ctx.close()
 
     ctx2 = browser.new_context()
+    ctx2.on("response", on_response)
     drive_responsive(ctx2, url, tag, fails)
     ctx2.close()
 
     device = p.devices[DEVICE_NAME]
     dctx = browser.new_context(**device)
+    dctx.on("response", on_response)
     dpage = dctx.new_page()
     dpage.goto(url, wait_until="domcontentloaded", timeout=30000)
     dpage.wait_for_timeout(1500)
@@ -291,6 +337,7 @@ def check_target(p, url: str, local: bool) -> list[str]:
         c for c in console if "status of 404" not in c and "Failed to load resource" not in c
     ]
     fails += [f"[{tag}] console: {c}" for c in console]
+    fails += [f"[{tag}] network: {n}" for n in network_404s]
     return fails
 
 

@@ -43,7 +43,11 @@ def main(out_path: str, corpus_path: str = "results/corpus.json") -> None:
         pathlib.Path(out_path).write_text(json.dumps(payload))
         msg = f"preview: bundled {len(rows)} company rows (as of {snapshot or 'n/a'}) -> {out_path}"
     else:
-        msg = "preview: no corpus (results/corpus.json) -> companies tab stays hidden"
+        # Still write a file — an empty `[]` (no business data, so safe even on the published
+        # site) rather than nothing, so `fetch("public/data/companies.json")` never 404s
+        # (`loadRealCompanies` already handles a rows-less payload; arc-011 Slice D).
+        pathlib.Path(out_path).write_text("[]")
+        msg = "preview: no corpus (results/corpus.json) -> bundled empty companies.json"
     sys.stdout.write(msg + "\n")
 
 
