@@ -90,9 +90,20 @@ The tell is `Active account: false` on the stored token in `gh auth status` — 
 the scope list, before concluding anything about permissions. Generally: when a write 403s but reads
 pass, suspect *which* credential is being used before suspecting what it is allowed to do.
 
-## Stage workflows are name-invocable from `.claude/workflows/`
+## Stage workflows are name-invocable from `.claude/workflows/` — but NOT after editing one
 
 **Pattern:** Long `Workflow({ scriptPath: '.claude/workflows/cc-workflow-*.js', … })` invocations.
 
 **Fix:** Since the workflows live in `.claude/workflows/`, invoke them by their `meta.name`:
 `Workflow({ name: 'relevance' | 'tailor-offer' | 'evidence-library', args: { … } })`.
+
+**Exception, cost ~1.3M tokens across two live smoke runs (2026-08-31, arc-011 Slice A):**
+`name` resolves a **snapshot cached at session start** (`workflows/scripts/<name>-wf_*.js`) — edits
+made to the `.claude/workflows/*.js` source *after* the session began are invisible to it, silently.
+Two full tailor-offer smoke runs "verified" a prompt edit that was never actually exercised, because
+`name` (and then a `resumeFromRunId` recovery that pointed `scriptPath` at the same frozen snapshot
+copy) kept re-running the pre-edit prompt. Only an advisor() call, prompted by two suspiciously
+identical failures, caught it. **When the workflow file was edited this session, invoke by
+`scriptPath` pointed at the real repo file — never `name`, and never a `workflows/scripts/*-wf_*.js`
+snapshot path a "stopped/resume" recovery notification suggests.** Cheap pre-flight before trusting
+any result: grep the file actually being read for a string unique to the edit.

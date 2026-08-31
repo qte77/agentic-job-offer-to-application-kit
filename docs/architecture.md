@@ -278,7 +278,12 @@ public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
   `cc-workflow-evidence-library.js`; `cc-workflow-relevance.js`; `cc-workflow-tailor-offer.js` Stage-3
   tailor pack (match/CV/cover-letter/gap-report/prefill-pack + optional coverage-report on JD
   must-have coverage with per-gap upskilling pointers, #55/#274, + an optional draft→critique→revise
-  pass, #272); `ajoa-kit ats-check`
+  pass, #272); **voice + private mitigation baked into the workflow prompt** (plan 011 Slice A) —
+  `match`/`cv`/`cover_letter` stay outward-only (a named value proposition, synergy framing, gaps
+  reframed as deliberate growth rather than listed directly), while `must_haves` gains per-gap
+  `mitigation` (grounded in the evidence library's `gapNarrative`, never inventing beyond it) and
+  `suggestion` fields that flow into `gap_report` alone, closing with a "Top-3 prep actions" digest;
+  `ajoa-kit ats-check`
   parse-safety (#9) + a deterministic `cv-stuffing-check.md` keyword-stuffing backstop (#272)
   and a deterministic `jd-truncation-check.md` source-JD-cap backstop (#347);
   `ajoa-kit render-pdf` optional Markdown→PDF export of a tailored pack (#275, lazy `[pdf]` extra —
