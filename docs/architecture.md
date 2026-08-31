@@ -313,7 +313,12 @@ public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
   `results/<lane>/shortlist.json`, same-origin, never published); a market-trends time-frame picker;
   hiring charts (plan 006 — a publishable geo-by-field top-10 in Market-trends + a local per-company
   top-10 in the Companies tab); a `make ui_e2e` local+remote headless e2e
-  ([dos & don'ts](testing-headless-ui.md)); Repo/Issues header links; `make preview` serves a throwaway copy keeping real data out of the source `ui/`; AI issue-triage CI (`issue-triage.yaml`,
+  ([dos & don'ts](testing-headless-ui.md)) that asserts **zero unexpected page network 404s**
+  (context-level `response` listeners; remote's `shortlist.json` 404 is the one whitelisted,
+  by-design fallback) — `build_ui_companies.py` now always bundles a `companies.json` (an empty
+  `[]` when there's no corpus) so its fetch never 404s, gh-pages bundles the same empty file, and
+  the two vendored libs' trailing `//# sourceMappingURL=` comments are stripped (DevTools-only
+  404s, invisible to a headless run either way; arc-011 Slice D); Repo/Issues header links; `make preview` serves a throwaway copy keeping real data out of the source `ui/`; AI issue-triage CI (`issue-triage.yaml`,
   SHA-pinned, GitHub Models, zero-secret).
 - **Designed:** #71 Vite intentionally not adopted (no-build).
 - **Dropped (YAGNI):** team mode, dual modes, validation ceremony, slide decks, locale-aware document conventions (#12, not planned); a multi-column

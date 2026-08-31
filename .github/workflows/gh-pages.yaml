@@ -89,6 +89,11 @@ jobs:
           else
             echo "no data branch; dashboard falls back to runtime fetch / synthetic"
           fi
+          # Bundle an empty companies.json (arc-011 Slice D): no business data (an empty array),
+          # so it's safe on the published site, but it stops loadRealCompanies's fetch from 404ing
+          # in every visitor's console/network tab. The Companies tab stays hidden regardless
+          # (loadRealCompanies returns null on an empty payload) — this only silences the 404.
+          echo "[]" > "$site/public/data/companies.json"
           # Stamp the real deploy date into the published copy (no-build; the committed
           # #gen-date value is only the local-preview default).
           sed -i -E "s#(<span id=\"gen-date\">)[^<]*#\1$(date -u +%F)#" "$site/index.html"
