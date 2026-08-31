@@ -285,7 +285,11 @@ public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
   `suggestion` fields that flow into `gap_report` alone, closing with a "Top-3 prep actions" digest;
   `ajoa-kit ats-check`
   parse-safety (#9) + a deterministic `cv-stuffing-check.md` keyword-stuffing backstop (#272)
-  and a deterministic `jd-truncation-check.md` source-JD-cap backstop (#347);
+  and a deterministic `jd-truncation-check.md` source-JD-cap backstop (#347); a deterministic
+  `cv-grounding-check.md` flagging a CV's distinctive numbers absent from the evidence library and
+  an `honesty-check.md` flagging a must-have marked covered without real evidence (plan 011 Slice
+  C) — both run through a `CHECKS` registry in `persist_offer.write_pack` alongside the other
+  sidecar checks, each writing its file only when it flags something;
   `ajoa-kit render-pdf` optional Markdown→PDF export of a tailored pack (#275, lazy `[pdf]` extra —
   fpdf2 + markdown-it, no LaTeX / no build; single-column ATS-safe selectable text, bundled DejaVu font);
   style/tone tailoring (#16); `ajoa-kit status` local application-outcome tracker (#273);
