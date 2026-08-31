@@ -116,6 +116,11 @@ once installed — both run the LLM phases via the **Claude Code** Workflow tool
   `ajoa-kit chunk --new` → `persist --merge` re-screens only the newly-seen offers into your shortlist,
   and `ajoa-kit refresh` flags filled/closed offers (or removes them with `--delete`);
   `ajoa-kit verify-sources` re-probes the seed and re-stamps `_date_verified` on the sources still live.
+  To guarantee coverage rather than tailor one offer at a time by hand, `ajoa-kit pack-plan
+  --min-score 5 --json` writes `results/pack-plan.json` — every shortlist row a
+  [`config/pack-policy.json`](docs/decisions/0005-pack-coverage-policy.md) policy selects
+  (`--min-score`/`--max-packs`/`--lanes` override it per run) that has no pack yet; loop tailor +
+  `persist-offer` over that list, then re-run `pack-plan` until it reports `missing: []`.
   Optionally, `ajoa-kit discover-yc` follows the yc-oss hiring feed into public YC company JDs
   (`results/yc-jobs.json`), and `ajoa-kit discover-slugs --location/--job-title/--company-name` mines
   startups.gallery for new first-party ATS slugs (`results/emerging-slugs.json`) to review before adding

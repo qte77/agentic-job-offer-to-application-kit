@@ -195,6 +195,15 @@
   summary shown — confirmed by attempting the site's own "View job" control, which no-opped rather
   than revealing anything — consistent with item 9's finding that this site's own Terms of Use bar
   automated access. **Arc-010 closes with this item — all 13 items shipped.**
+- Arc-011 (plan 011), in progress: Slice A baked synergy-forward voice + a private per-gap
+  mitigation/suggestion layer into the tailor Workflow prompt (`gap_report` gains a "Top-3 prep
+  actions" digest; outward `match`/`cv`/`cover_letter` never list a weakness). Slice C added
+  deterministic `cv-grounding-check.md` (unverified CV numbers) and `honesty-check.md`
+  (covered-without-evidence) sidecars, refactoring the 4 existing sidecar checks into a registry
+  first. Slice B added the `PackPolicy`-driven `ajoa-kit pack-plan` — a config+CLI selection policy
+  (score/lane/dedup/per-company-cap) reporting the missing-pack work list an orchestrator loops
+  over for a coverage guarantee (ADR-0005). Remaining: Slice D (dashboard 404 cleanup + hardened
+  `ui_e2e`) and the private-mitigation retrofit on the 32 existing packs.
 
 ## Next
 

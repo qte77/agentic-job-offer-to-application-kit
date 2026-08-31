@@ -250,6 +250,28 @@ class StyleBrief(BaseModel):
     cover_letter_sample: str = ""
 
 
+class PackPolicy(BaseModel):
+    """Config-driven pack-selection policy — which shortlist rows earn a full tailored pack.
+
+    ``config/pack-policy.json`` overrides the defaults (mirrors :class:`Lane`'s config
+    precedent, loaded by :func:`ajoa_kit.pack_plan.load_policy`); an absent file is inert
+    (``PackPolicy()``, every field default). ``ajoa-kit pack-plan``'s CLI flags override the
+    loaded policy in turn (ADR-0005).
+    """
+
+    min_score: int = 5
+    """Only shortlist rows scoring at or above this earn a pack."""
+    max_packs: int = 0
+    """Cap on the number of selected targets; ``0`` = unlimited."""
+    lanes: list[str] = Field(default_factory=list)
+    """Restrict selection to these lane keys; empty = every lane."""
+    per_company_cap: int = 0
+    """Cap on selected targets per company (after scoring); ``0`` = unlimited."""
+    dedup: str = "role_x_company"
+    """Dedup strategy; ``"role_x_company"`` drops a later row with the same (title, company) as
+    an earlier one (case-insensitive). Any other value disables deduping."""
+
+
 class OfferStatus(BaseModel):
     """One offer's local application-outcome status (#273) — set by hand via ``ajoa-kit status``.
 
