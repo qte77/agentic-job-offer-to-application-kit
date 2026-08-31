@@ -24,12 +24,16 @@ import argparse
 import json
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ajoa_kit.ats_check import parse_safety_warnings
 from ajoa_kit.coverage import coverage_summary
 from ajoa_kit.defaults import DESC_CAP
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.stuffing import stuffing_warnings
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # (pack key, output filename, rendered H1 heading) — the order files are written in.
 ARTIFACTS: list[tuple[str, str, str]] = [
@@ -95,6 +99,14 @@ def render(pack: dict) -> list[tuple[str, str]]:
     return rendered
 
 
+def _find_jd_record(jd_id: str, records: object) -> dict | None:
+    """Find the ``jobs-raw.json`` record matching ``jd_id``, or ``None`` if absent/malformed."""
+    for rec in records if isinstance(records, list) else []:
+        if isinstance(rec, dict) and rec.get("id") == jd_id:
+            return rec
+    return None
+
+
 def jd_truncation_warning(jd_id: str | None, results_dir: Path, cap: int = DESC_CAP) -> str | None:
     """Detect a source JD that sits at the legacy ingest description cap (#347).
 
@@ -128,16 +140,16 @@ def jd_truncation_warning(jd_id: str | None, results_dir: Path, cap: int = DESC_
         records = json.loads((results_dir / "jobs-raw.json").read_text())
     except (OSError, json.JSONDecodeError):
         return None
-    for rec in records if isinstance(records, list) else []:
-        if isinstance(rec, dict) and rec.get("id") == jd_id:
-            desc = rec.get("description")
-            if isinstance(desc, str) and len(desc) == cap:
-                return (
-                    f"the ingested JD description sits at the {cap}-char ingest cap, so this "
-                    "pack was tailored from a truncated JD — open the live posting and check "
-                    "the requirements past the cut before submitting"
-                )
-            return None
+    rec = _find_jd_record(jd_id, records)
+    if rec is None:
+        return None
+    desc = rec.get("description")
+    if isinstance(desc, str) and len(desc) == cap:
+        return (
+            f"the ingested JD description sits at the {cap}-char ingest cap, so this "
+            "pack was tailored from a truncated JD — open the live posting and check "
+            "the requirements past the cut before submitting"
+        )
     return None
 
 
@@ -177,6 +189,49 @@ def lane_angle_warning(lane: str | None, results_dir: Path) -> str | None:
     )
 
 
+def _cv_ats_check(pack: dict, results_dir: Path) -> list[str]:
+    return parse_safety_warnings(pack["cv"])
+
+
+def _cv_stuffing_check(pack: dict, results_dir: Path) -> list[str]:
+    return stuffing_warnings(pack["cv"])
+
+
+def _jd_truncation_check(pack: dict, results_dir: Path) -> list[str]:
+    jd_id = pack.get("offer_id") or pack.get("id")
+    warning = jd_truncation_warning(jd_id, results_dir)
+    return [warning] if warning else []
+
+
+def _lane_grounding_check(pack: dict, results_dir: Path) -> list[str]:
+    warning = lane_angle_warning(pack.get("lane"), results_dir)
+    return [warning] if warning else []
+
+
+# (sidecar title, filename, check) — each check takes (pack, results_dir) and returns warnings;
+# an empty list writes nothing. Registry so a new deterministic check is one more entry, not a
+# new inline block (arc-011 Slice C) — see cv_grounding_check/honesty_check below for the
+# same-shaped additions.
+CHECKS: list[tuple[str, str, Callable[[dict, Path], list[str]]]] = [
+    ("CV ATS parse-safety", "cv-ats-check.md", _cv_ats_check),
+    ("CV keyword-stuffing check", "cv-stuffing-check.md", _cv_stuffing_check),
+    ("Source JD truncation check", "jd-truncation-check.md", _jd_truncation_check),
+    ("Lane grounding check", "lane-grounding-check.md", _lane_grounding_check),
+]
+
+
+def _emit_check(offer_dir: Path, title: str, filename: str, warnings: list[str]) -> None:
+    """Write one sidecar review-aid file, only when its check flagged something."""
+    if not warnings:
+        return
+    items = "\n".join(f"- {w}" for w in warnings)
+    (offer_dir / filename).write_text(
+        f'---\ntitle: "{title}"\n---\n\n'
+        "Review before submitting — non-blocking warnings, not errors.\n\n"
+        f"{items}\n"
+    )
+
+
 def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     """Write the validated pack to ``results_dir/offers/<safe-slug>/``.
 
@@ -208,47 +263,11 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
         body = coverage_summary(pack["must_haves"], pack.get("gap_report", ""))
         cov = f'---\ntitle: "Coverage report"\n---\n\n{body}'
         (offer_dir / "coverage-report.md").write_text(cov)
-    # Auto parse-safety on the tailored CV (#75): surface ATS-hostile constructs for human review.
-    # Non-blocking — a warning file appears only when there is something to fix; never raises.
-    warnings = parse_safety_warnings(pack["cv"])
-    if warnings:
-        items = "\n".join(f"- {w}" for w in warnings)
-        (offer_dir / "cv-ats-check.md").write_text(
-            '---\ntitle: "CV ATS parse-safety"\n---\n\n'
-            "Review before submitting — non-blocking warnings, not errors.\n\n"
-            f"{items}\n"
-        )
-    # Auto keyword-stuffing check on the tailored CV (#272): surface dishonest keyword-density /
-    # copy-paste / skills-wall constructs for human review. Same non-blocking, opt-out-free backstop
-    # as cv-ats-check — a file appears only when there is something to trim; never raises.
-    stuffing = stuffing_warnings(pack["cv"])
-    if stuffing:
-        items = "\n".join(f"- {w}" for w in stuffing)
-        (offer_dir / "cv-stuffing-check.md").write_text(
-            '---\ntitle: "CV keyword-stuffing check"\n---\n\n'
-            "Review before submitting — non-blocking warnings, not errors.\n\n"
-            f"{items}\n"
-        )
+    # Deterministic review-aid sidecars (#75, #272, #347, #348; arc-011 Slice C) — each is
+    # non-blocking, opt-out-free, and appears only when it flags something; never raises.
+    for title, filename, check in CHECKS:
+        _emit_check(offer_dir, title, filename, check(pack, results_dir))
     jd_id = pack.get("offer_id") or pack.get("id")
-    # Deterministic source-JD truncation check (#347): a pack tailored from a DESC_CAP-capped JD
-    # lost whatever sat past the cap, and agent self-reporting misses it — same non-blocking
-    # review-aid idiom as the two CV checks above.
-    truncation = jd_truncation_warning(jd_id, results_dir)
-    if truncation:
-        (offer_dir / "jd-truncation-check.md").write_text(
-            '---\ntitle: "Source JD truncation check"\n---\n\n'
-            "Review before submitting — non-blocking warning, not an error.\n\n"
-            f"- {truncation}\n"
-        )
-    # Deterministic lane-grounding check (#348): a library missing this lane's angle silently
-    # tailored the pack against a neighbouring lane — same non-blocking review-aid idiom.
-    grounding = lane_angle_warning(pack.get("lane"), results_dir)
-    if grounding:
-        (offer_dir / "lane-grounding-check.md").write_text(
-            '---\ntitle: "Lane grounding check"\n---\n\n'
-            "Review before submitting — non-blocking warning, not an error.\n\n"
-            f"- {grounding}\n"
-        )
     # Sidecar for the local dashboard join (#209): the dir is named by the (maybe custom) slug, so
     # record the JD id -> this offer so build_ui_shortlist can attach cv/cover-letter by id.
     if jd_id:
