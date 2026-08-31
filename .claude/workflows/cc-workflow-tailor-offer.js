@@ -109,6 +109,16 @@ const matchSchema = {
             description:
               'for an UNCOVERED must-have only: 1-2 generic, non-fabricated upskilling pointers (a topic, course, or doc area) the candidate could learn to close the gap; omit or [] when covered (#274)',
           },
+          mitigation: {
+            type: ['string', 'null'],
+            description:
+              "for an UNCOVERED must-have only: an honest reframe grounded in the evidence library's gapNarrative — quote or closely paraphrase it, never state a fact gapNarrative does not; null when covered or when gapNarrative offers nothing relevant to this specific gap. PRIVATE — lands in gap_report, never in cv/cover_letter/match.",
+          },
+          suggestion: {
+            type: ['string', 'null'],
+            description:
+              'for an UNCOVERED must-have only: the single smallest concrete real action that would start closing this specific gap; null when covered. PRIVATE — lands in gap_report, never in cv/cover_letter/match.',
+          },
         },
         required: ['requirement', 'covered'],
       },
@@ -121,22 +131,57 @@ const matchSchema = {
 const styleLine = (k) =>
   STYLE[k] ? `\n\nSTYLE — write in the candidate's configured voice:\n${STYLE[k]}` : ''
 
+// Voice guidance for the three OUTWARD artifacts (match/cv/cover_letter, arc-011 Slice A).
+// A value proposition and a synergy framing; never a weakness. Where gapNarrative surfaces
+// relevant context, it is reframed as a deliberate choice that built real strength, not an
+// apology — the honest gap itself stays out of these three and lives only in gap_report.
+const VOICE = `VOICE: name the candidate's core value proposition plainly, early. Frame fit as
+synergy — how what the candidate has already built compounds with what this role needs — not a
+checklist match. If gapNarrative is relevant context here, frame it as a deliberate choice that
+built real strength (e.g. "working solo forced X, which is why Y ships fast and clean"), never as
+an apology or a listed weakness. This is an OUTWARD document: state only what is true and
+evidenced, and never list a weakness, gap, or missing skill directly.`
+
+// CV/cover_letter both receive the match assessment as context, and that assessment legitimately
+// discusses gaps (it is its own document with its own job). Without an explicit instruction not
+// to, a model carries that gap language straight through into the outward doc it's asked to write
+// — observed directly: a first version of this prompt produced CV/cover text that opened a
+// sentence with "Honest gap:" and "I have no experience with...", copied near-verbatim from the
+// match assessment's own "Bottom line". This is the fix, used only where that risk exists.
+const NO_GAP_ECHO = `The match assessment above may itself discuss gaps — that is its job, not
+yours. Do NOT carry that language into what you write here, not even paraphrased. If you notice
+yourself writing a sentence like "the honest gap is...", "I have no experience with...", "does not
+cover...", or "no evidence of..." — delete it and say only what the candidate IS and DOES instead.`
+
 phase('Match')
 log(`Tailoring ${offerId} (lane: ${lane}) from ${SHORTLIST_PATH}`)
 
 const match = await agent(
   `${SOURCES}
 
+${VOICE}
+
 Assess this ONE offer against the candidate. Write a concise markdown "match assessment": the
 JD's real must-haves and nice-to-haves, which the candidate genuinely covers (cite evidence),
 and which they do not. Be strict and honest — no overstatement. Return the prose as "match".
 
-Also return "must_haves": an array with one object per JD must-have requirement —
-{ requirement: the must-have (verbatim or tightly paraphrased), covered: true/false for whether the
-candidate genuinely meets it, evidence: a short citation from the evidence library / CV, or null if
-it is a gap, resources: for an UNCOVERED must-have, 1-2 concrete-but-generic learning pointers (a
-topic, course, or documentation area — never a fabricated URL and never a claim the candidate already
-has it) to help close the gap; omit or use [] when covered }.`,
+Also return "must_haves": an array with one object per JD must-have requirement. For EVERY entry
+return "requirement" (verbatim or tightly paraphrased) and "covered" (true/false — NEVER mark a gap
+"covered" to be kind, and NEVER invent evidence that does not exist) and "evidence" (a short
+citation from the evidence library / CV, or null if it is a gap).
+
+For every entry where covered is false, you MUST ALSO fill these three fields — do not leave them
+out or return them empty:
+- "resources": 1-2 concrete-but-generic learning pointers (a topic, course, or documentation area
+  — never a fabricated URL, never a claim the candidate already has it).
+- "mitigation": an honest reframe of this specific gap, grounded in the candidate's own
+  gapNarrative — quote or closely paraphrase gapNarrative, never state a fact it does not. Use null
+  ONLY if gapNarrative truly offers nothing relevant to this particular gap.
+- "suggestion": the single smallest concrete action that would start closing this specific gap.
+
+When covered is true, omit resources/mitigation/suggestion or leave them empty/null — they apply
+to gaps only. mitigation and suggestion are PRIVATE: they inform gap_report only and must never
+appear in match, cv, or cover_letter.`,
   { schema: matchSchema, phase: 'Match', label: 'match' },
 )
 
@@ -150,6 +195,10 @@ const [cv, cover, gap] = await parallel([
 
 MATCH ASSESSMENT (already produced):
 ${match.match}
+
+${VOICE}
+
+${NO_GAP_ECHO}
 
 Draft a tailored, ATS-safe CV in markdown for THIS offer. PARSE-SAFETY (mirrors the deterministic
 ats-check so the CV passes by construction): single-column with NO tables; NO images/graphics; NO
@@ -166,23 +215,47 @@ evidenced bullets.${styleLine('cv')} Return it as "cv".`,
 MATCH ASSESSMENT (already produced):
 ${match.match}
 
+${VOICE}
+
+${NO_GAP_ECHO}
+
 Draft a short, specific cover letter in markdown for THIS offer (company + role named): why this
-role, what the candidate brings (evidenced), and an honest framing of context using gapNarrative.
-No filler, no claims beyond the evidence.${styleLine('coverLetter')} Return it as "cover_letter".`,
+role, and what the candidate brings (evidenced). No filler, no claims beyond the evidence.${styleLine('coverLetter')} Return it as "cover_letter".`,
       { schema: strField('cover_letter', 'markdown cover letter'), phase: 'Tailor', label: 'cover-letter' },
     ),
-  () =>
-    agent(
+  () => {
+    const uncovered = (match.must_haves || []).filter((m) => m.covered === false)
+    const uncoveredBlock = uncovered.length
+      ? uncovered
+          .map(
+            (m) =>
+              `- ${m.requirement}\n  mitigation: ${m.mitigation ?? '(none — gapNarrative offers nothing relevant)'}\n  suggestion: ${m.suggestion ?? '(none)'}`,
+          )
+          .join('\n')
+      : '(none — no uncovered must-haves from the match pass)'
+    return agent(
       `${SOURCES}
 
 MATCH ASSESSMENT (already produced):
 ${match.match}
 
+PER-GAP MITIGATION + SUGGESTION (already produced, from the must_haves pass):
+${uncoveredBlock}
+
 Write an honest gap report in markdown: each must-have the candidate does NOT clearly meet, how
-big the gap is, and any genuine adjacent/transferable evidence to mention (or to leave out).
-This is for the candidate's eyes, not the employer. Return it as "gap_report".`,
+big the gap is, any genuine adjacent/transferable evidence to mention (or to leave out), and — for
+each — the mitigation and suggestion above, woven into prose rather than pasted verbatim.
+
+You MUST end the report with a section headed "## Top-3 prep actions" — a numbered list of the 3
+highest-priority suggestions across all gaps (fewer than 3 if there are fewer than 3 gaps), ranked
+by how much each would move this specific offer. Do not skip this section even if it feels
+repetitive with the body above.
+
+This is for the candidate's eyes, not the employer — never soften or omit an honest gap. Return it
+as "gap_report".`,
       { schema: strField('gap_report', 'markdown gap report'), phase: 'Tailor', label: 'gap-report' },
-    ),
+    )
+  },
 ])
 
 // --- optional critique loop (#272) ----------------------------------------------------
