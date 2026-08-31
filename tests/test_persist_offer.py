@@ -198,6 +198,47 @@ def test_write_pack_no_grounding_note_when_the_lane_angle_exists(tmp_path: Path)
     assert not (offer_dir / "lane-grounding-check.md").exists()
 
 
+def test_write_pack_flags_a_cv_number_absent_from_the_library(tmp_path: Path) -> None:
+    """A CV citing a distinctive number nowhere in the evidence library is unverifiable."""
+    (tmp_path / "evidence-library.json").write_text(json.dumps({"headline": "Shipped things."}))
+    unverified = {**PACK, "cv": "## Summary\nDelivered a 5.7x speedup on the pipeline.\n"}
+    offer_dir = persist_offer.write_pack(unverified, slug="acme-ai-101", results_dir=tmp_path)
+    note = offer_dir / "cv-grounding-check.md"
+    assert note.is_file()
+    assert "5.7x" in note.read_text()
+    assert (offer_dir / "cv.md").is_file()  # non-blocking — the full pack still wrote
+
+
+def test_write_pack_no_grounding_note_when_the_number_is_grounded(tmp_path: Path) -> None:
+    (tmp_path / "evidence-library.json").write_text(
+        json.dumps({"headline": "Shipped a 5.7x speedup."})
+    )
+    grounded = {**PACK, "cv": "## Summary\nDelivered a 5.7x speedup on the pipeline.\n"}
+    offer_dir = persist_offer.write_pack(grounded, slug="acme-ai-101", results_dir=tmp_path)
+    assert not (offer_dir / "cv-grounding-check.md").exists()
+
+
+def test_write_pack_flags_a_covered_must_have_with_no_evidence(tmp_path: Path) -> None:
+    dishonest = {
+        **PACK,
+        "must_haves": [{"requirement": "Kubernetes", "covered": True, "evidence": None}],
+    }
+    offer_dir = persist_offer.write_pack(dishonest, slug="acme-ai-101", results_dir=tmp_path)
+    note = offer_dir / "honesty-check.md"
+    assert note.is_file()
+    assert "Kubernetes" in note.read_text()
+    assert (offer_dir / "cv.md").is_file()  # non-blocking — the full pack still wrote
+
+
+def test_write_pack_no_honesty_note_on_a_consistent_pack(tmp_path: Path) -> None:
+    honest = {
+        **PACK,
+        "must_haves": [{"requirement": "Python", "covered": True, "evidence": "Acme"}],
+    }
+    offer_dir = persist_offer.write_pack(honest, slug="acme-ai-101", results_dir=tmp_path)
+    assert not (offer_dir / "honesty-check.md").exists()
+
+
 def test_lane_angle_warning_stays_silent_without_evidence(tmp_path: Path) -> None:
     # No library on disk, or no lane on the pack — indeterminable, so claim nothing either way
     # (same never-guess contract as jd_truncation_warning).
