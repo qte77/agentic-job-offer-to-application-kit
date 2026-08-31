@@ -97,3 +97,16 @@ the corpus `delisted` state and a read-only URL re-probe; dead offers are flagge
 The inbound complement keeps it current from the other side: `ajoa-kit chunk --new` → `persist --merge`
 screens the offers new or changed in the latest pull into the existing shortlists (union by `id`, no
 clobber) instead of re-running the whole screen. See #226/#235.
+
+## US8 — Cover every strong match automatically
+
+As a candidate with shortlists growing across several lanes, I want every score-5 (or however I set
+the bar) offer to get a tailored pack without me tracking which ones I've already done, so a strong
+match never quietly falls through the cracks.
+
+Accept: `ajoa-kit pack-plan --min-score 5 --json` selects every shortlist row a
+[`config/pack-policy.json`](decisions/0005-pack-coverage-policy.md) policy targets (score/lane/dedup/
+per-company-cap, CLI flags override the file) and writes `results/pack-plan.json` — exactly the ids
+still missing a pack. Looping tailor + `persist-offer` over that list, then re-running `pack-plan`,
+reports `missing: []` once coverage is complete; re-running any time after is a no-op for ids already
+tailored (idempotent). See ADR-0005.

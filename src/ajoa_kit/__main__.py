@@ -194,6 +194,19 @@ def _discover_slugs(args: argparse.Namespace) -> None:
     run(SgFilters(location=args.location, job_title=args.job_title, company_name=args.company_name))
 
 
+def _pack_plan(args: argparse.Namespace) -> None:
+    """Write the missing-pack work list across every lane (arc-011 Slice B)."""
+    from ajoa_kit.pack_plan import main as run
+
+    run(
+        min_score=args.min_score,
+        max_packs=args.max_packs,
+        lanes=args.lanes.split(",") if args.lanes else None,
+        json_output=args.json,
+        dry_run=args.dry_run,
+    )
+
+
 def _refresh(args: argparse.Namespace) -> None:
     """Reconcile per-lane shortlists: flag (or --delete) filled/closed offers (#214)."""
     from ajoa_kit.refresh import main as run
@@ -265,6 +278,30 @@ def main() -> None:
     status_p.add_argument("--date", default=None, help="Application/update date (YYYY-MM-DD).")
     status_p.add_argument("--notes", default=None, help="Free-text note.")
     status_p.set_defaults(func=_status)
+
+    pack_plan_p = sub.add_parser(
+        "pack-plan",
+        help="Write the missing-pack work list across every lane (arc-011 Slice B, ADR-0005).",
+    )
+    pack_plan_p.add_argument(
+        "--min-score", type=int, default=None, help="Override the policy's min_score."
+    )
+    pack_plan_p.add_argument(
+        "--max-packs",
+        type=int,
+        default=None,
+        help="Override the policy's max_packs (0 = unlimited).",
+    )
+    pack_plan_p.add_argument(
+        "--lanes", default=None, help="Comma-separated lane keys (default: policy lanes / all)."
+    )
+    pack_plan_p.add_argument(
+        "--json", action="store_true", help="Print the work list as JSON instead of a summary line."
+    )
+    pack_plan_p.add_argument(
+        "--dry-run", action="store_true", help="Report without writing results/pack-plan.json."
+    )
+    pack_plan_p.set_defaults(func=_pack_plan)
 
     refresh_p = sub.add_parser(
         "refresh",
