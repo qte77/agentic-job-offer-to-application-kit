@@ -89,3 +89,40 @@ def coverage_summary(must_haves: list[dict], gap_report: str) -> str:
     if gap:
         lines += ["", "## Gap report", "", gap]
     return "\n".join(lines) + "\n"
+
+
+_GAP_ONLY_FIELDS = ("resources", "mitigation", "suggestion")
+
+
+def honesty_warnings(must_haves: list[dict]) -> list[str]:
+    """Flag must-have entries where ``covered`` looks overstated (arc-011 Slice C).
+
+    Two deterministic tells, both agent self-inconsistency rather than semantic judgement:
+    a ``covered: true`` entry citing no real ``evidence`` (a coverage claim with nothing behind
+    it), and a ``covered: true`` entry carrying a gap-closing field (``resources``/``mitigation``/
+    ``suggestion``, all Slice A additions meant for an uncovered requirement only). The reverse —
+    an uncovered entry missing ``mitigation``/``suggestion`` — is never flagged: those fields are
+    optional by design (Slice A), so flagging their absence would fire on every legacy pack.
+
+    Args:
+        must_haves: One ``{requirement, covered, evidence, ...}`` dict per JD must-have; keys may
+            be missing or ``None`` — never raises.
+
+    Returns:
+        One warning per flagged entry, or an empty list.
+    """
+    warnings: list[str] = []
+    for item in must_haves or []:
+        if not isinstance(item, dict) or not item.get("covered"):
+            continue
+        requirement = _cell(item.get("requirement"))
+        evidence = item.get("evidence")
+        if not isinstance(evidence, str) or not evidence.strip():
+            warnings.append(f"'{requirement}' is marked covered but cites no evidence")
+        gap_fields = [f for f in _GAP_ONLY_FIELDS if item.get(f)]
+        if gap_fields:
+            warnings.append(
+                f"'{requirement}' is marked covered but carries gap-only field(s) "
+                f"({', '.join(gap_fields)}) — inconsistent with being covered"
+            )
+    return warnings

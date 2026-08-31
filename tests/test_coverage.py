@@ -11,7 +11,7 @@ from __future__ import annotations
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from ajoa_kit.coverage import coverage_summary
+from ajoa_kit.coverage import coverage_summary, honesty_warnings
 
 
 def test_renders_one_row_per_must_have_with_covered_evidence_and_resources() -> None:
@@ -93,6 +93,77 @@ _ITEM = st.dictionaries(
     keys=st.sampled_from(["requirement", "covered", "evidence", "resources", "extra"]),
     values=_VALUES,
 )
+
+
+def test_honesty_flags_a_covered_item_with_no_evidence() -> None:
+    must_haves = [{"requirement": "Kubernetes", "covered": True, "evidence": None}]
+    out = honesty_warnings(must_haves)
+    assert len(out) == 1
+    assert "Kubernetes" in out[0]
+
+
+def test_honesty_flags_a_covered_item_with_blank_evidence() -> None:
+    must_haves = [{"requirement": "SQL", "covered": True, "evidence": "   "}]
+    assert len(honesty_warnings(must_haves)) == 1
+
+
+def test_honesty_does_not_flag_a_covered_item_with_real_evidence() -> None:
+    must_haves = [{"requirement": "Python", "covered": True, "evidence": "Acme ML platform"}]
+    assert honesty_warnings(must_haves) == []
+
+
+def test_honesty_does_not_flag_an_uncovered_item_with_no_evidence() -> None:
+    # A gap is SUPPOSED to have no evidence — that's not dishonest, that's the point.
+    must_haves = [{"requirement": "Go", "covered": False, "evidence": None}]
+    assert honesty_warnings(must_haves) == []
+
+
+def test_honesty_flags_a_covered_item_carrying_gap_only_fields() -> None:
+    # resources/mitigation/suggestion are gap-closing aids — covered=True carrying any of them
+    # is agent inconsistency (coverage._row already defends the rendered table against exactly
+    # this by never showing resources on a covered row).
+    must_haves = [
+        {
+            "requirement": "Kubernetes",
+            "covered": True,
+            "evidence": "Acme",
+            "resources": ["CKA course"],
+        },
+        {
+            "requirement": "PyTorch",
+            "covered": True,
+            "evidence": "Acme",
+            "mitigation": "some reframe",
+        },
+        {
+            "requirement": "GPU tuning",
+            "covered": True,
+            "evidence": "Acme",
+            "suggestion": "fine-tune something",
+        },
+    ]
+    out = honesty_warnings(must_haves)
+    assert len(out) == 3
+    assert all("Acme" not in w for w in out)  # the warning names the requirement, not evidence
+
+
+def test_honesty_does_not_flag_uncovered_items_missing_mitigation_or_suggestion() -> None:
+    # mitigation/suggestion are OPTIONAL on a gap (Slice A) — flagging their absence would fire
+    # on every legacy pack in the retrofit. Only the reverse (present on a COVERED row) is a bug.
+    must_haves = [{"requirement": "Go", "covered": False, "evidence": None}]
+    assert honesty_warnings(must_haves) == []
+
+
+def test_honesty_is_silent_on_empty_or_malformed_input() -> None:
+    assert honesty_warnings([]) == []
+    assert honesty_warnings([{}]) == []  # missing keys -> covered is falsy -> no flag
+
+
+class TestHonestyProperties:
+    @given(must_haves=st.lists(_ITEM))
+    @settings(deadline=None)
+    def test_never_raises_on_arbitrary_input(self, must_haves: list[dict]) -> None:
+        honesty_warnings(must_haves)
 
 
 class TestCoverageProperties:
