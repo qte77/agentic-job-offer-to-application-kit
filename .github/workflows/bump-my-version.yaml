@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   bump:
-    uses: qte77/.github/.github/workflows/bump-version.yml@b03592321e529d0d136b35852fc9045e96c65159  # 2026-07-18
+    uses: qte77/.github/.github/workflows/bump-version.yml@4801217a20922cd54187fc7e4c98c7ea78c0ec9a  # 2026-09-01: fixes blob-content arg-length overflow on a large uv.lock (qte77/.github#36)
     with:
       bump_type: ${{ inputs.bump_type }}
       use_uv: true
