@@ -89,6 +89,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `tenure` | `--json` — emit the workflow `tenure` arg from `config/tenure.json` (advisory; absent file is inert, mirrors `location`) |
 | `style` | `--json` — emit the tailor `style` arg from `config/style.json` |
 | `prefill-fields` | `--ats <name> --slug <board> --job-id <id>` (Greenhouse schema lookup) |
+| `open-offers` | tier 1 (#417, plan 012) — opens each selected shortlist offer's URL in a browser tab via stdlib `webbrowser.open` (not `render_session`, which is headless-only) · `--min-score N` · `--lanes L1,L2` · `--dry-run` — print title/company/url without opening a browser |
 | `probe` | — (probe candidate slugs across ATS platforms) |
 | `trend-snapshot` | — (see [§Trends data branch](#trends-data-branch)) |
 | `companies-snapshot` | — company-hiring series: publishable geo-by-field + local per-company (see [§Trends data branch](#trends-data-branch)) |
