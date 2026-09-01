@@ -209,6 +209,16 @@
   mitigation layer to all 34 existing packs (hash-verified byte-identical elsewhere); the coverage
   guarantee was then closed by tailoring the 4 score-5 offers `pack-plan` found missing —
   `pack-plan --min-score 5 --json` now reports `missing: []`.
+- **Arc-012 (plan 012) closes, scope reduced — tier 1 only.** `ajoa-kit open-offers` (#417, #421)
+  opens every selected shortlist offer's application URL in the human's own browser via stdlib
+  `webbrowser.open`, reusing `pack_plan.select()`/`PackPolicy` for selection. The plan also
+  designed tier 2 (locate/highlight form fields) and tier 3 (script values into fields,
+  fill-without-submit) via `polyfetch-scrape`'s `render_session`, but both were **deferred by owner
+  decision** after re-verifying `docs/research.md`'s primary sources (#420): any headless-browser
+  interaction with a real ATS form — even read-only field-location — carries a bot-detection /
+  account-flagging risk to the candidate, compounding tier 3's separate unresolved question of
+  whether a human could even watch/submit from a session `render_session` renders invisibly. See
+  `docs/plans/012-tiered-apply-prefill.md`'s "Scope change" section.
 
 ## Next
 
@@ -224,6 +234,13 @@
 
 ## Later — hardening & reach
 
+- Browser-assist tiers 2/3 (#417, plan 012 — deferred, not scheduled): locate/highlight an
+  offer's form fields, then script candidate values into them (fill-without-submit, gated per
+  action). Blocked on either a design that doesn't route page-interaction through an automated
+  headless `render_session` (bot-detection risk even read-only), or an explicit, informed owner
+  call accepting that risk — plus, for tier 3 specifically, a `headless: bool` param added to
+  `polyfetch-scrape`'s `render_session` so a human can watch the fill and submit from that same
+  window (never resolved this arc). See `docs/plans/012-tiered-apply-prefill.md`.
 - #71 Vite not adopted — the dashboard stays no-build.
 - Data-contract typing (per ADR-0003): a `JobRecord` model + parse-on-read at the JD / tailor
   boundaries, and config-entry models (the `config/lanes.json` lane source and its

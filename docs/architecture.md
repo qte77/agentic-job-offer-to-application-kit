@@ -72,12 +72,20 @@ flowchart TD
   g2 --> pick["pick an offer to tailor"] --> tai["tailor workflow (LLM)"]
   tai --> g3{"GATE 3<br/>review CV / cover / gap / ats-check"}
   g3 --> g4{"GATE 4<br/>fill prefill-pack by hand"}
+  g4 -.->|"optional"| open["ajoa-kit open-offers<br/>tier 1: webbrowser.open, #417"]
   g4 --> sub["manual submit on the ATS site"]
+  open -.-> sub
   ing -. any time .-> tr["trend-snapshot → data branch → dashboard"]
 ```
 
 The pipeline is **human-gated at four points** and ends in a manual submission — no automation crosses
-into actually applying (see [research.md §Delivery](research.md#delivery)).
+into actually applying (see [research.md §Delivery](research.md#delivery)). `open-offers` (#417,
+plan 012) is an optional convenience before that manual step — it opens each selected offer's URL
+in the human's own browser via stdlib `webbrowser.open`, with zero automated interaction with the
+target site. Plan 012 also designed two further tiers (locate/highlight fields, then script values
+into fields) but deferred both: any headless-browser interaction with a real ATS form — even
+read-only field-location — carries a bot-detection/account-flagging risk to the candidate, so
+they're not built; see the plan's "Scope change" section.
 
 ## Three mechanics that define it
 
@@ -205,7 +213,7 @@ agentic-job-offer-to-application-kit/
 ├── docs/
 │   └── architecture.md / roadmap.md / userstory.md / research.md
 ├── src/ajoa_kit/               # engine: ingest, corpus, chunk, persist_scored, persist_offer, ats_check,
-│                               #   style, prefill, slug_probe, refresh, settings, __main__ (CLI)
+│                               #   style, prefill, slug_probe, refresh, settings, open_offers, __main__ (CLI)
 ├── scripts/ingest.sh           # thin env shim -> ajoa-kit ingest (borrows polyfetch's uv env via POLYFETCH_DIR)
 ├── config/                     # your inputs — git-ignored except the tracked default-seed.json
 │                               #   default-seed.json (shipped sources) · your seed.json overrides it
@@ -309,8 +317,13 @@ public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
   first-party ATS-slug leads from startups.gallery (`results/emerging-slugs.json`), both CAUTION-tier
   read-only + local-only (ADR-0004 Phase 2);
   the reusable `run-with-keywords` workflow (#79); `ajoa-kit refresh` shortlist liveness sweep
-  (#214 — corpus-delisted + URL re-probe, flag-`stale`-or-`--delete`); baseline gates (ruff, pyright,
-  complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
+  (#214 — corpus-delisted + URL re-probe, flag-`stale`-or-`--delete`); `ajoa-kit open-offers`
+  (#417, plan 012) — tier 1 of a planned browser-assist arc: opens each selected shortlist offer's
+  URL in the human's own browser via stdlib `webbrowser.open` (no automation on the target site,
+  deliberately not `render_session`, which is headless-only); the two further tiers (locate/
+  highlight fields, then script values into fields) were designed but deferred — any headless
+  interaction with a real ATS form risks bot-detection/account-flagging, even read-only; baseline
+  gates (ruff, pyright, complexipy, pytest, CodeQL/Dependabot/CI, markdownlint+lychee).
 - **Built (dashboard UX + CI):** trends bundled **same-origin** at deploy (the ingest cron dispatches
   a redeploy after each `data` push — no cross-origin fetch); expandable shortlist rows → tailored CV + cover
   letter; **`make preview` shows your real local shortlist** (#209 — aggregated from
