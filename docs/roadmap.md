@@ -241,6 +241,11 @@
   call accepting that risk — plus, for tier 3 specifically, a `headless: bool` param added to
   `polyfetch-scrape`'s `render_session` so a human can watch the fill and submit from that same
   window (never resolved this arc). See `docs/plans/012-tiered-apply-prefill.md`.
+- Optional `posted_at` backfill trend series (#269, deliberately deferred): a survivorship-biased
+  historical view alongside (never replacing) the primary `first_seen` series — `posted_at`
+  re-buckets past weeks from the currently-open survivor set on every re-scrape, so `first_seen`
+  stays the unbiased primary axis. Revisit gated on the #187/#188 dashboard-granularity UI landing
+  (data layers shipped, UI half — dropdown/toggle — still open).
 - #71 Vite not adopted — the dashboard stays no-build.
 - Data-contract typing (per ADR-0003): a `JobRecord` model + parse-on-read at the JD / tailor
   boundaries, and config-entry models (the `config/lanes.json` lane source and its
