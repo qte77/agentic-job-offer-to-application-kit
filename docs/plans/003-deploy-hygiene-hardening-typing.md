@@ -4,6 +4,9 @@ Three small PRs, each closing one issue filed 2026-07-05, each grounded in evide
 session (the #251/#252 deploy incidents and the verified security-teardown triage). Approved in-session
 2026-07-05; handoff: [docs/handoffs/003-deploy-hygiene-hardening-typing.md](../handoffs/003-deploy-hygiene-hardening-typing.md).
 
+**Status: SHIPPED (confirmed 2026-09-01).** All 3 tracked issues closed: #251, #256, #257.
+Retroactively confirmed — predates the SHIPPED-stamp convention plans 004+ use.
+
 ## Context
 
 - **#251 (bug)** — `data`-branch pushes never re-trigger the Pages deploy: `make trends-data`

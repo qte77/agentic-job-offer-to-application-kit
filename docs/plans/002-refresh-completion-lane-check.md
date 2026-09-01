@@ -2,6 +2,10 @@
 
 > Status: 2026-06-30. From the ROI/feasibility pass over the open issues (handoff-001 roadmap shipped).
 > Tier 1 + 2, minus the two items deferred on a KISS/YAGNI review.
+>
+> **Status: SHIPPED (confirmed 2026-09-01).** All 4 tracked items closed: #226, #227, and the two
+> originally YAGNI-deferred (#197, #217) both shipped later anyway. Retroactively confirmed —
+> predates the SHIPPED-stamp convention plans 004+ use.
 
 ## Context
 
