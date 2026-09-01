@@ -174,6 +174,46 @@ field values (optionally from Greenhouse's public `?questions=true` schema) for 
 review and manual submission. It must **never** POST to a submit endpoint, bypass a
 CAPTCHA, drive a browser autofill extension, or use an employer key.
 
+### Addendum (2026-09-01) — scoped exception: writing form fields, never submitting
+
+**This is the project owner's deliberate risk decision, not a legal conclusion or new
+research finding.** It narrows one line above — "drive a browser autofill extension" —
+for one specific action: scripting a *value into a field* on the offer's own real
+application form (via `polyfetch-scrape`'s `render_session`), gated by an explicit,
+per-action human trigger (a CLI flag or a UI button click — never a standing "autofill
+everything" toggle). Everything else in this document's safe/unsafe boundary is
+**unchanged and still absolute**: no code path may POST to a submit endpoint, click a
+submit control, bypass a CAPTCHA, or act without the human present and reviewing —
+those lines are not touched by this addendum.
+
+**Reasoning offered for this narrower exception** (not independently re-verified —
+treat as the owner's stated rationale, same evidentiary weight as any other unverified
+claim in this document until someone checks it):
+
+- The CFAA analysis above (Van Buren) is specific to *submission* implicating the
+  "without authorization" prong; it does not analyze fill-without-submit, so this
+  narrower action is not something the research found to be a settled violation — but
+  that is a **gap in the analysis**, not a finding that it is safe.
+- This is a candidate filling in *their own* application on a page they are
+  legitimately visiting to apply, once, on their own initiative and with a click they
+  make each time — a different shape of use than a multi-tenant SaaS product driving
+  the same forms at scale for many users, which is closer to what LinkedIn's/Indeed's
+  automation clauses and most ATS platforms' bot-detection are aimed at.
+
+**What this addendum does NOT resolve** — still open, still genuinely uncertain:
+
+- The "Residual uncertainties" note above — *"Third-party autofill tools (Simplify,
+  LazyApply, Sonara)... documented ban outcomes unconfirmed"* — still applies in full.
+  Real tools doing exactly this exist and their ToS standing has not been settled by
+  anyone verified here; this addendum does not change that.
+- Bot-detection heuristics on a target ATS (behavioral analysis, honeypot fields,
+  timing checks) can flag or silently corrupt a scripted fill regardless of its legal
+  standing — a functional risk to the candidate's own application, separate from and
+  in addition to the legal one.
+- Any implementation must keep the human-consent gate **per action**, never a batch
+  "do this for every offer automatically" mode, and must never let a filled-but-
+  unreviewed form auto-advance to submission.
+
 ### Primary sources (retrieved 2026-06-14)
 
 - Greenhouse Job Board API — <https://developers.greenhouse.io/job-board.html>
