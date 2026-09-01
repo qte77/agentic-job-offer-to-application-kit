@@ -125,6 +125,9 @@ once installed — both run the LLM phases via the **Claude Code** Workflow tool
   (`results/yc-jobs.json`), and `ajoa-kit discover-slugs --location/--job-title/--company-name` mines
   startups.gallery for new first-party ATS slugs (`results/emerging-slugs.json`) to review before adding
   to your seed — both read-only public GET, CAUTION-tier ([ADR-0004](docs/decisions/0004-discovery-source-tiers.md)), local-only.
+  `ajoa-kit open-offers --min-score 5` opens every selected shortlist offer's application URL in
+  your own browser tab (plain `webbrowser.open`, no automation on the target site) so you don't
+  have to hunt each one down by hand before applying.
 
 End-users: **[docs/quickstart.md](docs/quickstart.md)** narrates the full run end-to-end (prerequisites
 plus the keyword-trends and writing-style options). Contributors: **[CONTRIBUTING.md](CONTRIBUTING.md)**

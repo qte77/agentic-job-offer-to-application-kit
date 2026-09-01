@@ -110,3 +110,20 @@ per-company-cap, CLI flags override the file) and writes `results/pack-plan.json
 still missing a pack. Looping tailor + `persist-offer` over that list, then re-running `pack-plan`,
 reports `missing: []` once coverage is complete; re-running any time after is a no-op for ids already
 tailored (idempotent). See ADR-0005.
+
+## US9 — Open my shortlisted offers without hunting each one down
+
+As a candidate ready to apply, I want the kit to open each selected offer's application page in my
+own browser, so I don't have to copy-paste URLs one at a time out of the shortlist before applying.
+
+Accept: `ajoa-kit open-offers [--min-score N] [--lanes L1,L2] [--dry-run]` selects offers the same
+way `pack-plan` does (reusing `PackPolicy`/`select()`) and opens each one's URL via stdlib
+`webbrowser.open` — the human's own already-configured default browser, with zero automated
+interaction with the target site. See #417.
+
+Two further tiers were designed — locating and highlighting an offer's form fields, then scripting
+candidate values into them (never submitting) — but were **deferred**: any headless-browser
+interaction with a real ATS form, even read-only field-location, carries a bot-detection /
+account-flagging risk to the candidate's own application. See
+[`docs/plans/012-tiered-apply-prefill.md`](plans/012-tiered-apply-prefill.md)'s "Scope change"
+section for the full reasoning.
