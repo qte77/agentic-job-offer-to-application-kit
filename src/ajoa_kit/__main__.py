@@ -207,6 +207,17 @@ def _pack_plan(args: argparse.Namespace) -> None:
     )
 
 
+def _open_offers(args: argparse.Namespace) -> None:
+    """Open each selected shortlist offer's URL in a browser tab (tier 1, #417)."""
+    from ajoa_kit.open_offers import main as run
+
+    run(
+        min_score=args.min_score,
+        lanes=args.lanes.split(",") if args.lanes else None,
+        dry_run=args.dry_run,
+    )
+
+
 def _refresh(args: argparse.Namespace) -> None:
     """Reconcile per-lane shortlists: flag (or --delete) filled/closed offers (#214)."""
     from ajoa_kit.refresh import main as run
@@ -302,6 +313,23 @@ def main() -> None:
         "--dry-run", action="store_true", help="Report without writing results/pack-plan.json."
     )
     pack_plan_p.set_defaults(func=_pack_plan)
+
+    open_offers_p = sub.add_parser(
+        "open-offers",
+        help="Open each selected shortlist offer's URL in a browser tab (tier 1, #417).",
+    )
+    open_offers_p.add_argument(
+        "--min-score", type=int, default=None, help="Override the policy's min_score."
+    )
+    open_offers_p.add_argument(
+        "--lanes", default=None, help="Comma-separated lane keys (default: policy lanes / all)."
+    )
+    open_offers_p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print what would be opened (title/company/url) without opening a browser.",
+    )
+    open_offers_p.set_defaults(func=_open_offers)
 
     refresh_p = sub.add_parser(
         "refresh",
