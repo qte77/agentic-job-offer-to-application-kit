@@ -58,6 +58,7 @@ make chunk                                           # -> results/batches/ (+ ma
 Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js",
            args: { rootDir: ".", batchCount: <N> } })
 make persist FILE=<relevance-output.json>            # -> results/<lane>/shortlist.*
+uv run ajoa-kit pack-plan --min-score 5 --json       # -> results/pack-plan.json (which offer ids still need a pack)
 
 # Stage 3 (per offer) — pick an offer id from a shortlist, then tailor -> persist-offer -> ats-check:
 Workflow({ scriptPath: ".claude/workflows/cc-workflow-tailor-offer.js",

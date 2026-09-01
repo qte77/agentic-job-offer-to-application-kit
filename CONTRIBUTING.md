@@ -40,6 +40,7 @@ make chunk                                            # -> results/batches/ + ma
 # relevance (Workflow tool) — batchCount = results/batches/manifest.json .batch_count:
 #   Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js", args: { rootDir: ".", batchCount: <N> } })
 make persist FILE=<workflow-output.json>              # -> results/<lane>/shortlist.*
+uv run ajoa-kit pack-plan --min-score 5 --json        # -> results/pack-plan.json (missing-pack work list, ADR-0005)
 # tailor one shortlisted offer (Workflow tool); add `critique: true` for the draft→critique→revise pass (#272):
 #   Workflow({ scriptPath: ".claude/workflows/cc-workflow-tailor-offer.js", args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
 uv run ajoa-kit persist-offer <workflow-output.json>  # -> results/offers/<slug>/*.md
