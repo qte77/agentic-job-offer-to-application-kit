@@ -289,7 +289,11 @@ public branch (ADR-0001 PII). Revisit if dormancy becomes a real risk.
   `cv-grounding-check.md` flagging a CV's distinctive numbers absent from the evidence library and
   an `honesty-check.md` flagging a must-have marked covered without real evidence (plan 011 Slice
   C) — both run through a `CHECKS` registry in `persist_offer.write_pack` alongside the other
-  sidecar checks, each writing its file only when it flags something;
+  sidecar checks, each writing its file only when it flags something; a config-driven
+  **`PackPolicy`** (`min_score`/`max_packs`/`lanes`/`per_company_cap`/`dedup`, `config/pack-policy.json`
+  overridden by CLI flags) and `ajoa-kit pack-plan` reporting the shortlist rows the policy selects
+  that have no pack yet (`results/pack-plan.json`) — the coverage guarantee is an orchestrator looping
+  `pack-plan` → tailor Workflow → `persist-offer` until `missing: []` (plan 011 Slice B, ADR-0005);
   `ajoa-kit render-pdf` optional Markdown→PDF export of a tailored pack (#275, lazy `[pdf]` extra —
   fpdf2 + markdown-it, no LaTeX / no build; single-column ATS-safe selectable text, bundled DejaVu font);
   style/tone tailoring (#16); `ajoa-kit status` local application-outcome tracker (#273);
