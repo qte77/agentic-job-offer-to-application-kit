@@ -16,6 +16,261 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.9.0] - 2026-09-01
+
+### Added
+
+- `persist-offer` now writes a `jd-truncation-check.md` review aid whenever the pack's source
+  JD sits at the ingest description cap (`DESC_CAP`), so a human reviewer deterministically
+  learns the pack was tailored from a truncated JD instead of relying on the Match agent to
+  notice (#347 — observed 8 of 9 capped in one live batch, only 5 self-reported).
+
+- `persist-offer` writes a `lane-grounding-check.md` review aid when the evidence library has
+  no `{lane}Angle` for the pack's lane (#348). A library built with a stale or partial lane set
+  silently grounds packs on a neighbouring lane: the 2026-06-29 library carried 5 of 7 angles
+  (no `mlAngle`/`fdeAngle`) and of three ml-lane packs tailored against it, only one Match agent
+  reported the fallback. Deterministic check, same non-blocking idiom as the CV parse-safety,
+  keyword-stuffing and JD-truncation aids — it never blocks a pack and never guesses when the
+  library is missing or unreadable.
+
+- The relevance screen can now flag location and work-authorization constraints. A candidate
+  policy in `config/location.json` (based in / authorized in / remote ok / relocate to / notes) is
+  emitted by the new `ajoa-kit location --json` and passed to `cc-workflow-relevance.js` as
+  `args.location`, mirroring how `lanes --json` feeds `args.lanes`.
+
+  **Advisory by design** — it never drops a JD and never changes a score. When a posting states a
+  requirement the candidate does not currently meet, the screen puts it verbatim in `deal_breaker`
+  and counts it in `location_flagged_count`; the human weighs it, because sponsorship, remote
+  exceptions and relocation are all negotiable in ways a screen cannot judge.
+
+  Motivated by the 12-pack tailor run: authorization blockers were surfacing only in the Stage-3
+  match report, ~400k tokens per pack. One Webflow pack scored 5/5 and called it the closest skill
+  match in the shortlist, then flagged Argentina-only residency as "disqualifying regardless of
+  skill fit".
+
+  The policy file is **not committed** — it describes a person, so the no-PII rule keeps it under
+  the `config/` ignore (same precedent as `config/seed-candidates.json`). Absent or without
+  `authorizedIn` it is inert and the screen behaves exactly as before.
+
+- Records gained a `salary` field, populated from the band swissdevjobs puts in its titles and
+  previously discarded (363 records). It is the highest-signal feed for a Swiss search.
+
+  Neither field is part of the content hash, and `title` is deliberately left verbatim, so a
+  re-pull backfills both through `merge_corpus`'s unchanged branch without flipping 558 records to
+  `changed` and fanning out a re-screen.
+
+- `config/default-seed.json`: Workato (`greenhouse/workato`), reachability-verified 2026-08-11 —
+  the public board API returns HTTP 200 with 154 live roles, 106 of them engineering-relevant,
+  including Amsterdam / London / Barcelona / Berlin / Madrid. Source count 140 → 141
+  (138 ATS + 3 feeds + 2 aggregators). No new platform tiering needed: Greenhouse is already
+  **OK** under ADR-0002.
+
+- `verify-sources` now re-probes the seed's `aggregators` and `discovery` entries as well, so
+  every source can have its `_date_verified` refreshed (144 covered, up from 141 — `feeds` + `ats`
+  only). `discovery` entries are probed by their `url` like a feed; `aggregators` carry none, so
+  each one's fixed endpoint moved into `sources.AGGREGATOR_ENDPOINTS` — a single constant shared by
+  the adapter and the probe. Their multi-line entries are re-stamped surgically (only the
+  `_date_verified` value is substituted), so the long `_tos` prose blocks stay byte-identical, and
+  the parse-back guard that refuses to write a corrupt seed now covers all four sections.
+
+- `ajoa-kit discover-yc` + `ajoa-kit discover-slugs`: two CAUTION-tier discovery adapters
+  (`ajoa_kit.yc_jobs`, `ajoa_kit.startups_gallery`; ADR-0002/0004). `discover-yc` follows the yc-oss
+  hiring feed to public YC company job pages (`/companies/<slug>/jobs`, the clean robots-allowed path)
+  into a normalized `results/yc-jobs.json`; `discover-slugs --location/--job-title/--company-name`
+  renders a filtered startups.gallery jobs page and recovers the underlying first-party ATS slugs
+  (ashby/greenhouse/lever) into `results/emerging-slugs.json` for human review before seeding.
+  Read-only public GET only; the network fetch/render lazy-imports `polyfetch_scrape`, so the pure
+  parse/derive/filter logic stays offline-testable. New typed contracts `YcCompany` / `AtsRef` /
+  `SgFilters` / `SgJob` in `models.py`. Output is local-only business data, never published
+  (ADR-0001 PII gate).
+
+- Dashboard shortlist: rows with a tailored pack now show a `pack` badge, plus a "Tailored only"
+  checkbox that filters the list to packed offers; `ui/public/data/demo.json` gains pack-less rows so
+  the badge + filter are exercised in the synthetic demo. No-build (vanilla) dashboard, unchanged.
+
+- `config/tenure.json` (`models.SeniorityPolicy`): an advisory tenure policy for the relevance
+  screen, mirroring `config/location.json` (arc-010 item 8). Declares the candidate's longest
+  continuous tenure at a single employer; when a JD states a minimum-tenure requirement the
+  candidate's figure doesn't meet, the screen surfaces it verbatim in `deal_breaker` and tallies it
+  in `tenure_flagged_count` — it never drops the JD or changes its score. Inert without a
+  `longestTenureYears` above zero, same as location without `authorizedIn`. New CLI:
+  `ajoa-kit tenure --json`.
+
+- `cc-workflow-tailor-offer.js`: baked voice + private gap-mitigation into the tailor prompts (arc-011
+  Slice A). `match`/`cv`/`cover_letter` stay strictly outward — a named value proposition, a synergy
+  framing (how the candidate's existing strengths compound with what the role needs), and any
+  relevant gap context reframed as a deliberate growth choice rather than listed as a weakness.
+  `must_haves` gains two new OPTIONAL fields per uncovered requirement: `mitigation` (an honest
+  reframe grounded in the evidence library's `gapNarrative` — quotes or closely paraphrases it, never
+  states a fact `gapNarrative` doesn't) and `suggestion` (the smallest concrete next action). Both are
+  private — they flow only into `gap_report`, never into the three outward artifacts — which now also
+  closes with a "Top-3 prep actions" digest ranking the highest-priority actions across all gaps.
+
+- `ajoa_kit.grounding.grounding_warnings`: deterministic check flagging a tailored CV's
+  distinctive numbers (decimal / % / x-multiplier / comma-grouped / 4+-digit) absent from anywhere
+  in the evidence library, via a recursive string-leaf collector immune to schema drift. Bare short
+  integers, years (1900-2099), and id-prefixed numbers (`ADR-0000`, `#402`) are excluded by
+  design — false negatives are the safe direction. Wired into `persist_offer.write_pack` as
+  `cv-grounding-check.md`.
+- `ajoa_kit.coverage.honesty_warnings`: deterministic check flagging a must-have marked
+  `covered: true` with no real evidence, or carrying a gap-only field (`resources`/`mitigation`/
+  `suggestion`) meant for an uncovered requirement — agent self-inconsistency, not semantic
+  judgement. Wired into `persist_offer.write_pack` as `honesty-check.md`.
+
+- `PackPolicy` (`models.py`): config-driven pack-selection policy — `min_score`, `max_packs`,
+  `lanes`, `per_company_cap`, `dedup`. `config/pack-policy.json` overrides the defaults (absent
+  file is inert, same precedent as `config/lanes.json`).
+- `ajoa_kit.pack_plan`: `load_policy`, `select` (filter by score/lane, sort by score descending —
+  stable, dedup role x company, cap per-company then total), `missing` (diff against the offer
+  index), and a thin `main`. `ajoa-kit pack-plan --min-score --max-packs --lanes --json --dry-run`
+  writes `results/pack-plan.json` — the shortlist ids a policy selects but have no pack yet, ready
+  to feed the tailor Workflow. The coverage guarantee (loop `pack-plan` -> tailor -> `persist-offer`
+  until `missing: []`) is an orchestrator pattern documented in ADR-0005, not new code.
+- ADR-0005: the pack-coverage-policy decision record (policy contract, config+CLI precedence, the
+  coverage guarantee, and why the pack itself still has no pydantic model, ADR-0003).
+
+### Changed
+
+- `config/default-seed.json`: re-stamped `_date_verified` across the registry and dropped two
+  Greenhouse boards that now return a terminal 404 — `fireworksai` (Fireworks AI) and
+  `dbtlabsinc` (dbt Labs). Source count 142 → 140 (137 ATS + 3 feeds + 2 aggregators), keeping
+  the registry reachability-verified as ADR-0002 requires.
+
+- ADR-0002 (source ToS/ToU tiers) now states that `config/manual-jds.json` is
+  **not** a source under the ToS tiering — it is the paste-only outcome the ADR already prescribes
+  for BLOCKED sources — and bounds hand capture by **conduct, not destination** (no logins/paywalls,
+  no recurring or bulk capture over a CAUTION/BLOCKED source, no redistribution of verbatim JD text).
+- Documented a freshness caveat with user-visible consequences: `refresh` can only expire a manual
+  entry through its `url`, because injection keeps its corpus `last_seen` current. **Prefer the
+  posting's own URL over a careers page** — a careers page answers 200 long after the role is
+  filled, leaving the entry with no automatic path to `stale`.
+
+- `chunk`: batch text is now scoped to the substantive body of a posting before `DESC_CAP` is
+  applied — the "About us" preamble and the trailing benefits/EEO wrapper are dropped, so the
+  relevance screen spends its budget on the role (arc-010 item 7). Measured over the 9,159-record
+  local corpus: 86.6% of postings scope (median 34.4% of characters dropped, p90 55.8%), and
+  **2,636 JDs that were previously truncated by the cap now fit under it whole**.
+
+  Markers are matched mid-string, not line-anchored: 99.9% of the corpus arrives as a single
+  unbroken line (HTML is stripped at ingest), so a line-anchored pattern matched 0% of it. Three
+  guards keep mid-string matching safe — an opening marker is only believed inside the first 2,500
+  characters, a closing marker only in the last 40%, and any slice retaining under 25% of the
+  posting is rejected as a spurious prose hit. `DESC_CAP` remains the hard backstop behind all of
+  it, `results/jobs-raw.json` is untouched (the tailor pass still reads the complete JD), and no
+  posting is ever dropped or rescored.
+
+- `.github/dependabot.yml`: each ecosystem's update group now splits `minor`/`patch` from `major`.
+  A single catch-all group with no `update-types` filter let a major bump ride in alongside safe
+  ones and block the whole PR — happened twice in one round (`complexipy` 5→7 in #381, breaching
+  the repo's own `<6` pin from the #279/#288 incident; `astral-sh/setup-uv` 9→10 in #382). Majors
+  now land in their own group for review; routine bumps keep merging together.
+
+- `docs/decisions/0002-source-tos-tiers.md`: `workatastartup` (Y Combinator's job board) tiered
+  **BLOCKED** under ADR-0002 (arc-010 item 9) — two independent grounds: unauthenticated access
+  serves one company at a time behind a signup gate (no listings feed to poll), and YC's own Terms
+  of Use bars "data mining, robots, scraping or similar data gathering or extraction methods". This
+  supersedes the plan's earlier "wanted, but opt-in" framing — BLOCKED forecloses any adapter,
+  including one added to a personal `config/seed.json`. `config/default-seed.json` `_blocked` gains
+  a matching entry. Paste-only hand capture remains available and unaffected (already how
+  HumanLayer's posting was captured).
+
+- `persist_offer.write_pack`: the four existing sidecar review-aid checks (CV parse-safety,
+  keyword-stuffing, source-JD truncation, lane grounding) now run through a `CHECKS` registry +
+  `_emit_check` loop instead of four near-identical inline blocks — the seam the two new checks
+  plug into. Behaviour-identical for existing packs. `jd_truncation_warning`'s complexity drops
+  from 10 to 5 via an extracted `_find_jd_record` helper.
+
+- `scripts/ui_e2e.py`: now captures the page's own network layer (context-level `response`
+  listeners, attached before each context's first navigation) and fails on any unexpected 404 —
+  the four console-string-matching filter it used to rely on masked exactly this class of bug.
+  Remote's `shortlist.json` 404 is whitelisted (falls back to synthetic `demo.json` by design, #52
+  PII gate). `seed_local` now also seeds a real-shaped `shortlist.json`, so LOCAL exercises
+  `loadRealShortlist`'s actual fetch path instead of silently falling back to the same demo data
+  remote uses.
+
+### Fixed
+
+- `persist-offer` now strips frontmatter blocks the tailor agents embed inside artifact
+  values before adding the canonical title block, so `cv.md` and friends carry exactly one
+  frontmatter block instead of 2-3 stacked ones leaking into the dashboard as literal text
+  (#351 — 11 of 26 existing packs were affected).
+
+- `refresh` no longer expires live shortlist entries on any non-2xx probe. Only a
+  definitively-gone status (404/410) now marks an entry `stale`; a 3xx redirect, a 403
+  bot-block, and 5xx faults are inconclusive and keep the entry. Board URLs routinely 301 to
+  the canonical posting (Stripe/Databricks `gh_jid` links) and WeWorkRemotely answers an
+  unattended probe with 403 — the old rule buried 56 live offers in one sweep. This aligns
+  `refresh.classify` with `verify_sources._reachable`, which already treated 3xx as live.
+
+- `DESC_CAP` no longer truncates JDs at ingest (#347). It bounds the *relevance pass*, so
+  `chunk` now applies it when writing batch files while `ingest` stores the whole posting —
+  the stage-3 tailor pass reads the same record, so packs were being built from a partial JD.
+  The cap was hitting **80% of ingested JDs** (4632 of 5773; median description length was
+  exactly 4000), keeping the front-loaded company blurb and discarding the requirements.
+  `content_hash` now digests only the first `DESC_CAP` chars of the description, which keeps
+  every existing corpus digest bit-identical — verified zero of 7997 records change — so the
+  relocation does not reclassify the corpus as `changed` and trigger a one-off ~150-batch
+  re-screen. `merge_corpus` also adopts fresh content on the *unchanged* branch, so full text
+  backfills into already-stored rows as the daily pull re-sees them.
+
+- RSS-sourced JDs now carry their employer. The three RSS feeds expose no company element — each
+  folds it into the item title with its own separator — so every one of the 558 `ats: rss` records
+  was stored with `company: ""`, screened without the employer being known, and collapsed into a
+  single "Unknown" row in the Companies-hiring tab. `from_rss` now recovers it via
+  `normalize.rss_company_salary`, which knows one convention per feed:
+  `Title @ Company [CHF band]` (swissdevjobs), `Company: Title` (weworkremotely) and
+  `Title // Company` (berlinstartupjobs).
+
+  Recovered 557 of the 558 live records (258 distinct employers). The one miss is a title that
+  carries no separator at all — an unrecognized title yields `""` rather than a guessed employer,
+  as does any feed with no convention registered.
+
+- Hand-captured JDs survive a re-ingest. `ingest` rewrites `results/jobs-raw.json` wholesale from
+  the pull, and manual records lived *only* in that file — so every `manual:` posting vanished on
+  the next run and the application packs grounded in one lost their JD. They now come from a new
+  `config/manual-jds.json` (`ManualJd`, pydantic, camelCase aliases like `lanes.json` /
+  `location.json`) and are injected into every pull by `ingest.with_manual`.
+
+  Injection is also what stops `merge_corpus` from delisting them: a record present in the pull is
+  never "absent from today's pull". Removing an entry is therefore the deliberate way to retire one,
+  and if a board later publishes the same id the **pulled record wins** — the board is authoritative
+  once the posting actually exists. Manual records join after `collect`, so they bypass the keyword
+  pre-filter; a human already decided the posting is worth keeping.
+
+  A malformed entry raises rather than being skipped — a silent skip would lose exactly what the
+  file exists to protect. An absent file is inert and returns `[]`, the normal case for a fresh
+  clone.
+
+- `scripts/build_ui_shortlist.py`: the preview dashboard now lists rows by `score` descending
+  instead of by lane-file glob path. `engineering` holds the large majority of rows, so a
+  high-scoring offer in an alphabetically later lane was buried hundreds of positions down
+  (HumanLayer at row 417 of 467, Nomadic ML at 467). The sort is **stable** — equal scores keep
+  their lane-path then in-file order, so the output stays deterministic for snapshot comparison —
+  and a missing, `null` or non-numeric `score` sorts to the bottom rather than raising. `stale`
+  filtering is unchanged.
+
+- `verify-sources` never moves a `_date_verified` backwards: a sweep dated 2026-07-28 no longer
+  overwrites entries an automated probe had already confirmed on 2026-08-01. ISO `YYYY-MM-DD` is
+  fixed-width, so the guard is a plain string comparison.
+
+- `companies.parse_geo`: falls back to a feed's known country (`swissdevjobs` -> `Switzerland`)
+  only when the JD's `location` text gives no region, and only fills the gap — a stated qualifier
+  always wins (arc-010 item 12). RSS boards carry no `location` field at all, so all 391
+  `swissdevjobs` corpus records (100% Swiss listings) collapsed into an unqualified "Unknown"
+  bucket in the Companies-hiring tab and in the publishable geo-by-field hiring trend
+  (`public-data/hiring-*.ndjson`). `city` is never invented and no record's `location` field is
+  ever written — only the derived, in-memory aggregation bucket changes. 187 active-record rows
+  moved out of the bare-Unknown bucket on the live corpus.
+
+- `scripts/build_ui_companies.py`: bundle an empty `[]` `companies.json` when there's no local
+  corpus, instead of writing nothing — `loadRealCompanies`'s fetch no longer 404s (it already
+  handled a rows-less payload). Applied to both `make preview` and the gh-pages deploy (an empty
+  array carries no business data, so it's safe on the published site).
+- `ui/public/vendor/{chart.umd.min.js,marked.esm.min.js}`: stripped the trailing
+  `//# sourceMappingURL=...` comment from both vendored files — Chromium fetches `.map` files only
+  when DevTools is open, so this was invisible to headless e2e but showed as a 404 in a human's
+  open console.
+
 ## [0.8.0] - 2026-07-19
 
 ### Added
