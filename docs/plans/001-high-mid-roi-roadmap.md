@@ -1,6 +1,10 @@
 # Plan 001 — high & mid-ROI issue roadmap
 
 > Status: 2026-06-30. From the approved plan-mode plan over the open-issue ROI/feasibility pass.
+>
+> **Status: SHIPPED (confirmed 2026-09-01).** All 4 tracked items closed: #195, #214, #210, #193 —
+> the last three picked up via plan 002; #195 via ADR-0003. This file predates this repo's
+> SHIPPED-stamp convention (plans 004+); retroactively confirmed rather than left stale.
 
 ## Progress
 
