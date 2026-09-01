@@ -97,6 +97,16 @@ legal advice** — for commercial use, have counsel and a GDPR-qualified reviewe
 it. All sources retrieved 2026-06-14; ATS terms and APIs change, so re-verify before
 relying on any claim. Tracked in #8.
 
+**Re-verified 2026-09-01** (plan 012, #417): all 8 primary sources below re-fetched and checked
+against the specific claims in the Per-platform table and the LinkedIn/Indeed section — every
+claim still holds. Two facts updated in this pass: Greenhouse's docs URLs now redirect
+`developers.greenhouse.io` → `docs.greenhouse.io` (content unchanged, citations below updated);
+Workable's application-question schema, previously "unconfirmed," is now confirmed to need
+`r_jobs` Bearer auth (401 without) — same employer-key-gated pattern as Ashby (see the
+Residual-uncertainties note below). Nothing found bears on the 2026-09-01 fill-without-submit
+addendum either way — no platform has ToS or bot-detection language specific to scripted
+field-filling as distinct from submission or scraping.
+
 ### The safe / unsafe boundary
 
 - **Safe (what the kit does):** no-auth *reading* of public job-board GET APIs to
@@ -149,9 +159,10 @@ the line the kit stays behind.
 
 - **Personio, Recruitee:** not verified this cycle; assumed employer-keyed submit by
   pattern. Check their developer docs before trusting either.
-- **Workable question schema:** whether the *application question* schema is fetchable without an
-  employer key (as Greenhouse's is) is unconfirmed. (**Ashby** verified 2026-06-20 — *not* exposed;
-  see the application-question schema note above.)
+- **Workable question schema:** confirmed 2026-09-01 — `GET /jobs/:shortcode/questions` needs
+  `r_jobs` Bearer auth (401 without), the same employer-key-gated pattern as Ashby (verified
+  2026-06-20 — *not* exposed; see the application-question schema note above). Not fetchable
+  without an employer key.
 - **Non-US computer-misuse law** (UK CMA 1990; EU Directive 2013/40; DE StGB §202a; CH
   StGB Art. 143bis): no primary-source claims survived verification. These generally
   criminalise access to systems one is *not authorised* to access; reading a documented
@@ -216,8 +227,10 @@ claim in this document until someone checks it):
 
 ### Primary sources (retrieved 2026-06-14)
 
-- Greenhouse Job Board API — <https://developers.greenhouse.io/job-board.html>
-- Greenhouse Candidate Ingestion API — <https://developers.greenhouse.io/candidate-ingestion.html>
+- Greenhouse Job Board API — <https://docs.greenhouse.io/job-board.html> (`developers.` redirects
+  here as of 2026-09-01)
+- Greenhouse Candidate Ingestion API — <https://docs.greenhouse.io/candidate-ingestion.html>
+  (`developers.` redirects here as of 2026-09-01)
 - Ashby public posting API — <https://developers.ashbyhq.com/docs/public-job-posting-api>
 - Ashby `applicationForm.submit` — <https://developers.ashbyhq.com/reference/applicationformsubmit>
 - Lever Postings API — <https://github.com/lever/postings-api>
