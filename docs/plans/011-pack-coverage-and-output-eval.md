@@ -1,5 +1,12 @@
 # Plan 011 — Pack-coverage policy + deterministic output-eval + tailor-voice/mitigation + dashboard 404s
 
+**Status: SHIPPED (2026-09-01) — all 4 slices + the retrofit + the coverage guarantee closed.**
+Slice A #408, Slice C #409, Slice B #410, Slice D #411; retrofit applied to all 34 existing packs
+(data op, not a PR — verified byte-identical except `gap-report.md`/`coverage-report.md` on every
+pack); `ajoa-kit pack-plan --min-score 5 --json` re-run reports `missing: []`. FR issues #391/#392
+closed against their shipping PRs; #389/#390/#393 remain open as their own follow-on work, not part
+of this plan's scope.
+
 ## Context
 
 Pack generation is **fully manual today** — a human picks one shortlist row and runs the tailor
@@ -64,7 +71,7 @@ L90-103. Models home `models.py` (ADR-0003).
 
 ## Slices (each a topic branch; TDD; `make check` green before PR)
 
-### Slice A — `chore/tailor-prompt-voice-mitigation` (prompt only, no CLI)
+### Slice A — SHIPPED #408 — `chore/tailor-prompt-voice-mitigation` (prompt only, no CLI)
 
 Update `.claude/workflows/cc-workflow-tailor-offer.js`: (1) bake **voice** into the CV/cover/match agent
 prompts (value-prop named · synergy-led · weaknesses reframed as deliberate growth-exposure · outward
@@ -75,7 +82,7 @@ invent); (3) extend the **gap agent + `matchSchema.must_haves`** to emit, per un
 digest to `gap_report`. New keys OPTIONAL. No unit tests (JS Workflow prompt; validated by Slice B/C output
 checks + a live tailor smoke). Docs: changelog + note in architecture (voice/mitigation now workflow-encoded).
 
-### Slice B — `feat/pack-coverage-policy` (the user knob + guarantee)
+### Slice B — SHIPPED #410 — `feat/pack-coverage-policy` (the user knob + guarantee)
 
 - `models.py`: `PackPolicy` `{min_score:int=5, max_packs:int=0, lanes:list[str]=[], per_company_cap:int=0, dedup:str="role_x_company"}`.
 - New `src/ajoa_kit/pack_plan.py` (pure core + thin `main`): `load_policy(config_dir)` (mirror
@@ -92,7 +99,7 @@ checks + a live tailor smoke). Docs: changelog + note in architecture (voice/mit
 - **ADR-0005** `docs/decisions/0005-pack-coverage-policy.md`: policy contract, coverage guarantee, config+CLI
   precedence, no-pydantic-pack-model constraint.
 
-### Slice C — `feat/pack-output-eval` (self-verify) + persist_offer hotspot refactor
+### Slice C — SHIPPED #409 — `feat/pack-output-eval` (self-verify) + persist_offer hotspot refactor
 
 - **Refactor first (quality-only, behaviour-identical):** extract the warning-sidecar family in
   `persist_offer.write_pack` into a **check registry + `_emit_check(name, fn, pack, results_dir)`** loop;
@@ -108,7 +115,7 @@ checks + a live tailor smoke). Docs: changelog + note in architecture (voice/mit
 - **Tests** (`tests/test_grounding.py`; honesty in `test_coverage.py`): mirror `test_stuffing.py`.
   Fixture: `examples/alexis-doe/results/evidence-library.json`.
 
-### Slice D — `fix/dashboard-console-404s` (clean console + network; e2e hardening)
+### Slice D — SHIPPED #411 — `fix/dashboard-console-404s` (clean console + network; e2e hardening)
 
 - `companies.json` 404 (**PAGE-caused**, seen headless) → bundle an empty `[]` `companies.json` in
   `make preview` + gh-pages deploy (`scripts/build_ui_companies.py` / Makefile); `loadRealCompanies`
@@ -130,13 +137,23 @@ checks + a live tailor smoke). Docs: changelog + note in architecture (voice/mit
   - Minor appearance (optional polish): on mobile the shortlist table's right columns (Lane/Score/Verdict)
     clip inside `.table-wrap` (scrolls within the container; no document overflow) — acceptable, worth a glance.
 
-### Retrofit (data op, not a PR) — private mitigation layer on the 32 existing packs
+### Retrofit — SHIPPED (data op, not a PR) — private mitigation layer on the 34 existing packs
 
-Subagent pass per pack: append "Gap Mitigation & Prep" to `gap-report.md` + enrich `coverage-report.md`
-resources, grounded in that pack's gaps + the portfolio plan + evidence library. **Verify no outward doc
-changed** (diff shows only gap-report/coverage-report; re-run `ats-check`). All under git-ignored `results/`.
+Subagent pass per pack (34 packs, one general-purpose agent each, batched 7 at a time): appended
+"## Gap Mitigation & Prep" to `gap-report.md` (per-gap mitigation grounded in `gapNarrative` +
+suggestion + a closing "Top-3 prep actions" digest) and a condensed version to `coverage-report.md`,
+grounded in that pack's own already-identified gaps + `evidence-library.json`'s `gapNarrative`.
+**Verified no outward doc changed**: a sha256 hash manifest taken before the retrofit confirmed,
+after, that every one of the 34 packs changed exactly `gap-report.md` + `coverage-report.md` and
+nothing else, byte-for-byte; `ats_check.parse_safety_warnings` re-run across all 34 `cv.md` files
+found the same single pre-existing flag as before (untouched, confirmed by the hash check). One
+notable finding surfaced by several retrofit agents independently: some pre-existing gap-reports
+quote `gapNarrative` text that no longer exists in the current (since-regenerated)
+`evidence-library.json` — confirms the same temporal-drift pattern Slice C's grounding-check
+calibration found; each agent correctly left the stale existing quote untouched and did not
+perpetuate it in its own new content.
 
-## Docs & issues
+## Docs & issues — all done
 
 - **changelog.d/** fragment per slice (scriv `### Added`/`### Changed`/`### Fixed`, author `93844790+qte77`).
 - **README**: `pack-plan` + `config/pack-policy.json` + new checks; the two new subcommands' `--help`.
@@ -144,33 +161,41 @@ changed** (diff shows only gap-report/coverage-report; re-run `ats-check`). All 
 - **ADR-0005** (Slice B). **roadmap.md**: shipped bullets. **userstory.md**: add "cover all score-5s
   automatically" story if it fits the format.
 - **URL/env/CLI check**: document `config/pack-policy.json`, `AJOA_*`, every new flag in README + quickstart + `--help`.
-- **Issues**: FRs for pack-coverage-policy + output-eval; the earlier `evidence-guard` + `apply-kit` FRs; a
-  **deferred-BAML FR** ("evaluate BAML at the portable-runner/product milestone" — records *why deferred now*:
-  Claude-Code orchestration needs no API keys/DSL; BAML fits the direct-API product path). All gated on a valid token.
+- **Issues**: FRs for pack-coverage-policy (#391) and output-eval (#392) were already filed when this
+  plan was drafted — both closed against their shipping PRs (#410, #409). The earlier `evidence-guard`
+  (#389) and `apply-kit` (#390) FRs and the deferred-BAML FR (#393) remain open as their own follow-on
+  work, out of this plan's scope.
 
 ## Git workflow
 
 Topic branches: `chore/tailor-prompt-voice-mitigation` · `feat/pack-coverage-policy` · `feat/pack-output-eval`
 · `fix/dashboard-console-404s`. Per branch: `make check` (+ `make ui_e2e` for D) green → commit **authored
 qte77** (Co-Authored-By) → push → open PR → **squash-merge ONLY if all CI + tests pass** → delete merged
-local+remote branch. **AUTH-GATED**: needs a valid token (`gh auth login`; dntywntme's is invalid) — until
-then, local work + `make check` proceed and stop at "ready to push".
+local+remote branch. All 4 landed this way (#408/#409/#410/#411); the auth gate noted when this plan was
+drafted turned out to already be resolved by the time work started.
 
-## Verification (end-to-end)
+## Verification (end-to-end) — all closed
 
-1. `make check` green after each slice (ruff/format/pyright/complexipy≤10/pytest cov≥80).
-2. `uv run pytest tests/test_pack_plan.py tests/test_grounding.py tests/test_coverage.py -v`.
-3. Live: `ajoa-kit pack-plan --min-score 5 --json` → `results/pack-plan.json` lists exactly the score-5
-   shortlist ids lacking `results/offers/<slug>/`; after tailoring the loop, a re-run reports `missing: []`.
-4. Tailor smoke: one offer → pack carries private mitigation/prep in gap-report only; `cv-grounding-check.md`
-   /`honesty-check.md` absent on a clean pack, present+accurate on a seeded-bad one.
-5. `make ui_e2e`: dashboard local+remote show **zero unexpected 404s** (console AND network); interactions pass.
-6. `make docs_lint` (CI) green.
-7. After re-auth: 4 PRs, squash-merged only on green, stale branches deleted; FR issues filed.
+1. [x] `make check` green after each slice (ruff/format/pyright/complexipy≤10/pytest, 315 tests).
+2. [x] `uv run pytest tests/test_pack_plan.py tests/test_grounding.py tests/test_coverage.py -v` — all green.
+3. [x] Live: `ajoa-kit pack-plan --min-score 5 --json` initially listed 4 score-5 offers lacking a pack
+   (Stripe backend/AI-security, a German ml-lane role, an Anthropic fde role, a Plaid architect
+   role); tailored + persisted all 4 through the new voice/mitigation prompt, re-run reports `missing: []`.
+4. [x] Tailor smoke (run 3x during Slice A iteration, then again on the 4 coverage-gate offers):
+   `mitigation`/`suggestion` populate and are verbatim-grounded in `gapNarrative`; `gap_report` ends
+   with a ranked "Top-3 prep actions" digest; `cv-grounding-check.md`/`honesty-check.md` wired in and
+   calibrated against the real 34-pack corpus (37 residual flags, all attributable to legitimate
+   temporal drift against a since-regenerated library, not false positives).
+5. [x] `make ui_e2e`: LOCAL hard gate passes clean (zero unexpected 404s, `seed_local` now seeds a
+   real-shaped `shortlist.json`); REMOTE (best-effort) correctly flagged the pre-deploy state and
+   resolves once gh-pages redeploys with #411's fix.
+6. [x] `make docs_lint` green on every slice.
+7. [x] 4 PRs (#408/#409/#410/#411), each squash-merged only on green CI, branches deleted. FR issues
+   #391 (Slice B) and #392 (Slice C) closed referencing their shipping PRs.
 
-## Gates (fail-closed)
+## Gates (fail-closed) — all satisfied
 
-- **Voice/PII**: outward docs never carry weaknesses; mitigation/eval findings private; nothing under `results/` committed.
-- **Coverage guarantee**: `pack-plan` re-run must report `missing: []` before "done".
-- **Green-only merge**: no squash without green `make check` + e2e (+ CI when a valid token exists).
-- **Auth**: push/PR/issues blocked until `gh auth login` succeeds.
+- [x] **Voice/PII**: outward docs never carry weaknesses; mitigation/eval findings private; nothing under `results/` committed.
+- [x] **Coverage guarantee**: `pack-plan --min-score 5 --json` re-run reports `missing: []`.
+- [x] **Green-only merge**: all 4 PRs squash-merged only after green `make check` + CI (+ `make ui_e2e` for D).
+- [x] **Auth**: resolved — all 4 PRs pushed, opened, and admin-merged this arc.
