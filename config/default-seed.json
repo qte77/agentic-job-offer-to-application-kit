@@ -10,6 +10,7 @@
     {"ats": "greenhouse", "slug": "arizeai", "company": "Arize AI", "lane": "engineering", "_date_verified": "2026-09-01"},
     {"ats": "greenhouse", "slug": "assemblyai", "company": "AssemblyAI", "lane": "engineering", "_date_verified": "2026-09-01"},
     {"ats": "greenhouse", "slug": "brex", "company": "Brex", "lane": "engineering", "_date_verified": "2026-09-01"},
+    {"ats": "greenhouse", "slug": "cloudflare", "company": "Cloudflare", "lane": "engineering", "_date_verified": "2026-09-01"},
     {"ats": "greenhouse", "slug": "databricks", "company": "Databricks", "lane": "engineering", "_date_verified": "2026-09-01"},
     {"ats": "greenhouse", "slug": "dataiku", "company": "Dataiku", "lane": "engineering", "_date_verified": "2026-09-01"},
     {"ats": "greenhouse", "slug": "doctolib", "company": "Doctolib", "lane": "engineering", "_date_verified": "2026-09-01"},
@@ -190,7 +191,8 @@
      "sources": [
        {"name": "jobicy", "_date_verified": "2026-06-20", "url": "https://jobicy.com/api/v2/remote-jobs", "_tos": "open API (ai-train=yes, full JD) BUT robots.txt Disallow:/api/ + no redistribution to other aggregators + asks <=~1 poll/hr — robots conflict, deferred (ADR-0002)."},
        {"name": "himalayas", "_date_verified": "2026-06-20", "url": "https://himalayas.app/jobs/api", "_tos": "public /jobs/api returns 200 unauth, but general ToS §30 requires prior written approval for automated tools; no dedicated API-ToS grant (ADR-0002)."},
-       {"name": "remotive", "_date_verified": "2026-06-20", "url": "https://remotive.com/api/remote-jobs", "_tos": "robots.txt Disallow:/api/*; attribution (follow link + name) + <=4 req/day + 24h delay; private paid API for heavy use, no public price (ADR-0002)."}
+       {"name": "remotive", "_date_verified": "2026-06-20", "url": "https://remotive.com/api/remote-jobs", "_tos": "robots.txt Disallow:/api/*; attribution (follow link + name) + <=4 req/day + 24h delay; private paid API for heavy use, no public price (ADR-0002)."},
+       {"name": "aitinkerers-sf", "_date_verified": "2026-09-01", "url": "https://sf.aitinkerers.org/jobs", "_tos": "sponsored (paid) community jobs board, no feed/API (robots.txt Disallow:/api/ + per-job visit-link paths), no JSON-LD JobPosting schema -- only raw HTML, and even that needs curl_cffi to clear bot detection (plain httpx/UA gets 403). No explicit ToS ban on scraping, but no automation grant either. Not automatable without a bespoke HTML scraper against an undocumented, bot-detection-gated surface -- same disposition as ai-jobs.net (ADR-0002)."}
      ]},
     {"_note": "Discovery-layer candidates (#292, ADR-0004): company-signal sources evaluated but NOT adopted — yc-oss stays the single phase-1 source. Recorded so they are not re-researched; not loaded by any pipeline (discover.py reads only the `discovery` key).",
      "_kind": "discovery",

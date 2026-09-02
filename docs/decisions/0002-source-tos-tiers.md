@@ -91,6 +91,22 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
   (whitelist-only `robots.txt`). High-fit companies reachable only on a non-OK ATS stay paste-only:
   Klarna / Zalando (Workday), Hugging Face / Snyk (Workable), Cognigy (SmartRecruiters), DeepMind
   (Google/Workday).
+- **Cloudflare** (2026-09-01) — resolves to Greenhouse, slug `cloudflare` (`boards-api.greenhouse.io`
+  200 via plain httpx, no bot-detection needed, 324 live roles verified). Already-OK platform, added to
+  `ats` alongside the other Greenhouse companies — no new tiering needed.
+- **AI Tinkerers San Francisco jobs** (`sf.aitinkerers.org/jobs`, 2026-09-01) — CAUTION, kept in
+  `_deferred`, not shipped. It's a sponsored (paid-placement) community jobs board with no feed/API:
+  `robots.txt` disallows `/api/` and the per-job "visit" link paths (both for every named user-agent,
+  ClaudeBot/anthropic-ai included) — it does not disallow the `/jobs` listing page itself, but there is
+  no clean read path to it either. The page carries no JSON-LD `JobPosting` schema (only
+  `Organization`/`WebSite`), so the only extraction path is raw HTML scraping. A plain fetch (WebFetch,
+  generic UA) gets HTTP 403; only polyfetch's `curl_cffi` tier (browser-TLS impersonation) clears it —
+  i.e. the surface is bot-detection-gated even before ToS is considered. The ToS (`aitinkerers.org/eula`,
+  "Last Updated" 2026-08-07/2026-05-15 depending on page) has no explicit automation/scraping clause,
+  only a general "don't misuse the Services" line referencing an unpublished "Sloppy Joe Acceptable Use
+  Policy" whose text could not be located. No explicit ban, but also no automation grant — same
+  disposition as `ai-jobs.net` above: not automatable without a bespoke scraper against an undocumented,
+  gated surface. Revisit only if the platform ships a documented feed/API.
 
 ### Hand capture is bounded by conduct, not by destination
 
