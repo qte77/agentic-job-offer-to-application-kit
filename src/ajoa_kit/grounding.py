@@ -62,6 +62,14 @@ def _distinctive_numbers(text: str) -> set[str]:
     return out
 
 
+def _dict_leaves(d: dict) -> list[str]:
+    return [s for v in d.values() for s in _string_leaves(v)]
+
+
+def _list_leaves(items: list) -> list[str]:
+    return [s for v in items for s in _string_leaves(v)]
+
+
 def _string_leaves(value: object) -> list[str]:
     """Recursively collect every string leaf in a JSON-like structure.
 
@@ -73,9 +81,9 @@ def _string_leaves(value: object) -> list[str]:
     if isinstance(value, str):
         return [value]
     if isinstance(value, dict):
-        return [s for v in value.values() for s in _string_leaves(v)]
+        return _dict_leaves(value)
     if isinstance(value, list):
-        return [s for v in value for s in _string_leaves(v)]
+        return _list_leaves(value)
     return []
 
 
