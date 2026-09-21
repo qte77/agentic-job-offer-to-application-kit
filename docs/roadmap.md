@@ -253,9 +253,11 @@
 - ats-check: wire into the tailor pass (#75); re-evaluate the parse-safety regexes (#77).
 - Broaden ingest reach: more JSON aggregators as their robots/ToS clear (jobicy/himalayas/remotive
   — #94 deferred follow-ups). Outlook (#109): the public-directory **read layer** shipped as company
-  discovery (#292, yc-oss, local-only); resolving ATS slugs for discovered companies is the deferred
-  phase-2 (ADR-0004 §Out of scope, gated on phase-1 proving out). Keyed aggregators (e.g. Jooble) stay
-  outside the current no-auth/no-key model.
+  discovery (#292, yc-oss, local-only); ATS-slug resolution for discovered companies has **also
+  shipped** (`discover-slugs`, ADR-0004 Phase 2 — see Shipped section above). Additional company-lead
+  sources beyond startups.gallery (e.g. getcargo.ai, #427) stay owner-deferred pending ToS
+  verification, not blocked by a phase gate. Keyed aggregators (e.g. Jooble) stay outside the current
+  no-auth/no-key model.
 - Trends file growth: aggregated trends are the durable store (on the `data` branch); the JD corpus
   stays git-ignored / ephemeral **by design** (#191, accepted limitation — **closed**; recorded in
   architecture.md §Data layout). The two trend files grow linearly (~23 KB/yr
