@@ -94,6 +94,22 @@ def coverage_summary(must_haves: list[dict], gap_report: str) -> str:
 _GAP_ONLY_FIELDS = ("resources", "mitigation", "suggestion")
 
 
+def _item_warnings(item: dict) -> list[str]:
+    """Warnings for one covered-but-suspicious must-have entry (item['covered'] already truthy)."""
+    requirement = _cell(item.get("requirement"))
+    out: list[str] = []
+    evidence = item.get("evidence")
+    if not isinstance(evidence, str) or not evidence.strip():
+        out.append(f"'{requirement}' is marked covered but cites no evidence")
+    gap_fields = [f for f in _GAP_ONLY_FIELDS if item.get(f)]
+    if gap_fields:
+        out.append(
+            f"'{requirement}' is marked covered but carries gap-only field(s) "
+            f"({', '.join(gap_fields)}) — inconsistent with being covered"
+        )
+    return out
+
+
 def honesty_warnings(must_haves: list[dict]) -> list[str]:
     """Flag must-have entries where ``covered`` looks overstated (arc-011 Slice C).
 
@@ -115,14 +131,5 @@ def honesty_warnings(must_haves: list[dict]) -> list[str]:
     for item in must_haves or []:
         if not isinstance(item, dict) or not item.get("covered"):
             continue
-        requirement = _cell(item.get("requirement"))
-        evidence = item.get("evidence")
-        if not isinstance(evidence, str) or not evidence.strip():
-            warnings.append(f"'{requirement}' is marked covered but cites no evidence")
-        gap_fields = [f for f in _GAP_ONLY_FIELDS if item.get(f)]
-        if gap_fields:
-            warnings.append(
-                f"'{requirement}' is marked covered but carries gap-only field(s) "
-                f"({', '.join(gap_fields)}) — inconsistent with being covered"
-            )
+        warnings.extend(_item_warnings(item))
     return warnings
