@@ -16,9 +16,8 @@ from __future__ import annotations
 import webbrowser
 from typing import TYPE_CHECKING
 
-from ajoa_kit.ingest import load_lanes
 from ajoa_kit.pack_plan import load_policy, select
-from ajoa_kit.persist_scored import load_shortlist
+from ajoa_kit.persist_scored import load_all_shortlists
 from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
@@ -62,17 +61,12 @@ def main(
             ``webbrowser.open`` — the CLI invocation is itself the per-offer human trigger.
     """
     settings = AppSettings()
-    results = settings.results_dir
     policy = load_policy(settings.config_dir)
     overrides = {k: v for k, v in {"min_score": min_score, "lanes": lanes}.items() if v is not None}
     if overrides:
         policy = policy.model_copy(update=overrides)
 
-    shortlist_rows: list[ScoredItem] = []
-    for lane in load_lanes(settings.config_dir):
-        path = results / lane.key / "shortlist.json"
-        if path.is_file():
-            shortlist_rows.extend(load_shortlist(path))
+    shortlist_rows = load_all_shortlists(settings)
 
     targets = selected_urls(shortlist_rows, policy)
 

@@ -88,6 +88,13 @@ def test_empty_cv_or_non_dict_library_is_silent_not_a_crash() -> None:
     assert grounding_warnings("5.7x speedup", None) == []  # type: ignore[arg-type]
 
 
+def test_string_leaves_collects_every_leaf_from_nested_dict_and_list() -> None:
+    from ajoa_kit.grounding import _string_leaves
+
+    value = {"a": "x", "b": [{"c": "y"}, "z"], "d": {"e": ["w"]}, "f": 1, "g": None}
+    assert sorted(_string_leaves(value)) == ["w", "x", "y", "z"]
+
+
 class TestGroundingProperties:
     # Reason: pure text scan over generated input; deadline off so instrumentation timing
     # cannot flake the property.

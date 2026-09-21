@@ -18,10 +18,9 @@ import argparse
 import json
 from typing import TYPE_CHECKING
 
-from ajoa_kit.ingest import load_lanes
 from ajoa_kit.models import PackPolicy, ScoredItem
 from ajoa_kit.persist_offer import _load_offer_index
-from ajoa_kit.persist_scored import load_shortlist
+from ajoa_kit.persist_scored import load_all_shortlists
 from ajoa_kit.settings import AppSettings
 
 if TYPE_CHECKING:
@@ -147,11 +146,7 @@ def main(
     if overrides:
         policy = policy.model_copy(update=overrides)
 
-    shortlist_rows: list[ScoredItem] = []
-    for lane in load_lanes(settings.config_dir):
-        path = results / lane.key / "shortlist.json"
-        if path.is_file():
-            shortlist_rows.extend(load_shortlist(path))
+    shortlist_rows = load_all_shortlists(settings)
 
     targets = select(shortlist_rows, policy)
     offer_index = _load_offer_index(results)
