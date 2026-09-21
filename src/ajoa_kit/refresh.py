@@ -123,6 +123,19 @@ def _targets(lane: str | None, results_dir: Path, config_dir: Path) -> list[str]
     return [lane]
 
 
+def _load_corpus(results: Path) -> list[dict]:
+    """Load results/corpus.json, or [] when absent."""
+    path = results / "corpus.json"
+    return json.loads(path.read_text()) if path.is_file() else []
+
+
+def _report_line(ln: str, rep: dict, verb: str) -> str:
+    """Render one lane's refresh report line."""
+    if rep["missing"]:
+        return f"{ln}: no shortlist.json"
+    return f"{ln}: {rep['live']} live, {verb} {rep['stale']} stale"
+
+
 def main(
     lane: str | None = None,
     *,
@@ -134,11 +147,7 @@ def main(
     settings = AppSettings()
     results = settings.results_dir
     today = today or date.today().isoformat()
-    corpus = (
-        json.loads((results / "corpus.json").read_text())
-        if (results / "corpus.json").is_file()
-        else []
-    )
+    corpus = _load_corpus(results)
     corpus_by_id = {r["id"]: r for r in corpus}
     latest_pull = max((r.get("last_seen", "") for r in corpus), default=today)
 
@@ -154,10 +163,7 @@ def main(
             delete=delete,
             dry_run=dry_run,
         )
-        if rep["missing"]:
-            print(f"{ln}: no shortlist.json")
-        else:
-            print(f"{ln}: {rep['live']} live, {verb} {rep['stale']} stale")
+        print(_report_line(ln, rep, verb))
 
 
 if __name__ == "__main__":
