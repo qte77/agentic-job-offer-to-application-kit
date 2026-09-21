@@ -74,6 +74,17 @@ def load_shortlist(path: Path) -> list[ScoredItem]:
     return [ScoredItem.model_validate(r) for r in json.loads(path.read_text())]
 
 
+def load_all_shortlists(settings: AppSettings) -> list[ScoredItem]:
+    """Load every lane's shortlist.json (skipping lanes with none yet) into ScoredItem rows."""
+    results = settings.results_dir
+    rows: list[ScoredItem] = []
+    for lane in load_lanes(settings.config_dir):
+        path = results / lane.key / "shortlist.json"
+        if path.is_file():
+            rows.extend(load_shortlist(path))
+    return rows
+
+
 def _flags(item: ScoredItem) -> tuple[str, str]:
     """Render the #271 human-flag annotations: (tag suffix, deal-breaker bullet; "" when unset)."""
     deadline, breaker = item.deadline.strip(), item.deal_breaker.strip()
@@ -167,6 +178,17 @@ def _load_prior_relevant(scored: Path) -> list[ScoredItem]:
     return [ScoredItem.model_validate(r) for r in prior]
 
 
+def _route_lanes(rel: list[ScoredItem], valid: set[str]) -> tuple[int, int]:
+    """Blank a hallucinated best_lane (routes to unsorted/) and tally unlaned/invalid counts."""
+    unlaned = sum(1 for j in rel if not j.best_lane)
+    invalid = 0
+    for j in rel:
+        if j.best_lane and j.best_lane not in valid:
+            j.best_lane = ""
+            invalid += 1
+    return unlaned, invalid
+
+
 def main(src: Path | None = None, *, merge: bool = False) -> None:
     """Write scored artifacts to results/; src defaults to sys.argv[1] when called directly.
 
@@ -184,12 +206,7 @@ def main(src: Path | None = None, *, merge: bool = False) -> None:
     for j in rel:
         j.url = canonical_url(j.url)
     valid = {lane.key for lane in load_lanes(settings.config_dir)}
-    unlaned = sum(1 for j in rel if not j.best_lane)  # the LLM left best_lane empty
-    invalid = 0
-    for j in rel:
-        if j.best_lane and j.best_lane not in valid:
-            j.best_lane = ""  # hallucinated lane -> unsorted/ (no junk results/<bogus>/)
-            invalid += 1
+    unlaned, invalid = _route_lanes(rel, valid)
     results.mkdir(parents=True, exist_ok=True)
     scored = results / "jobs-scored.json"
     merged = _union_by_id(_load_prior_relevant(scored), rel) if merge and scored.is_file() else rel
