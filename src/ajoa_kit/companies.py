@@ -119,6 +119,50 @@ def _momentum(first_seens: list[date], ref: date) -> str:
 _MIN_MOMENTUM_SPAN_DAYS = 28
 
 
+def _accumulate(
+    corpus: list[dict], ref: date | None, active_days: int, lanes: dict[str, str]
+) -> tuple[Counter[_Key], dict[_Key, Counter[str]], dict[_Key, list[date]]]:
+    """Fold active corpus records into per-key counts/regions/first-seen dates."""
+    counts: Counter[_Key] = Counter()
+    regions: dict[_Key, Counter[str]] = defaultdict(Counter)
+    firsts: dict[_Key, list[date]] = defaultdict(list)
+    for rec in corpus:
+        if not _is_active(rec, ref, active_days):
+            continue
+        city, region = parse_geo(rec.get("location", ""), rec.get("remote"), rec.get("source", ""))
+        key: _Key = (city, _field(rec, lanes), rec.get("company", ""))
+        counts[key] += 1
+        if region:
+            regions[key][region] += 1
+        fs = rec.get("first_seen")
+        if fs:
+            firsts[key].append(date.fromisoformat(fs))
+    return counts, regions, firsts
+
+
+def _build_rows(
+    counts: Counter[_Key],
+    regions: dict[_Key, Counter[str]],
+    firsts: dict[_Key, list[date]],
+    ref_for_momentum: date | None,
+) -> list[CompanyRow]:
+    """Build one CompanyRow per aggregated key."""
+    rows = []
+    for key, count in counts.items():
+        city, field, company = key
+        rows.append(
+            CompanyRow(
+                city=city,
+                region=regions[key].most_common(1)[0][0] if regions[key] else "",
+                field=field,
+                company=company,
+                count=count,
+                momentum=_momentum(firsts[key], ref_for_momentum) if ref_for_momentum else None,
+            )
+        )
+    return rows
+
+
 def aggregate_companies(
     corpus: list[dict],
     lane_by_id: dict[str, str] | None = None,
@@ -132,36 +176,10 @@ def aggregate_companies(
     """
     lanes = lane_by_id or {}
     ref = _reference_date(corpus)
-    counts: Counter[_Key] = Counter()
-    regions: dict[_Key, Counter[str]] = defaultdict(Counter)
-    firsts: dict[_Key, list[date]] = defaultdict(list)
-
-    for rec in corpus:
-        if not _is_active(rec, ref, active_days):
-            continue
-        city, region = parse_geo(rec.get("location", ""), rec.get("remote"), rec.get("source", ""))
-        key: _Key = (city, _field(rec, lanes), rec.get("company", ""))
-        counts[key] += 1
-        if region:
-            regions[key][region] += 1
-        fs = rec.get("first_seen")
-        if fs:
-            firsts[key].append(date.fromisoformat(fs))
-
+    counts, regions, firsts = _accumulate(corpus, ref, active_days, lanes)
     ref_for_momentum = (
         ref if ref and _history_span_days(corpus) >= _MIN_MOMENTUM_SPAN_DAYS else None
     )
-    rows = [
-        CompanyRow(
-            city=city,
-            region=regions[key].most_common(1)[0][0] if regions[key] else "",
-            field=field,
-            company=company,
-            count=count,
-            momentum=_momentum(firsts[key], ref_for_momentum) if ref_for_momentum else None,
-        )
-        for key in counts
-        for (city, field, company), count in [(key, counts[key])]
-    ]
+    rows = _build_rows(counts, regions, firsts, ref_for_momentum)
     rows.sort(key=lambda r: (r.city, r.field, -r.count, r.company))
     return rows
