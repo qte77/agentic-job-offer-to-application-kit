@@ -97,6 +97,36 @@ def test_malformed_items_are_dropped_and_counted(
     assert "dropped 2" in capsys.readouterr().out
 
 
+def test_location_and_tenure_flagged_counts_surfaced_in_summary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # #370: the Workflow computes these per-batch and aggregates them (locationFlaggedCount /
+    # tenureFlaggedCount), but persist_scored's summary line silently dropped both — fixed here.
+    _run(
+        tmp_path,
+        monkeypatch,
+        {
+            "relevant": [_item("a", "engineering", 4)],
+            "locationFlaggedCount": 2,
+            "tenureFlaggedCount": 1,
+        },
+    )
+    out = capsys.readouterr().out
+    assert "2 location-flagged" in out
+    assert "1 tenure-flagged" in out
+
+
+def test_flagged_counts_omitted_from_summary_when_absent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # A run with LOCATION_ACTIVE/TENURE_ACTIVE both off never includes either key -- the summary
+    # must not print a stray "0 location-flagged" for a policy that was never evaluated.
+    _run(tmp_path, monkeypatch, {"relevant": [_item("a", "engineering", 4)]})
+    out = capsys.readouterr().out
+    assert "location-flagged" not in out
+    assert "tenure-flagged" not in out
+
+
 def test_missing_relevant_array_fails_loud(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     results = tmp_path / "results"
     results.mkdir()

@@ -214,9 +214,14 @@ def main(src: Path | None = None, *, merge: bool = False) -> None:
     scored.write_text(json.dumps(data, indent=2, ensure_ascii=False))
     by_lane = merge_shortlists(rel, results) if merge else write_shortlists(rel, results)
     summary = ", ".join(f"{k}={v}" for k, v in sorted(by_lane.items()))
+    flagged = ""
+    if (loc := data.get("locationFlaggedCount")) is not None:
+        flagged += f", {loc} location-flagged"
+    if (ten := data.get("tenureFlaggedCount")) is not None:
+        flagged += f", {ten} tenure-flagged"
     print(
         f"persisted {len(rel)} JDs -> results/jobs-scored.json; per-lane: {summary} "
-        f"(dropped {dropped} malformed, {unlaned} un-laned, {invalid} invalid-lane)"
+        f"(dropped {dropped} malformed, {unlaned} un-laned, {invalid} invalid-lane{flagged})"
     )
 
 

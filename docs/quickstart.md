@@ -58,6 +58,7 @@ make chunk                                           # -> results/batches/ (+ ma
 Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js",
            args: { rootDir: ".", batchCount: <N> } })
 make persist FILE=<relevance-output.json>            # -> results/<lane>/shortlist.*
+POLYFETCH_DIR=../polyfetch-scrape uv run ajoa-kit refresh  # flags stale/delisted rows before pack-plan skips them
 uv run ajoa-kit pack-plan --min-score 5 --json       # -> results/pack-plan.json (which offer ids still need a pack)
 
 # Stage 3 (per offer) — pick an offer id from a shortlist, then tailor -> persist-offer -> ats-check:

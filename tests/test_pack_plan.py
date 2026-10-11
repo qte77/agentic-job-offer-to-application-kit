@@ -13,10 +13,20 @@ from ajoa_kit.pack_plan import load_policy, missing, select
 
 
 def _item(
-    id_: str, score: int, lane: str = "engineering", title: str = "", company: str = ""
+    id_: str,
+    score: int,
+    lane: str = "engineering",
+    title: str = "",
+    company: str = "",
+    stale: bool = False,
 ) -> ScoredItem:
     return ScoredItem(
-        id=id_, score=score, best_lane=lane, title=title or id_, company=company or "Acme"
+        id=id_,
+        score=score,
+        best_lane=lane,
+        title=title or id_,
+        company=company or "Acme",
+        stale=stale,
     )
 
 
@@ -35,6 +45,14 @@ def test_select_filters_by_lane_when_lanes_configured() -> None:
     items = [_item("a", 5, lane="ml"), _item("b", 5, lane="engineering")]
     out = select(items, PackPolicy(min_score=5, lanes=["ml"]))
     assert [i.id for i in out] == ["a"]
+
+
+def test_select_excludes_stale_items() -> None:
+    # A refresh.py-flagged stale (delisted/dead) offer must never reach a tailor pass (#214's
+    # flag was set but never read here) — wastes a full LLM tailor call on a dead posting.
+    items = [_item("live", 5), _item("dead", 5, stale=True, company="Other")]
+    out = select(items, PackPolicy(min_score=5))
+    assert [i.id for i in out] == ["live"]
 
 
 def test_select_empty_lanes_means_every_lane() -> None:
