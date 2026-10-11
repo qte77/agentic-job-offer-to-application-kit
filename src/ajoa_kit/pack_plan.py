@@ -77,7 +77,8 @@ def _apply_company_cap(items: list[ScoredItem], cap: int) -> list[ScoredItem]:
 def select(shortlist_rows: list[ScoredItem], policy: PackPolicy) -> list[ScoredItem]:
     """Select + order the shortlist rows a pack policy targets for a full tailored pack.
 
-    Pipeline: filter (score >= ``min_score``, lane membership) -> sort by score descending
+    Pipeline: filter (score >= ``min_score``, lane membership, excludes ``refresh.py``-flagged
+    ``stale`` rows so a dead posting never reaches a tailor pass) -> sort by score descending
     (stable — equal scores keep input order) -> dedup role x company (policy-gated) -> per-company
     cap -> ``max_packs`` cap.
 
@@ -93,6 +94,7 @@ def select(shortlist_rows: list[ScoredItem], policy: PackPolicy) -> list[ScoredI
         for item in shortlist_rows
         if item.score is not None
         and item.score >= policy.min_score
+        and not item.stale
         and (not policy.lanes or item.best_lane in policy.lanes)
     ]
     ordered = sorted(candidates, key=lambda item: -(item.score or 0))
