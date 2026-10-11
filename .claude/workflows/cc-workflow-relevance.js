@@ -183,9 +183,23 @@ const results = (
 
 const relevant = results.flatMap((r) => r.relevant || [])
 const dropped = results.reduce((a, r) => a + (r.dropped_count || 0), 0)
+const locationFlagged = results.reduce((a, r) => a + (r.location_flagged_count || 0), 0)
+const tenureFlagged = results.reduce((a, r) => a + (r.tenure_flagged_count || 0), 0)
 relevant.sort((a, b) => b.score - a.score)
 const byLane = {}
 for (const j of relevant) byLane[j.best_lane] = (byLane[j.best_lane] || 0) + 1
 
-log(`Kept ${relevant.length}, dropped ${dropped} across ${results.length} batches`)
-return { kept: relevant.length, dropped, byLane, batchesProcessed: results.length, relevant }
+log(
+  `Kept ${relevant.length}, dropped ${dropped} across ${results.length} batches` +
+    (LOCATION_ACTIVE ? `, ${locationFlagged} location-flagged` : '') +
+    (TENURE_ACTIVE ? `, ${tenureFlagged} tenure-flagged` : '')
+)
+return {
+  kept: relevant.length,
+  dropped,
+  byLane,
+  batchesProcessed: results.length,
+  relevant,
+  locationFlaggedCount: locationFlagged,
+  tenureFlaggedCount: tenureFlagged,
+}
