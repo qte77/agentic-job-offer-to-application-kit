@@ -29,12 +29,14 @@ For top level release notes, leave all the headers commented out.
 - A bullet item for the Removed category.
 
 -->
-<!--
 ### Fixed
 
-- A bullet item for the Fixed category.
-
--->
+- `pack_plan.select()` now excludes `refresh.py`-flagged `stale` (delisted/dead) offers, so a
+  closed posting can no longer reach a full LLM tailor pass. `docs/quickstart.md`'s pipeline now
+  shows `refresh` before `pack-plan` so the flag is set before it's read.
+- `cc-workflow-relevance.js`'s aggregated return and `persist_scored`'s summary line now surface
+  `locationFlaggedCount`/`tenureFlaggedCount` (previously computed per batch, then silently
+  dropped before reaching either output) (#370).
 <!--
 ### Security
 
