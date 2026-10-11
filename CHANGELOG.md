@@ -16,6 +16,35 @@ Types of changes:
 
 <!-- scriv-insert-here -->
 
+## [0.9.1] - 2026-10-11
+
+### Added
+
+- `ajoa-kit open-offers` (tier 1, #417, plan 012) — opens every shortlist offer selected by the
+  pack policy in a browser tab (`--min-score`, `--lanes`, `--dry-run`).
+
+- Cloudflare added to `config/default-seed.json` (Greenhouse, slug `cloudflare`) — OK-tier per
+  ADR-0002, already-vetted platform.
+
+### Changed
+
+- Bumped `complexipy` from the `<6` pin (kept since 6.0's cognitive-complexity scoring rewrite) to
+  `>=8.0.1`. The 7 functions that scored over the ≤10 gate under 8.x were refactored — extracted
+  helpers in `persist_scored.py`, `refresh.py`, `companies.py`, `coverage.py`, `grounding.py`,
+  `open_offers.py`, `pack_plan.py` — with `persist_scored.py` and `open_offers.py`/`pack_plan.py`
+  also gaining a new shared `load_all_shortlists` helper, removing a duplicated shortlist-loading
+  loop. All behavior-preserving; the existing test suite is the regression guard, plus one new
+  direct test for `grounding._string_leaves` (previously untested). Supersedes #434.
+
+### Fixed
+
+- `pack_plan.select()` now excludes `refresh.py`-flagged `stale` (delisted/dead) offers, so a
+  closed posting can no longer reach a full LLM tailor pass. `docs/quickstart.md`'s pipeline now
+  shows `refresh` before `pack-plan` so the flag is set before it's read.
+- `cc-workflow-relevance.js`'s aggregated return and `persist_scored`'s summary line now surface
+  `locationFlaggedCount`/`tenureFlaggedCount` (previously computed per batch, then silently
+  dropped before reaching either output) (#370).
+
 ## [0.9.0] - 2026-09-01
 
 ### Added
