@@ -37,6 +37,7 @@ from ajoa_kit.coverage import coverage_summary, honesty_warnings
 from ajoa_kit.defaults import DESC_CAP
 from ajoa_kit.grounding import grounding_warnings
 from ajoa_kit.models import OfferMeta
+from ajoa_kit.pull import pull_date
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.stuffing import stuffing_warnings
 
@@ -299,7 +300,9 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     # Sidecar for the local dashboard join (#209): the dir is named by the (maybe custom) slug, so
     # record the JD id -> this offer so build_ui_shortlist can attach cv/cover-letter by id.
     if jd_id:
-        meta = OfferMeta(id=str(jd_id), slug=safe_slug(slug))
+        meta = OfferMeta(
+            id=str(jd_id), slug=safe_slug(slug), tailored_against=pull_date(results_dir)
+        )
         (offer_dir / "meta.json").write_text(meta.model_dump_json())
     return offer_dir
 
