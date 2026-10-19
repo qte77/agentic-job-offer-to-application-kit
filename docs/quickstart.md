@@ -92,7 +92,11 @@ uv run ajoa-kit chunk --new                                       # batch only t
 uv run ajoa-kit persist --merge <relevance-output.json>           # union by id into shortlists
 ```
 
-Then reconcile — offers get filled or closed, so a shortlist goes stale:
+Then reconcile — offers get filled or closed, so a shortlist goes stale. `ingest --merge` prints
+`N delisted -- run: ajoa-kit refresh` whenever the corpus holds delisted offers. Every ingest records
+its date in `results/last-pull.json`; `persist` stamps it on each newly scored shortlist row as
+`scored_against`, and `persist-offer` writes it to the pack's `meta.json` as `tailored_against`, so a
+screen or pack built from an old pull is visibly old (#346).
 
 ```bash
 # refresh re-probes offer URLs, so it runs via the polyfetch venv-borrow
