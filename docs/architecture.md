@@ -220,7 +220,7 @@ agentic-job-offer-to-application-kit/
 ├── tests/                      # value-add suite (pre-filter, canonical_url, dedup, adapters)
 ├── examples/alexis-doe/        # self-contained example mirroring config/ + results/ (committed)
 ├── results/                    # generated outputs (PII) — git-ignored, dir kept via .gitkeep
-│                               #   evidence-library.json, jobs-raw.json, corpus.json, batches/, <lane>/shortlist.*, offers/<slug>/ (pack .md + meta.json #209)
+│                               #   evidence-library.json, jobs-raw.json, corpus.json, batches/, <lane>/shortlist.*, offers/<slug>/ (pack .md + meta.json #209 + result.json source #365)
 ├── public-data/                # PII-free publishable aggregates (trends) — git-ignored; the only data published (#210)
 ├── pyproject.toml / uv.lock    # uv project; ruff + pyright + complexipy + pytest + scriv config
 ├── .claude/

@@ -285,6 +285,16 @@ class OfferStatus(BaseModel):
     notes: str = ""
 
 
+class OfferMeta(BaseModel):
+    """An offer pack's ``meta.json`` sidecar: the JD id the dashboard joins on (#209).
+
+    The pack dir is named by the (maybe custom) slug, so this records which JD it belongs to.
+    """
+
+    id: str
+    slug: str
+
+
 # --- discovery adapters (ADR-0004): CAUTION-tier read boundaries ---------------------------------
 
 

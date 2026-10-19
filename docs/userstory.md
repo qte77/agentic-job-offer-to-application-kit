@@ -57,7 +57,8 @@ anything.
 
 Accept: `cc-workflow-tailor-offer.js` → `ajoa-kit persist-offer` writes
 `results/offers/<slug>/{match,cv,cover-letter,gap-report,prefill-pack}.md` (plus `coverage-report.md`,
-a must-have / covered-gap / evidence table, when the match returns `must_haves`, #55); `ajoa-kit
+a must-have / covered-gap / evidence table, when the match returns `must_haves`, #55) and keeps the
+pack's source as `result.json`, so a hand-edited artifact can be re-rendered (#365); `ajoa-kit
 ats-check` gates the CV for parse-safety; no automated submission. After applying, `ajoa-kit status
 <slug> --stage applied/responded/interview/offer/rejected` records the outcome in a local
 `results/offers/<slug>/status.json` (git-ignored PII), closing the apply→outcome loop (#273).

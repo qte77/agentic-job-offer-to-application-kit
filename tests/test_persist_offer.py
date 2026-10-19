@@ -49,7 +49,7 @@ def test_write_pack_emits_one_md_per_artifact(tmp_path: Path) -> None:
     names = sorted(p.name for p in offer_dir.glob("*.md"))
     assert names == ["cover-letter.md", "cv.md", "gap-report.md", "match.md", "prefill-pack.md"]
     assert "Dear hiring team" in (offer_dir / "cover-letter.md").read_text()
-    assert (offer_dir / "match.md").read_text().startswith('---\ntitle: "Match assessment"\n---')
+    assert (offer_dir / "match.md").read_text().startswith('---\ntitle: "Match assessment"\n')
 
 
 def test_write_pack_emits_coverage_report_only_with_must_haves(tmp_path: Path) -> None:
@@ -105,7 +105,8 @@ def test_write_pack_normalizes_embedded_frontmatter(tmp_path: Path) -> None:
     )
     cv = (offer_dir / "cv.md").read_text()
     assert cv.count("---\ntitle:") == 1
-    assert cv.startswith('---\ntitle: "Tailored CV"\n---\n\n## Summary')
+    head = '---\ntitle: "Tailored CV"\ngenerated_from: "result.json"\n---\n\n'
+    assert cv.startswith(f"{head}## Summary")
 
 
 def test_write_pack_keeps_mid_document_rules(tmp_path: Path) -> None:
@@ -292,6 +293,26 @@ def test_write_pack_writes_meta_json_when_id_present(tmp_path: Path) -> None:
         "id": "ashby:acme-ai:101",
         "slug": "pretty-name",
     }
+
+
+def test_pack_rebuilds_byte_identically_from_its_result_json(tmp_path: Path) -> None:
+    # #365: the rendered .md files are build output; the pack keeps its source so a hand-edited
+    # artifact can be regenerated (and later drift-checked, #366) instead of silently desyncing.
+    first = persist_offer.write_pack(PACK, slug="acme-ai-101", results_dir=tmp_path / "a")
+    assert persist_offer.load_pack(first / "result.json") == PACK
+    rebuilt = persist_offer.write_pack(
+        persist_offer.load_pack(first / "result.json"),
+        slug="acme-ai-101",
+        results_dir=tmp_path / "b",
+    )
+    for md in first.glob("*.md"):
+        assert (rebuilt / md.name).read_bytes() == md.read_bytes()
+
+
+def test_rendered_artifacts_name_their_source(tmp_path: Path) -> None:
+    offer_dir = persist_offer.write_pack(PACK, slug="acme-ai-101", results_dir=tmp_path)
+    head = (offer_dir / "cv.md").read_text().split("\n---\n", 1)[0]
+    assert 'generated_from: "result.json"' in head
 
 
 def test_write_pack_no_meta_json_without_id(tmp_path: Path) -> None:
