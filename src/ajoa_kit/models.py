@@ -179,6 +179,8 @@ class ScoredItem(BaseModel):
     # survives a persist round-trip and the dashboard can hide stale rows.
     stale: bool = False
     last_checked: str = ""
+    # Provenance (#346): the ingest pull this row was scored against, so a stale screen is visible.
+    scored_against: str = ""
 
 
 class WeekCounts(BaseModel):
@@ -293,6 +295,14 @@ class OfferMeta(BaseModel):
 
     id: str
     slug: str
+    tailored_against: str = ""
+    """The ingest pull the pack was tailored against (#346); "" when unknown."""
+
+
+class PullStamp(BaseModel):
+    """``results/last-pull.json``: the date of the latest ingest pull (#346)."""
+
+    date: str
 
 
 # --- discovery adapters (ADR-0004): CAUTION-tier read boundaries ---------------------------------

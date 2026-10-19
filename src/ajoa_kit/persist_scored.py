@@ -24,6 +24,7 @@ from ajoa_kit.models import ScoredItem
 # The deliberate ingest-era duplicate collapsed here (#249 slice C): the lightweight
 # normalize module removed the original reason to duplicate (avoiding ingest's heavy import).
 from ajoa_kit.normalize import canonical_url
+from ajoa_kit.pull import pull_date
 from ajoa_kit.settings import AppSettings
 
 
@@ -178,6 +179,14 @@ def _load_prior_relevant(scored: Path) -> list[ScoredItem]:
     return [ScoredItem.model_validate(r) for r in prior]
 
 
+def _normalize(rel: list[ScoredItem], stamp: str) -> None:
+    """Canonicalize each URL and stamp the pull it was scored against (#346), when known."""
+    for j in rel:
+        j.url = canonical_url(j.url)
+        if stamp:
+            j.scored_against = stamp
+
+
 def _route_lanes(rel: list[ScoredItem], valid: set[str]) -> tuple[int, int]:
     """Blank a hallucinated best_lane (routes to unsorted/) and tally unlaned/invalid counts."""
     unlaned = sum(1 for j in rel if not j.best_lane)
@@ -203,8 +212,7 @@ def main(src: Path | None = None, *, merge: bool = False) -> None:
     results = settings.results_dir
     data = load_result(src)
     rel, dropped = parse_relevant(data)  # parse-on-read: fail loud on a non-result; drop bad items
-    for j in rel:
-        j.url = canonical_url(j.url)
+    _normalize(rel, pull_date(results))
     valid = {lane.key for lane in load_lanes(settings.config_dir)}
     unlaned, invalid = _route_lanes(rel, valid)
     results.mkdir(parents=True, exist_ok=True)

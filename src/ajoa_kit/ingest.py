@@ -27,6 +27,7 @@ from ajoa_kit.corpus import merge_corpus, render_daily_summary, summarize_change
 from ajoa_kit.defaults import DEFAULT_LANES, INTEREST, TITLE_ROLES
 from ajoa_kit.models import Lane, LocationPolicy, ManualJd, SeniorityPolicy
 from ajoa_kit.normalize import _INTEREST, _TITLE_ROLES, build_patterns, keep, record
+from ajoa_kit.pull import write_pull_date
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.sources import AGGREGATORS, ATS, from_rss, load_sources
 
@@ -269,6 +270,8 @@ def _update_corpus(deduped: list[dict[str, Any]], results_dir: Path, today: str)
         f"digest: {summary['new']} new / {summary['changed']} changed / "
         f"{summary['delisted']} delisted -> {summary_path}"
     )
+    if summary["delisted"]:
+        print(f"{summary['delisted']} delisted -- run: ajoa-kit refresh")
 
 
 def main(*, merge: bool = False, today: str | None = None) -> None:
@@ -300,8 +303,10 @@ def main(*, merge: bool = False, today: str | None = None) -> None:
     deduped = with_manual(state["jobs"], manual)
     (results / "jobs-raw.json").write_text(json.dumps(deduped, indent=2, ensure_ascii=False))
     (results / "jobs-raw.summary.md").write_text(build_summary(deduped, state))
+    today = today or date.today().isoformat()
+    write_pull_date(results, today)
     if merge:
-        _update_corpus(deduped, results, today or date.today().isoformat())
+        _update_corpus(deduped, results, today)
 
     total_filtered = sum(state["filtered"].values())
     print(
