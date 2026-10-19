@@ -123,9 +123,11 @@ def fetch_jobs(filters: SgFilters) -> list[SgJob]:
     Read-only public GET, patchright-rendered (the cards need JS). Unit tests cover the pure parse;
     this orchestrator is exercised by a live smoke test.
     """
-    from polyfetch_scrape import RenderOptions, fetch  # pyright: ignore[reportMissingImports]
+    from polyfetch_scrape import RenderOptions  # pyright: ignore[reportMissingImports]
 
-    r = fetch(
+    from ajoa_kit.polite import polite_fetch
+
+    r = polite_fetch(
         build_jobs_url(filters),
         max_tier="patchright",
         render=RenderOptions(wait_until="networkidle"),

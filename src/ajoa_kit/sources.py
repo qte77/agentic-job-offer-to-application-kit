@@ -18,6 +18,7 @@ from urllib.parse import urlencode
 from defusedxml.ElementTree import fromstring as xml_fromstring
 
 from ajoa_kit.normalize import canonical_url, html_to_text, record, rss_company_salary
+from ajoa_kit.polite import polite_fetch
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -39,9 +40,9 @@ def get_json(url: str) -> tuple[Any, str]:
     if not _is_http(url):
         raise ValueError(f"refusing non-http(s) URL: {url!r}")
     # lazy: keep pure logic importable w/o polyfetch
-    from polyfetch_scrape import FetchError, fetch  # pyright: ignore[reportMissingImports]
+    from polyfetch_scrape import FetchError  # pyright: ignore[reportMissingImports]
 
-    r = fetch(url, headers={"Accept": "application/json"})
+    r = polite_fetch(url, headers={"Accept": "application/json"})
     if r.status != 200:
         raise FetchError(f"HTTP {r.status} ({r.backend})")
     return json.loads(r.body), r.backend
@@ -55,9 +56,9 @@ def get_bytes(url: str) -> tuple[bytes, str]:
     if not _is_http(url):
         raise ValueError(f"refusing non-http(s) URL: {url!r}")
     # lazy: keep pure logic importable w/o polyfetch
-    from polyfetch_scrape import FetchError, fetch  # pyright: ignore[reportMissingImports]
+    from polyfetch_scrape import FetchError  # pyright: ignore[reportMissingImports]
 
-    r = fetch(url)
+    r = polite_fetch(url)
     if r.status != 200:
         raise FetchError(f"HTTP {r.status} ({r.backend})")
     return r.body, r.backend

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 
+from ajoa_kit.polite import polite_fetch
 from ajoa_kit.settings import AppSettings
 
 PROBE_TIMEOUT = 8.0
@@ -27,22 +28,16 @@ def fetch_status(url: str) -> int | None:
     """
     if not url.lower().startswith(("http://", "https://")):  # sec: no file:/javascript:/… schemes
         return None
-    # lazy: keep this module importable without polyfetch
-    from polyfetch_scrape import fetch  # pyright: ignore[reportMissingImports]
-
     try:
-        return fetch(url, timeout=PROBE_TIMEOUT).status
-    except Exception:  # an unreachable/blocked URL is inconclusive, not "dead"
+        return polite_fetch(url, timeout=PROBE_TIMEOUT).status
+    except Exception:  # unreachable, blocked or robots-disallowed is inconclusive, not "dead"
         return None
 
 
 def _count(url: str, key: str | None) -> int | None:
     """GET ``url``; return the item count, or None if it is not a live board."""
-    # lazy: keep this module importable without polyfetch
-    from polyfetch_scrape import fetch  # pyright: ignore[reportMissingImports]
-
     try:
-        r = fetch(url, headers={"Accept": "application/json"}, timeout=PROBE_TIMEOUT)
+        r = polite_fetch(url, headers={"Accept": "application/json"}, timeout=PROBE_TIMEOUT)
     except Exception:  # a dead/blocked board is just "not a hit"
         return None
     if r.status != 200:
