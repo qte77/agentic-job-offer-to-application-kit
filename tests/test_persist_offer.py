@@ -292,6 +292,7 @@ def test_write_pack_writes_meta_json_when_id_present(tmp_path: Path) -> None:
     assert json.loads((offer_dir / "meta.json").read_text()) == {
         "id": "ashby:acme-ai:101",
         "slug": "pretty-name",
+        "tailored_against": "",
     }
 
 
@@ -313,6 +314,15 @@ def test_rendered_artifacts_name_their_source(tmp_path: Path) -> None:
     offer_dir = persist_offer.write_pack(PACK, slug="acme-ai-101", results_dir=tmp_path)
     head = (offer_dir / "cv.md").read_text().split("\n---\n", 1)[0]
     assert 'generated_from: "result.json"' in head
+
+
+def test_meta_json_records_the_pull_the_pack_was_tailored_against(tmp_path: Path) -> None:
+    # #346: a pack tailored against an old pull is otherwise invisible without file mtimes.
+    (tmp_path / "last-pull.json").write_text(json.dumps({"date": "2026-10-19"}))
+    offer_dir = persist_offer.write_pack(
+        {**PACK, "offer_id": "ashby:acme-ai:101"}, slug="acme-ai-101", results_dir=tmp_path
+    )
+    assert json.loads((offer_dir / "meta.json").read_text())["tailored_against"] == "2026-10-19"
 
 
 def test_write_pack_no_meta_json_without_id(tmp_path: Path) -> None:

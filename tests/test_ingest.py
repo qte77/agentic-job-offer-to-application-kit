@@ -184,6 +184,18 @@ def test_update_corpus_second_run_keeps_delisted_and_updates_changed(tmp_path: P
     assert "No new offers" in digest  # nothing new this run
 
 
+def test_update_corpus_prompts_refresh_only_when_offers_are_delisted(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # #346: delisted offers leave shortlists stale until `refresh` runs; nothing used to say so.
+    a = normalize.record(id="a", ats="rss", source="s", title="Engineer", description="v1")
+    b = normalize.record(id="b", ats="rss", source="s", title="SRE", description="ops")
+    ingest._update_corpus([a, b], tmp_path, "2026-06-01")
+    assert "ajoa-kit refresh" not in capsys.readouterr().out
+    ingest._update_corpus([a], tmp_path, "2026-06-27")
+    assert "1 delisted -- run: ajoa-kit refresh" in capsys.readouterr().out
+
+
 def _capture_ingest(monkeypatch: pytest.MonkeyPatch, argv: list[str]) -> dict:
     """Run the CLI with argv and return the kwargs the ingest step was dispatched with."""
     called: dict[str, object] = {}

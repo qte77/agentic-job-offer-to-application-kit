@@ -64,6 +64,22 @@ def test_valid_result_writes_per_lane_shortlists_sorted(
     assert json.loads((results / "jobs-scored.json").read_text())["relevant"][0]["id"] == "a"
 
 
+def test_rows_record_the_pull_they_were_scored_against(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # #346: a shortlist row stamps the ingest pull it was scored against; a merge re-stamps only the
+    # re-scored rows, so an old screen stays visibly old.
+    results = tmp_path / "results"
+    results.mkdir()
+    (results / "last-pull.json").write_text(json.dumps({"date": "2026-07-01"}))
+    _run(tmp_path, monkeypatch, {"relevant": [_item("a", "engineering", 4)]})
+    (results / "last-pull.json").write_text(json.dumps({"date": "2026-10-19"}))
+    _run(tmp_path, monkeypatch, {"relevant": [_item("b", "engineering", 5)]}, merge=True)
+    eng = {j["id"]: j for j in json.loads((results / "engineering" / "shortlist.json").read_text())}
+    assert eng["a"]["scored_against"] == "2026-07-01"
+    assert eng["b"]["scored_against"] == "2026-10-19"
+
+
 def test_unknown_result_field_survives_round_trip(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
