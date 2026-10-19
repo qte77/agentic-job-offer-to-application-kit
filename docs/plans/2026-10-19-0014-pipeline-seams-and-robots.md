@@ -6,17 +6,16 @@
   #344), run long relevance screens outside the interactive session, cut their cost with a cheap
   decision-model pre-filter, and close the robots.txt / crawl-delay gap ADR-0002 names as out of
   scope (#454).
-- **Shipped:** #458 (`startBatch` slices for the relevance workflow); #459 (PR-A, #365); PR-B
-  (#346) in the PR that strikes its row.
-- **Next, in order:** PR-C (#342 + #344, with headless offload), PR-E (decision-model pre-filter),
-  PR-D (#454). PR-C waits until any in-flight relevance screen has finished and been persisted:
+- **Shipped:** #458 (`startBatch` slices for the relevance workflow); #459 (PR-A, #365); #460
+  (PR-B, #346); PR-D (#454) in the PR that strikes its row.
+- **Next, in order:** PR-C (#342 + #344, with headless offload), then PR-E (decision-model
+  pre-filter; keys are in the git-ignored `.env`). PR-C waits until any in-flight relevance screen has finished and been persisted:
   never re-run `chunk` while a screen is running.
 - **Loop per PR:** topic branch from main, red test first, `make check` last, changelog fragment,
   docs audit, push, squash-merge with `--admin` only when that PR's own checks are green, delete
   the branch, strike the row below in the same PR.
-- **Owner gates:** API keys for PR-E (a TypeSafe key for Jev; a Workers AI token usable locally for
-  Clef). PR-D only if the remaining robots audit finds a shipped source that disallows
-  `User-agent: *`.
+- **Owner gates:** none open. `TYPESAFE_API_KEY` and `CLOUDFLARE_API_TOKEN` are in `.env`; the
+  Cloudflare account id for Clef is looked up with the token (or set `CLOUDFLARE_ACCOUNT_ID`).
 - **Watch-outs:**
   - A workflow resume only works inside the Claude Code session that started it.
   - Each workflow run caps concurrent agents (2 on this 2-CPU devcontainer). Raise it with
@@ -69,14 +68,14 @@
   before the pre-filter gates anything. A 403, an error or a missing confidence escalates to the
   LLM screen, never a verdict. Stdlib HTTP only; switch to the shared `decide()` action once it
   merges.
-- **PR-D #454:** one `polite_fetch` in `sources.py` used by all fetch call sites; per-origin
-  `urllib.robotparser` cache checked with `User-agent: *` (polyfetch rotates browser UAs);
-  per-host spacing max(1 s, crawl-delay); robots 4xx = allow, 5xx/network error = skip with a
-  logged reason (inconclusive in `refresh`/`verify-sources`); skips show in ingest's
-  `sources ok / failed` summary; per-source `_robots_override` with a reason. Audit so far
-  (2026-10-19): Greenhouse, Lever (crawl-delay 1), Workable, arbeitnow, The Muse, swissdevjobs,
-  We Work Remotely and yc-oss allow their API paths; Ashby's robots.txt answers 401, which RFC 9309
-  treats as no rules.
+- **PR-D #454 (shipped):** `polite_fetch` in `src/ajoa_kit/polite.py`, used by all six fetch
+  call sites; per-origin `urllib.robotparser` cache checked with `User-agent: *` (polyfetch rotates
+  browser UAs); per-host spacing max(1 s, crawl-delay); robots 4xx = no rules (including 4xx that
+  polyfetch raises as typed errors such as `AuthRequired`), 5xx/network error = skip with a reason
+  (inconclusive in `refresh`/`verify-sources`); skips show in ingest's `sources ok / failed`
+  summary. Live check 2026-10-19: a full ingest kept 331 ok / 18 failed (the same dead boards as
+  before), with no robots skips. The per-source `_robots_override` key was dropped: no shipped
+  source needs it.
 
 ## Remaining work
 
@@ -86,6 +85,6 @@
 | Persist the 4 in-flight relevance slices, re-run `pack-plan` at score 4 and 5, report | agent | shortlists merged; pack numbers reported to the owner |
 | ~~PR-B #346: refresh hint; `last-pull.json`; `scored_against` / `tailored_against`~~ | agent | shipped in this PR |
 | PR-C #342 + #344: `batch_set_id`; per-batch files; `persist --from-batches`; `make relevance`; `make relevance_headless` | agent | merged; a headless one-batch run is picked up by `persist --from-batches` |
-| PR-E: `prefilter` subcommand with Jev and Clef backends; shadow-mode report on the 2026-10-19 screen | owner (keys) | merged; report shows per-backend recall of kept offers and the drop rate at the chosen threshold |
-| PR-D step 1: finish the robots audit (per-company Recruitee and Personio hosts, RSS feeds) | owner (only if a shipped source disallows) | audit report posted on #454 |
-| PR-D #454: `polite_fetch` with robots + crawl-delay | agent | merged; one live ingest pass with no unexpected skips |
+| PR-E: `prefilter` subcommand with Jev and Clef backends; shadow-mode report on the 2026-10-19 screen | agent | merged; report shows per-backend recall of kept offers and the drop rate at the chosen threshold |
+| ~~PR-D step 1: robots audit over every configured source~~ | agent | done: the live ingest found no source blocked by robots.txt |
+| ~~PR-D #454: `polite_fetch` with robots + crawl-delay~~ | agent | shipped in this PR |

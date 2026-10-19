@@ -99,6 +99,8 @@ they're not built; see the plan's "Scope change" section.
 3. **A web-access layer wraps polyfetch.** `src/ajoa_kit/sources.py` fetches via `polyfetch-scrape`
    (httpx → curl_cffi → headless), invoked with `uv run --directory $POLYFETCH_DIR` — never vendored.
    Feed/API-first, no-auth, GET only; each record carries `fetched_backend` for tier monitoring.
+   Every fetch goes through `src/ajoa_kit/polite.py` `polite_fetch`, which obeys robots.txt
+   (`User-agent: *`) and spaces requests per host by max(1 s, `Crawl-delay`) (#454).
 
 ## Data contracts
 

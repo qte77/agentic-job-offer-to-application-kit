@@ -13,7 +13,7 @@ import types
 
 import pytest
 
-from ajoa_kit import sources
+from ajoa_kit import polite, sources
 
 
 class _Resp:
@@ -34,7 +34,9 @@ def _install(
 
     calls: dict[str, object] = {}
 
-    def fetch(url: str, headers: dict[str, str] | None = None) -> _Resp:
+    def fetch(url: str, headers: dict[str, str] | None = None, **_kw: object) -> _Resp:
+        if url.endswith("/robots.txt"):  # polite_fetch reads robots first; none = no rules
+            return _Resp(404, b"", "fake")
         calls["url"] = url
         calls["headers"] = headers
         return resp
@@ -42,6 +44,8 @@ def _install(
     mod.FetchError = FetchError
     mod.fetch = fetch
     monkeypatch.setitem(sys.modules, "polyfetch_scrape", mod)
+    monkeypatch.setattr(polite, "_ROBOTS", {})
+    monkeypatch.setattr(polite, "_LAST", {})
     return FetchError, calls
 
 

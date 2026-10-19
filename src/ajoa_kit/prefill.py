@@ -119,10 +119,12 @@ def render_fields(fields: list[dict]) -> str:
 def fetch_greenhouse_questions(slug: str, job_id: str) -> list[dict]:
     """Fetch + normalize a Greenhouse board's public application question schema (no auth)."""
     # lazy: keep pure logic importable w/o polyfetch
-    from polyfetch_scrape import FetchError, fetch  # pyright: ignore[reportMissingImports]
+    from polyfetch_scrape import FetchError  # pyright: ignore[reportMissingImports]
+
+    from ajoa_kit.polite import polite_fetch
 
     url = f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs/{job_id}?questions=true"
-    r = fetch(url, headers={"Accept": "application/json"})
+    r = polite_fetch(url, headers={"Accept": "application/json"})
     if r.status != 200:
         raise FetchError(f"HTTP {r.status} ({r.backend})")
     import json

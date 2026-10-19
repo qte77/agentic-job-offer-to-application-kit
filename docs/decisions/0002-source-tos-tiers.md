@@ -173,8 +173,14 @@ hiring series stays local; ADR-0001 PII gate + #11). Full citations and the subm
 - **Jooble / Adzuna / Reed** — official APIs, but all **keyed + commercial ToS** (Adzuna covers FR/UK/
   US/IT; Reed is UK), outside the kit's no-auth/no-key model. Outlook only (#109). Welcome to the
   Jungle (FR) and similar SPA boards expose no public no-auth listings API → paste-only.
-- **Operational gaps:** `robots.txt` parsing/enforcement in the fetch path, plus a courtesy
-  rate-limit / crawl-delay — tracked as open gaps, not yet implemented.
+- **Operational gaps (closed by #454):** every fetch now goes through `polite_fetch`
+  (`src/ajoa_kit/polite.py`). It checks robots.txt for `User-agent: *` (polyfetch rotates browser
+  User-Agents, so no named group applies) and spaces requests per host by max(1 s, `Crawl-delay`).
+  Per RFC 9309, a 4xx robots.txt means no rules, while a 5xx or network error means the host is
+  skipped. A skipped source appears as a failure in ingest's `sources ok / failed` summary;
+  `refresh` and `verify-sources` treat it as inconclusive, never as dead. Audit 2026-10-19:
+  Greenhouse, Lever (crawl-delay 1), Workable, arbeitnow, The Muse, swissdevjobs, We Work Remotely
+  and yc-oss allow the paths the kit reads; Ashby's robots.txt answers 401 (no rules).
 
 ## References
 
