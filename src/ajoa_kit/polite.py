@@ -21,6 +21,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 MIN_INTERVAL = 1.0
+# A longer Crawl-delay skips the host rather than stalling a whole ingest run on it.
+MAX_CRAWL_DELAY = 30.0
 ROBOTS_TIMEOUT = 8.0
 
 _ROBOTS: dict[str, RobotFileParser | None] = {}
@@ -90,6 +92,8 @@ def polite_fetch(url: str, **kwargs: object) -> Response:
         raise RobotsDisallowedError(f"robots.txt unreachable for {origin}; skipped")
     if not rp.can_fetch("*", url):
         raise RobotsDisallowedError(f"robots.txt disallows {url}")
-    delay = rp.crawl_delay("*")
-    _wait(origin, max(MIN_INTERVAL, float(delay) if delay else 0.0))
+    delay = float(rp.crawl_delay("*") or 0)
+    if delay > MAX_CRAWL_DELAY:
+        raise RobotsDisallowedError(f"robots.txt Crawl-delay {delay:g}s for {origin} too long")
+    _wait(origin, max(MIN_INTERVAL, delay))
     return fetch(url, **kwargs)

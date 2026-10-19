@@ -100,6 +100,19 @@ def test_unreachable_robots_skips_the_host(monkeypatch: pytest.MonkeyPatch, robo
     assert "https://d.example/api/jobs" not in calls
 
 
+def test_excessive_crawl_delay_skips_the_host_instead_of_stalling(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A hostile or misconfigured Crawl-delay (e.g. a day) must not stall the daily ingest.
+    calls = _install(
+        monkeypatch,
+        {"https://h.example/robots.txt": _Resp(200, b"User-agent: *\nCrawl-delay: 86400\n")},
+    )
+    with pytest.raises(polite.RobotsDisallowedError, match="Crawl-delay"):
+        polite.polite_fetch("https://h.example/api/jobs")
+    assert "https://h.example/api/jobs" not in calls
+
+
 def test_same_host_requests_are_spaced_by_crawl_delay(monkeypatch: pytest.MonkeyPatch) -> None:
     _install(
         monkeypatch,
