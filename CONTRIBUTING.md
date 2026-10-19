@@ -43,7 +43,8 @@ make persist FILE=<workflow-output.json>              # -> results/<lane>/shortl
 uv run ajoa-kit pack-plan --min-score 5 --json        # -> results/pack-plan.json (missing-pack work list, ADR-0005)
 # tailor one shortlisted offer (Workflow tool); add `critique: true` for the draft→critique→revise pass (#272):
 #   Workflow({ scriptPath: ".claude/workflows/cc-workflow-tailor-offer.js", args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
-uv run ajoa-kit persist-offer <workflow-output.json>  # -> results/offers/<slug>/*.md
+uv run ajoa-kit persist-offer <workflow-output.json>  # -> results/offers/<slug>/*.md + result.json
+uv run ajoa-kit persist-offer results/offers/<slug>/result.json --slug <slug>  # re-render a hand-edited pack
 uv run ajoa-kit ats-check results/offers/<slug>/cv.md # ATS parse-safety gate
 uv run ajoa-kit render-pdf results/offers/<slug>/cv.md # optional -> cv.pdf (needs: uv sync --extra pdf)
 ```
