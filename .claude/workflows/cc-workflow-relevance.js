@@ -9,11 +9,13 @@
 //     rootDir:     '.',     // repo root holding results/batches/ + results/evidence-library.json
 //     batchCount:  N,       // REQUIRED — results/batches/manifest.json .batch_count
 //     limitBatches: K,      // optional — sample the first K batches (dry run)
+//     startBatch:  S,       // optional — begin at batch S (default 0); with limitBatches, screens
+//                           //   S..S+K-1. Concurrent runs over disjoint slices raise throughput.
 //     // libraryPath / library — optional overrides; by default each agent reads
 //     //   results/evidence-library.json (the Stage-1 output) for the candidate brief
 //   }})
 // (now under .claude/workflows/, it can also be invoked by name: Workflow({ name: 'relevance' }).)
-// ⚠️ TOKEN USAGE: fans out ONE subagent per batch — cost scales with batchCount (e.g. 106 batches ≈ 106 LLM calls; measured ≈100k tokens per 40-JD batch, 2026-07). Use limitBatches:K for a cheap dry run before a full pass.
+// ⚠️ TOKEN USAGE: fans out ONE subagent per batch — cost scales with batchCount (e.g. 106 batches ≈ 106 LLM calls; measured ≈100k tokens per 40-JD batch 2026-07, ≈168k 2026-10). Use limitBatches:K for a cheap dry run before a full pass.
 // ⚠️ RESUME: Workflow resumeFromRunId replays completed agents from cache SAME-SESSION only — and a
 // re-run of `ingest --merge` / `chunk --new` recomputes the delta, so the batch files a paused run
 // references may silently change; after any re-chunk, start a fresh run instead of resuming.
@@ -38,7 +40,8 @@ const cfg = typeof args === 'string' ? JSON.parse(args) : (args && typeof args =
 const rootDir = cfg.rootDir || '.'
 const dir = cfg.batchDir || `${rootDir}/results/batches`
 const batchCount = cfg.batchCount // REQUIRED: read results/batches/manifest.json before invoking
-const count = cfg.limitBatches ? Math.min(cfg.limitBatches, batchCount) : batchCount
+const start = cfg.startBatch || 0
+const end = cfg.limitBatches ? Math.min(start + cfg.limitBatches, batchCount) : batchCount
 
 // Candidate brief: by default each gate agent READS the Stage-1 evidence library itself.
 // Pass `library` (parsed evidence-library.json or a compact brief) to inline it instead.
@@ -166,9 +169,9 @@ For each KEPT JD return: id, title, company, url, best_lane (single best fit), s
 
 phase('Screen')
 if (!batchCount) throw new Error('args.batchCount required (read results/batches/manifest.json .batch_count)')
-log(`Screening ${count} of ${batchCount} batches from ${dir}`)
+log(`Screening batches ${start}..${end - 1} of ${batchCount} from ${dir}`)
 
-const batches = Array.from({ length: count }, (_, i) => i)
+const batches = Array.from({ length: Math.max(end - start, 0) }, (_, i) => start + i)
 const results = (
   await parallel(
     batches.map((i) => () =>
