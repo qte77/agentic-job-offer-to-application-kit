@@ -12,8 +12,9 @@ pass, #272, a ``jd-truncation-check.md`` when the source JD sat at the ingest de
 #347, a ``lane-grounding-check.md`` when the evidence library lacks the pack's lane angle, #348, a
 ``cv-grounding-check.md`` when the CV cites a distinctive number absent from the evidence library,
 and an ``honesty-check.md`` when a must-have looks marked covered without real evidence — arc-011
-Slice C), and a ``meta.json`` recording the JD id so the local dashboard
-can join the pack back to its shortlist row (#209). The results root comes from
+Slice C), a ``meta.json`` recording the JD id so the local dashboard
+can join the pack back to its shortlist row (#209), and ``result.json``, the pack itself, so a
+hand-edited artifact can be re-rendered from source (#365). The results root comes from
 ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate workspace works.
 
 No submission, no auto-apply: the prefill pack is a human-review artifact only — it lists
@@ -29,10 +30,13 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pydantic import ValidationError
+
 from ajoa_kit.ats_check import parse_safety_warnings
 from ajoa_kit.coverage import coverage_summary, honesty_warnings
 from ajoa_kit.defaults import DESC_CAP
 from ajoa_kit.grounding import grounding_warnings
+from ajoa_kit.models import OfferMeta
 from ajoa_kit.settings import AppSettings
 from ajoa_kit.stuffing import stuffing_warnings
 
@@ -47,6 +51,10 @@ ARTIFACTS: list[tuple[str, str, str]] = [
     ("gap_report", "gap-report.md", "Gap report"),
     ("prefill_pack", "prefill-pack.md", "Prefill pack (human review — do not auto-submit)"),
 ]
+
+# The pack's source, kept beside its rendered artifacts (#365); `persist-offer <dir>/result.json`
+# re-renders them.
+SOURCE = "result.json"
 
 _NON_SLUG = re.compile(r"[^a-z0-9]+")
 
@@ -99,7 +107,9 @@ def render(pack: dict) -> list[tuple[str, str]]:
             stripped = strip_frontmatter(body)
         # Title as YAML frontmatter (not a wrapping `# H1`) so each artifact keeps a single H1
         # from its own body — markdownlint strips frontmatter, so no MD025 "multiple H1" noise.
-        rendered.append((filename, f'---\ntitle: "{heading}"\n---\n\n{body}\n'))
+        rendered.append(
+            (filename, f'---\ntitle: "{heading}"\ngenerated_from: "{SOURCE}"\n---\n\n{body}\n')
+        )
     return rendered
 
 
@@ -271,6 +281,8 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     files = render(pack)  # validate first — all-or-nothing
     offer_dir = results_dir / "offers" / safe_slug(slug)
     offer_dir.mkdir(parents=True, exist_ok=True)
+    # The .md files are build output; keep their source so a hand-edit can be regenerated (#365).
+    (offer_dir / SOURCE).write_text(json.dumps(pack, indent=2, ensure_ascii=False))
     for filename, content in files:
         (offer_dir / filename).write_text(content)
     # Optional 6th artifact — kept OUT of ARTIFACTS so render()'s all-or-nothing
@@ -287,7 +299,8 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     # Sidecar for the local dashboard join (#209): the dir is named by the (maybe custom) slug, so
     # record the JD id -> this offer so build_ui_shortlist can attach cv/cover-letter by id.
     if jd_id:
-        (offer_dir / "meta.json").write_text(json.dumps({"id": jd_id, "slug": safe_slug(slug)}))
+        meta = OfferMeta(id=str(jd_id), slug=safe_slug(slug))
+        (offer_dir / "meta.json").write_text(meta.model_dump_json())
     return offer_dir
 
 
@@ -312,11 +325,11 @@ def _load_offer_index(results_dir: Path) -> dict[str, Path]:
     index: dict[str, Path] = {}
     for meta_path in (results_dir / "offers").glob("*/meta.json"):
         try:
-            meta = json.loads(meta_path.read_text())
-        except (OSError, json.JSONDecodeError):
+            meta = OfferMeta.model_validate_json(meta_path.read_text())
+        except (OSError, ValidationError):
             continue
-        if isinstance(meta, dict) and meta.get("id"):
-            index[str(meta["id"])] = meta_path.parent
+        if meta.id:
+            index[meta.id] = meta_path.parent
     return index
 
 
