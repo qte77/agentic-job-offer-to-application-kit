@@ -66,10 +66,12 @@ def _endpoint(backend: str, keys: DecisionKeys) -> tuple[str, str, SecretStr | N
 
 
 def _post(url: str, body: dict, headers: dict[str, str]) -> dict:
-    req = urllib.request.Request(  # noqa: S310 -- fixed https endpoints above
+    if not url.startswith("https://"):  # never file:/ or other schemes
+        raise ValueError(f"refusing non-https URL: {url!r}")
+    req = urllib.request.Request(  # noqa: S310 -- https enforced above
         url, data=json.dumps(body).encode(), headers=headers, method="POST"
     )
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:  # noqa: S310
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:  # noqa: S310  # nosec B310
         return json.loads(resp.read())
 
 
@@ -163,7 +165,8 @@ def main(backend: str = "jev", sample: int = 500, seed: int = 0) -> None:
     settings = AppSettings()
     results = settings.results_dir
     jds, kept = _screened(results)
-    rng = random.Random(seed)  # noqa: S311 -- reproducible sampling, not cryptography
+    # Reproducible sampling, not cryptography.
+    rng = random.Random(seed)  # noqa: S311  # nosec B311
     pos = [jd for jd in jds if jd["id"] in kept]
     neg = [jd for jd in jds if jd["id"] not in kept]
     picked = rng.sample(pos, min(sample // 2, len(pos))) + rng.sample(
