@@ -35,7 +35,7 @@ evidence — plan 003 closes all three.
 branch off fresh `main` → (PR 2/3) tests first → implement → **gate LAST** (`make check`; changed
 docs via `markdownlint-cli2 --no-globs <files>`) → CHANGELOG fragment → commit by topic
 (`--no-gpg-sign`) → `env -u GH_TOKEN -u GITHUB_TOKEN git push` → PR with `Closes #n` →
-`gh pr checks <n> --watch` → `gh pr merge <n> --squash --admin --delete-branch` → prune local
+`gh pr checks <n> --watch` → `gh pr merge <n> --squash --delete-branch` → prune local
 branch → sync `main` before the next PR.
 
 ## Gotchas (this environment)

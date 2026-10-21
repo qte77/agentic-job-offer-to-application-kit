@@ -83,7 +83,7 @@ committed into a plan.
 **Fix:** Unset **both** on every `gh` and `git push`:
 
 ```bash
-env -u GH_TOKEN -u GITHUB_TOKEN gh pr merge <n> --squash --admin
+env -u GH_TOKEN -u GITHUB_TOKEN gh pr merge <n> --squash
 ```
 
 The tell is `Active account: false` on the stored token in `gh auth status` — check that line, not

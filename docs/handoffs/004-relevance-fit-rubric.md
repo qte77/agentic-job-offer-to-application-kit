@@ -31,7 +31,7 @@ motivation) in prose and emits two optional structured fields — `deadline` and
 5. Mutators (`ruff --fix`/format) → **gate LAST** (`make check`; `markdownlint-cli2 --no-globs` on
    changed md). Any post-gate edit → re-run the full gate.
 6. Commit by topic (`--no-gpg-sign`) → `env -u GH_TOKEN -u GITHUB_TOKEN git push` → PR **`Closes #271`**
-   → `gh pr checks <n> --watch` → `gh pr merge <n> --squash --admin --delete-branch` → prune local.
+   → `gh pr checks <n> --watch` → `gh pr merge <n> --squash --delete-branch` → prune local.
 
 ## Gotchas (this environment)
 

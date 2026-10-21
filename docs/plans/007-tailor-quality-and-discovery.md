@@ -192,7 +192,7 @@ S1+S2 share the tailor workflow file and may ride one branch if you prefer; kept
   live** (a real Workflow run), not unit-tested → mutators (`ruff --fix`/format) → **gate LAST**
   (`make check` + `markdownlint-cli2 --no-globs` on changed md + `actionlint` on changed workflows) → commit
   by topic (`--no-gpg-sign`) → `env -u GH_TOKEN -u GITHUB_TOKEN` push/gh → PR (`Closes #NNN`) →
-  `gh pr checks <n> --watch` → squash `--admin --delete-branch` on green → prune.
+  `gh pr checks <n> --watch` → squash `--delete-branch` on green → prune.
 - **Assume strict lint/typing/sec** (ruff incl. `S`/bandit, `ruff format`, pyright, complexipy ≤10). The
   `×` multiplication sign trips RUF001/2/3 — use `x`; `·` middle dot is fine.
 - **S3 boundary is structural:** discovery output names companies → business data → local `results/` only.

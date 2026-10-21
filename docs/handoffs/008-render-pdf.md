@@ -25,7 +25,7 @@ also on issue #275 (2026-07-14 comment).
 Branch off fresh `main` → TDD red→green (pure `_normalize_html` only; the render is glue, **verified live**) →
 mutators (`ruff --fix`/format) → **gate LAST** (`make check` + `markdownlint-cli2 --no-globs` on changed md) →
 commit by topic (`--no-gpg-sign`) → `env -u GH_TOKEN -u GITHUB_TOKEN` push/gh → PR → `gh pr checks <n> --watch` →
-`gh pr merge <n> --squash --admin --delete-branch` on green → prune local + `git remote prune origin`.
+`gh pr merge <n> --squash --delete-branch` on green → prune local + `git remote prune origin`.
 
 ## Gotchas
 

@@ -192,7 +192,7 @@ mirrors; the dashboard chart reuses `trends.js` fetch/pivot/render verbatim.
   (`ruff --fix`/format) → **gate LAST** (`make check` + `markdownlint-cli2 --no-globs` on changed md +
   `actionlint` on changed workflows) → commit by topic (`--no-gpg-sign`) → `env -u GH_TOKEN
   -u GITHUB_TOKEN` push/gh (`gh auth setup-git` once) → PR → `gh pr checks <n> --watch` → squash
-  `--admin --delete-branch` on green → prune local + `git remote prune origin`.
+  `--delete-branch` on green → prune local + `git remote prune origin`.
 - **Boundary is structural:** the fail-closed boundary guard (Makefile:154-159) aborts the data-branch
   push if any non-allowlisted path is in the tree — so a company-named file can never leak. Add **only**
   the geo×field `hiring-*.ndjson` to `TRENDS_PUBLISH`.

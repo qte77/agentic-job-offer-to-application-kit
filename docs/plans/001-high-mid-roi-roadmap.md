@@ -21,7 +21,7 @@
 ## Conventions (every slice)
 
 - Branch per issue off `main`; commit by topic (`git commit --no-gpg-sign`); push; **squash-merge on
-  green** (`gh pr merge <n> --squash --admin --delete-branch`).
+  green** (`gh pr merge <n> --squash --delete-branch`).
 - **TDD red→green for MODULES only** (`src/ajoa_kit/*.py`). No tests for L3 workflow scripts
   (`.claude/workflows/*.js` → `node --check`), L4 `ui/`, Makefile/CI/`.gitignore` glue, `scripts/`
   glue, config JSON, docs.

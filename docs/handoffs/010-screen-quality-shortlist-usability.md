@@ -86,7 +86,7 @@ Every open decision has a default; proceed with it unattended and let the owner 
   looks exactly like a revoked account (2026-08-10 cost two failed writes and a wrong diagnosis).
   `gh auth status` is the tell — the stored `gho_` token shows `Active account: false` while a
   shadowing token is set. Commit with `--no-gpg-sign`.
-- **`gh pr merge --squash --admin`** works for PRs authored by the sole code owner (qte77); every
+- **`gh pr merge --squash`** merges without a review only for PRs authored by the sole code owner (qte77); every
   other author — bots (dependabot, github-actions) **and other human accounts** (e.g. dntywntme) —
   hits `Waiting on code owner review from qte77` and needs a real `gh pr review --approve` from
   qte77 first (a comment saying "approved" does not count — check `gh pr view <n> --json reviews`

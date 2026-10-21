@@ -41,7 +41,7 @@ Branch off fresh `main` → **TDD red→green for the pure Python only** (glue/p
 unit-tested) → implement → mutators (`ruff --fix`/format) → **gate LAST** (`make check` +
 `markdownlint-cli2 --no-globs` on changed md + `actionlint` on changed workflows) → commit by topic
 (`--no-gpg-sign`) → `env -u GH_TOKEN -u GITHUB_TOKEN` push (`gh auth setup-git` once) → PR (`Closes #NNN`,
-cross-ref `#284` with "for #284") → `gh pr checks <n> --watch` → `gh pr merge <n> --squash --admin
+cross-ref `#284` with "for #284") → `gh pr checks <n> --watch` → `gh pr merge <n> --squash
 --delete-branch` on green → prune local + `git remote prune origin`.
 
 ## Gotchas (this environment)

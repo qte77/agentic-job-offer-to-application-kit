@@ -70,7 +70,7 @@
 - UI theming converged on the qte77 brand (#112/#117): EyeRest tokens, `qte77-theme` storage key,
   system/light/dark cycle, `.sr-only` clip-path; Inter now served as WOFF2 (TTF fallback).
 - Governance safe-subset settled (#54, closed): selected-actions allowlist + full SHA-pinning
-  enforced and the branch ruleset reverted to permit the solo `--admin` / unsigned-release flow;
+  enforced and the branch ruleset reverted to permit the solo-maintainer merge / unsigned-release flow;
   strict signed-tag (03) and required-review (06) rulesets intentionally excluded.
 - Offline e2e pipeline smoke test (#165): pins the deterministic `chunk → persist_scored →
   persist_offer → ats_check` chain with canned synthetic Workflow outputs (the LLM relevance/tailor

@@ -151,7 +151,7 @@ is assembled by scriv from the per-PR fragments above.
    `action_required` until a real-user event — push an empty commit to the bump branch
    (`git commit --allow-empty -m "ci: run checks" && git push origin HEAD:<bump-branch>`) or close +
    reopen the PR.
-3. Merge on green — `gh pr merge <n> --squash --admin --delete-branch`. **tag-release** then fires on
+3. Merge on green — `gh pr merge <n> --squash --delete-branch`. **tag-release** then fires on
    `main` and tags the merge commit `vX.Y.Z` (always reachable from `main` — no tag drift).
 4. Optionally publish a GitHub Release with notes from the `CHANGELOG.md` block —
    `gh workflow run publish-release.yaml -f tag=vX.Y.Z`. The default flow is tag-only.

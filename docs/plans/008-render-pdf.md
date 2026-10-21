@@ -94,7 +94,7 @@ CHANGELOG fragment (Added: `render-pdf` verb + `[pdf]` extra); CONTRIBUTING §CL
 - **Live (closes the spike's one gap):** `uv sync --extra pdf` → `ajoa-kit render-pdf results/offers/<slug>/cv.md` →
   `pdftotext out.pdf -` shows **selectable, single-column, top-to-bottom-ordered** text with section headings intact.
 - `make check` green (pure test; fpdf2/markdown-it lazy → offline import holds); `markdownlint-cli2 --no-globs` on
-  changed md. Gate LAST → commit by topic (`--no-gpg-sign`) → PR (`Closes #275`) → squash `--admin` on green → prune.
+  changed md. Gate LAST → commit by topic (`--no-gpg-sign`) → PR (`Closes #275`) → squash-merge on green → prune.
 
 ## Guardrails (#275)
 
