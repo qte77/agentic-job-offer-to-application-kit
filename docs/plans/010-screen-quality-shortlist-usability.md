@@ -321,7 +321,7 @@ own; the record of it lives here and in the corpus/jobs-raw.json regen.
   evidence library (before 2026-07-29). Phase C scores under the current one. A "5" from June and a
   "5" from Phase C are not the same judgement. Re-screening the back catalogue is ~16 batches
   (~1.6M tokens) if that ever matters enough.
-- **`--admin` merges PRs authored by the sole code owner (qte77), not any other author.** The
+- **Only PRs authored by the sole code owner (qte77) merge without a review, not any other author.** The
   `default` ruleset sets `require_code_owner_review: true`; this blocks bots (dependabot,
   github-actions) **and other human accounts** (e.g. dntywntme) identically — all need an explicit
   `gh pr review --approve` from qte77 first. A comment saying "approved" does not count; verify with

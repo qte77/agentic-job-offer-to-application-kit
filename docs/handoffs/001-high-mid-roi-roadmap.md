@@ -22,7 +22,7 @@ PARKED (don't build proactively): #195-JobRecord, #199.
 
 branch off `main` → TDD (modules only; glue/JS/docs get none) → `make check` + `make docs-lint` →
 CHANGELOG fragment (`changelog.d/`) + doc impact → push (`env -u GH_TOKEN -u GITHUB_TOKEN git push`) →
-PR → **squash-merge on green** (`--squash --admin --delete-branch`) → sync `main`.
+PR → **squash-merge on green** (`--squash --delete-branch`) → sync `main`.
 
 ## Gotchas
 

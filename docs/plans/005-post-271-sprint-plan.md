@@ -168,7 +168,7 @@ holds — see Slice 5 comment).
 - Per slice: branch off fresh `main` (`feat/…`, `docs/…`, `ci/…`) → commit by topic → **gate LAST**
   (`make check` + `markdownlint-cli2 --no-globs` on changed md + lychee) → `--no-gpg-sign` commits →
   `env -u GH_TOKEN -u GITHUB_TOKEN` push/gh (`gh auth setup-git` once) → PR → `gh pr checks --watch` →
-  `gh pr merge --squash --admin --delete-branch` → prune local.
+  `gh pr merge --squash --delete-branch` → prune local.
 - **TDD only for module (`.py`) slices** (the S2 build script) — the S1 docs/UI/gitignore slices touch
   no module, so no tests (repo rule: value-add only, not for docs/UI/scripts-without-logic).
 - **Changelog:** docs closeout (Slice 1) + the #260 eval are **exempt** (CONTRIBUTING.md:92); the UI

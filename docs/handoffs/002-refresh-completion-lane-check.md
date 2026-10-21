@@ -30,7 +30,7 @@ the local shortlist expand now shows the tailored CV/cover-letter via `persist_o
 
 branch off `main` → TDD red→green (modules only) → `make check` + `make docs-lint` → CHANGELOG fragment
 (`changelog.d/`) + doc impact → push (`env -u GH_TOKEN -u GITHUB_TOKEN git push`) → PR → squash-merge on
-green (`gh pr merge <n> --squash --admin --delete-branch`) → sync `main`.
+green (`gh pr merge <n> --squash --delete-branch`) → sync `main`.
 
 ## Gotchas
 
