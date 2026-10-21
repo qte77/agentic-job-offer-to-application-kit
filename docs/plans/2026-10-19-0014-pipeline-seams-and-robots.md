@@ -12,7 +12,7 @@
 - **Next:** PR-C (#342 + #344, with headless offload). Never re-run `chunk` while a relevance
   screen is running. Use `chunk --new --decision-gate` for the next re-screen.
 - **Loop per PR:** topic branch from main, red test first, `make check` last, changelog fragment,
-  docs audit, push, squash-merge with `--admin` only when that PR's own checks are green, delete
+  docs audit, push, squash-merge only when that PR's own checks are green, delete
   the branch, strike the row below in the same PR.
 - **Owner gates:** none open. The owner chose (2026-10-21) to switch Jev on at 0.25 rather than
   wait for per-lane questions. Keys are in `.env`: `TYPESAFE_API_KEY`, `CLOUDFLARE_API_TOKEN`,
