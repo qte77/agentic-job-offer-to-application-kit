@@ -207,6 +207,13 @@ def _pack_plan(args: argparse.Namespace) -> None:
     )
 
 
+def _decision_prefilter(args: argparse.Namespace) -> None:
+    """Shadow-score screened JDs with a decision model and print the go/no-go report."""
+    from ajoa_kit.decision_prefilter import main as run
+
+    run(backend=args.backend, sample=args.sample, seed=args.seed)
+
+
 def _open_offers(args: argparse.Namespace) -> None:
     """Open each selected shortlist offer's URL in a browser tab (tier 1, #417)."""
     from ajoa_kit.open_offers import main as run
@@ -313,6 +320,19 @@ def main() -> None:
         "--dry-run", action="store_true", help="Report without writing results/pack-plan.json."
     )
     pack_plan_p.set_defaults(func=_pack_plan)
+
+    decision_p = sub.add_parser(
+        "decision-prefilter",
+        help="Shadow-test a decision-model pre-filter (Jev / Clef) on the last screen.",
+    )
+    decision_p.add_argument("--backend", choices=("jev", "clef"), default="jev")
+    decision_p.add_argument(
+        "--sample", type=int, default=500, help="JDs to score, half kept, half dropped."
+    )
+    decision_p.add_argument(
+        "--seed", type=int, default=0, help="Sample seed (same seed, same JDs)."
+    )
+    decision_p.set_defaults(func=_decision_prefilter)
 
     open_offers_p = sub.add_parser(
         "open-offers",
