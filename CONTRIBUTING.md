@@ -96,6 +96,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | `companies-snapshot` | — company-hiring series: publishable geo-by-field + local per-company (see [§Trends data branch](#trends-data-branch)) |
 | `discover` | — reads the config `discovery` source (yc-oss) → emerging/hiring company signal in `results/emerging-companies.json` (local business data, never published; needs polyfetch env) (#292) |
 | `status` | `<slug>` — set/read a local application-outcome status per offer · `--stage <applied/responded/interview/offer/rejected>` `--date <YYYY-MM-DD>` `--notes <text>` (#273) |
+| `decision-prefilter` | shadow-tests a decision-model pre-filter against the last relevance screen: scores a stratified sample (half kept, half dropped) with one "fits any lane?" question and prints recall of kept offers and the share of JDs a gate would drop, per threshold · `--backend jev\|clef` (default `jev`) · `--sample N` (default 500) · `--seed N` · writes `results/decision-prefilter/<backend>.jsonl` · sends the JD text and a short candidate summary to the chosen API · gates nothing yet |
 
 Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tiered per
 [ADR-0002](docs/decisions/0002-source-tos-tiers.md).
@@ -110,6 +111,8 @@ Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tie
 | `POLYFETCH_DIR` | `../polyfetch-scrape` | the [polyfetch-scrape](https://github.com/qte77/polyfetch-scrape) checkout the network-touching subcommands borrow (see [§Polyfetch venv-borrow](#polyfetch-venv-borrow)) |
 | `PORT` | `8000` | port for `make preview` |
 | `TRENDS_FORCE` | *(unset)* | `1` skips `make trends_data`'s shrink guard (which refuses a push that would drop bucket counts) for an intentional prune |
+| `TYPESAFE_API_KEY` | *(unset)* | key for the `decision-prefilter --backend jev` decision model (TypeSafe Jev); keep it in `.env` |
+| `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` | *(unset)* | token (Workers AI scope) and account id for `decision-prefilter --backend clef` (Cloudflare Clef-flash); keep them in `.env` |
 | `.env` file | *(none)* | optional dotenv (`AppSettings.env_file`, `src/ajoa_kit/settings.py`) that sets any `AJOA_*` override above; git-ignored — keep private paths out of the repo |
 
 ## Opening a PR
