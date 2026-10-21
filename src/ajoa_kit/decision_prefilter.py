@@ -160,6 +160,51 @@ def _screened(results: Path) -> tuple[list[dict], dict[str, float | None]]:
     return jds, {r["id"]: r.get("score") for r in relevant if r.get("id") in ids}
 
 
+def make_scorer(backend: str, results: Path, config_dir: Path) -> Callable[[dict], float | None]:
+    """Build ``jd -> fit probability``, loading the brief, lane labels and keys once."""
+    library = json.loads((results / "evidence-library.json").read_text())
+    brief = f"{library.get('headline', '')}\n{library.get('positioningSummary', '')}"
+    lanes = "; ".join(lane.label for lane in load_lanes(config_dir))
+    keys = DecisionKeys()
+    return lambda jd: fit(build_state(jd, brief), backend, keys, lanes=lanes)
+
+
+# Shadow 2026-10-21: no score-4+ offer scored below 0.26 on Jev (118 checked); ~30% of JDs fall
+# below 0.25.
+GATE_BACKEND = "jev"
+GATE_THRESHOLD = 0.25
+
+
+def gate(
+    jds: list[dict],
+    results_dir: Path,
+    *,
+    score: Callable[[dict], float | None],
+    threshold: float = GATE_THRESHOLD,
+) -> list[dict]:
+    """Return the JDs worth an LLM screen; record each skipped one in ``skipped.jsonl``.
+
+    Only a confident low score skips a JD. A failed call (``None``) keeps it.
+    """
+    out_dir = results_dir / "decision-prefilter"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    kept: list[dict] = []
+    failed = 0
+    with (out_dir / "skipped.jsonl").open("w") as fh:
+        for jd in jds:
+            p = score(jd)
+            if p is not None and p < threshold:
+                fh.write(json.dumps({"id": jd["id"], "title": jd.get("title", ""), "p": p}) + "\n")
+                continue
+            failed += p is None
+            kept.append(jd)
+    print(
+        f"decision gate ({GATE_BACKEND} < {threshold}): skipped {len(jds) - len(kept)} of "
+        f"{len(jds)}; {failed} kept after a failed call -> {out_dir / 'skipped.jsonl'}"
+    )
+    return kept
+
+
 def main(backend: str = "jev", sample: int = 500, seed: int = 0) -> None:
     """Score a stratified sample with ``backend``, save it, and print the shadow report."""
     settings = AppSettings()
@@ -172,16 +217,13 @@ def main(backend: str = "jev", sample: int = 500, seed: int = 0) -> None:
     picked = rng.sample(pos, min(sample // 2, len(pos))) + rng.sample(
         neg, min(sample // 2, len(neg))
     )
-    library = json.loads((results / "evidence-library.json").read_text())
-    brief = f"{library.get('headline', '')}\n{library.get('positioningSummary', '')}"
-    lanes = "; ".join(lane.label for lane in load_lanes(settings.config_dir))
-    keys = DecisionKeys()
+    score = make_scorer(backend, results, settings.config_dir)
     out_dir = results / "decision-prefilter"
     out_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     with (out_dir / f"{backend}.jsonl").open("w") as fh:
         for jd in picked:
-            p = fit(build_state(jd, brief), backend, keys, lanes=lanes)
+            p = score(jd)
             row = {"id": jd["id"], "kept": jd["id"] in kept, "score": kept.get(jd["id"]), "p": p}
             fh.write(json.dumps(row) + "\n")
             rows.append(row)

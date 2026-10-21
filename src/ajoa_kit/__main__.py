@@ -41,7 +41,11 @@ def _chunk(args: argparse.Namespace) -> None:
     from ajoa_kit.chunk import DEFAULT_BATCH
     from ajoa_kit.chunk import main as run
 
-    run(batch=args.batch_size if args.batch_size is not None else DEFAULT_BATCH, new=args.new)
+    run(
+        batch=args.batch_size if args.batch_size is not None else DEFAULT_BATCH,
+        new=args.new,
+        decision_gate=args.decision_gate,
+    )
 
 
 def _persist(args: argparse.Namespace) -> None:
@@ -265,6 +269,11 @@ def main() -> None:
         "--new",
         action="store_true",
         help="Batch only the latest-pull delta from results/corpus.json (#226 re-screen).",
+    )
+    chunk_p.add_argument(
+        "--decision-gate",
+        action="store_true",
+        help="Skip JDs the Jev decision model scores below 0.25 (needs TYPESAFE_API_KEY).",
     )
     chunk_p.set_defaults(func=_chunk)
 
