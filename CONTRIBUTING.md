@@ -78,7 +78,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 | Subcommand | Flags / args |
 |---|---|
 | `ingest` | `--merge` — also fold the pull into a running `results/corpus.json` (4-state dedup-merge) · reads `config/seed.json`, else `config/default-seed.json` · injects `config/manual-jds.json` into every pull (hand-captured postings; absent file is inert — see [`examples/alexis-doe`](examples/alexis-doe/README.md#adding-a-posting-no-adapter-can-reach)) |
-| `chunk` | `--batch-size N` (default 40) · `--new` — batch only the latest-pull `corpus.json` delta (offers new or changed this pull) for an incremental re-screen (#226/#235) |
+| `chunk` | `--batch-size N` (default 40) · `--new` — batch only the latest-pull `corpus.json` delta (offers new or changed this pull) for an incremental re-screen (#226/#235) · `--decision-gate` — skip JDs the Jev decision model scores below 0.25 before batching; a failed call keeps the JD; skips listed in `results/decision-prefilter/skipped.jsonl` (needs `TYPESAFE_API_KEY`) |
 | `persist` | `FILE` — the relevance workflow result · `--merge` — union into the existing shortlists / `jobs-scored.json` by id instead of overwriting (#226) |
 | `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` · writes a `jd-truncation-check.md` review aid when the source JD sat at the ingest description cap (#347) |
 | `refresh` | reconcile shortlists vs the corpus `delisted` state + a read-only URL re-probe · `--lane <name>` (default: all buckets) · `--delete` (remove vs flag `stale`) · `--dry-run` · runs via the [venv-borrow](#polyfetch-venv-borrow) (the re-probe imports `polyfetch_scrape`) |
@@ -111,7 +111,7 @@ Per-adapter endpoint URLs live in `src/ajoa_kit/sources.py`; sources are ToS-tie
 | `POLYFETCH_DIR` | `../polyfetch-scrape` | the [polyfetch-scrape](https://github.com/qte77/polyfetch-scrape) checkout the network-touching subcommands borrow (see [§Polyfetch venv-borrow](#polyfetch-venv-borrow)) |
 | `PORT` | `8000` | port for `make preview` |
 | `TRENDS_FORCE` | *(unset)* | `1` skips `make trends_data`'s shrink guard (which refuses a push that would drop bucket counts) for an intentional prune |
-| `TYPESAFE_API_KEY` | *(unset)* | key for the `decision-prefilter --backend jev` decision model (TypeSafe Jev); keep it in `.env` |
+| `TYPESAFE_API_KEY` | *(unset)* | key for the TypeSafe Jev decision model used by `chunk --decision-gate` and `decision-prefilter --backend jev`; keep it in `.env` |
 | `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` | *(unset)* | token (Workers AI scope) and account id for `decision-prefilter --backend clef` (Cloudflare Clef-flash); keep them in `.env` |
 | `.env` file | *(none)* | optional dotenv (`AppSettings.env_file`, `src/ajoa_kit/settings.py`) that sets any `AJOA_*` override above; git-ignored — keep private paths out of the repo |
 

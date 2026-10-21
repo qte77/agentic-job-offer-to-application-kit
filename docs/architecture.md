@@ -58,7 +58,9 @@ disagree; counts are the config-driven vocabulary — no JD content.
 > reconstructed from the aggregate series.
 
 **Two-stage trim (cost model):** cheap deterministic pre-filter → LLM relevance screen →
-expensive tailoring only on the shortlist.
+expensive tailoring only on the shortlist. Optionally, `chunk --decision-gate` adds a step before
+the LLM screen: a decision model (TypeSafe Jev) scores each JD's fit for cents, and confident
+misfits (below 0.25) are left out of the batches (`src/ajoa_kit/decision_prefilter.py`).
 
 ## User flow
 

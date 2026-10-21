@@ -88,6 +88,8 @@ union them into the existing shortlists without clobbering:
 ```bash
 POLYFETCH_DIR=../polyfetch-scrape scripts/ingest.sh --merge       # updates results/corpus.json
 uv run ajoa-kit chunk --new                                       # batch only the corpus.json delta
+# optional: add --decision-gate to skip JDs the Jev decision model scores below 0.25
+# (needs TYPESAFE_API_KEY in .env; each skip is listed in results/decision-prefilter/skipped.jsonl)
 # relevance (Workflow tool) over the delta batches; save the result, then:
 uv run ajoa-kit persist --merge <relevance-output.json>           # union by id into shortlists
 ```
