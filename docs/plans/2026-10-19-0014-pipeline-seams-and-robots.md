@@ -7,14 +7,15 @@
   decision-model pre-filter, and close the robots.txt / crawl-delay gap ADR-0002 names as out of
   scope (#454).
 - **Shipped:** #458 (`startBatch` slices for the relevance workflow); #459 (PR-A, #365); #460
-  (PR-B, #346); #461 (PR-D, #454); the PR-E shadow tool in the PR that strikes its row.
-- **Next, in order:** the owner's call on the pre-filter (see the Remaining work table), then PR-C
-  (#342 + #344, with headless offload). Never re-run `chunk` while a relevance screen is running.
+  (PR-B, #346); #461 (PR-D, #454); #462 (PR-E shadow tool); the Jev decision gate
+  (`chunk --decision-gate`) in the PR that strikes its row.
+- **Next:** PR-C (#342 + #344, with headless offload). Never re-run `chunk` while a relevance
+  screen is running. Use `chunk --new --decision-gate` for the next re-screen.
 - **Loop per PR:** topic branch from main, red test first, `make check` last, changelog fragment,
-  docs audit, push, squash-merge with `--admin` only when that PR's own checks are green, delete
+  docs audit, push, squash-merge only when that PR's own checks are green, delete
   the branch, strike the row below in the same PR.
-- **Owner gates:** whether and how to switch the pre-filter on (shadow results below miss the
-  98% / 50% bar). Keys are in `.env`: `TYPESAFE_API_KEY`, `CLOUDFLARE_API_TOKEN`,
+- **Owner gates:** none open. The owner chose (2026-10-21) to switch Jev on at 0.25 rather than
+  wait for per-lane questions. Keys are in `.env`: `TYPESAFE_API_KEY`, `CLOUDFLARE_API_TOKEN`,
   `CLOUDFLARE_ACCOUNT_ID`.
 - **Watch-outs:**
   - A workflow resume only works inside the Claude Code session that started it.
@@ -94,6 +95,7 @@
 | ~~PR-B #346: refresh hint; `last-pull.json`; `scored_against` / `tailored_against`~~ | agent | shipped in #460 |
 | PR-C #342 + #344: `batch_set_id`; per-batch files; `persist --from-batches`; `make relevance`; `make relevance_headless` | agent | merged; a headless one-batch run is picked up by `persist --from-batches` |
 | ~~PR-E: `decision-prefilter` subcommand with Jev and Clef backends; shadow-mode report on the 2026-10-19 screen~~ | agent | shipped in this PR (results above) |
-| Pre-filter next step: switch Jev on at a zero-loss threshold, or add per-lane questions and re-run the shadow test | owner | decision recorded here; the chosen step merged with its own shadow or live numbers |
+| ~~Pre-filter next step: switch Jev on at a zero-loss threshold, or add per-lane questions and re-run the shadow test~~ | owner | shipped in this PR: `chunk --decision-gate` (Jev below 0.25 skipped). Live check on one 40-JD batch: 26 skipped, none of Claude's 5 kept JDs among them |
+| Per-lane decision questions (7 nouls per call) to push the skip share past 50% at the same recall | agent | deferred: only if the 30% saving proves too small; needs its own shadow run first |
 | ~~PR-D step 1: robots audit over every configured source~~ | agent | done: the live ingest found no source blocked by robots.txt |
 | ~~PR-D #454: `polite_fetch` with robots + crawl-delay~~ | agent | shipped in #461 |

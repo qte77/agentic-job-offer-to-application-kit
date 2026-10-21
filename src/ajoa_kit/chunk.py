@@ -110,7 +110,7 @@ def _new_offers(results: Path) -> list[dict]:
     return [rec for rec in corpus if rec.get("last_changed", rec["first_seen"]) == latest]
 
 
-def main(batch: int = DEFAULT_BATCH, *, new: bool = False) -> None:
+def main(batch: int = DEFAULT_BATCH, *, new: bool = False, decision_gate: bool = False) -> None:
     """Split the ingested corpus into fixed-size batch files plus a manifest.
 
     Args:
@@ -121,9 +121,16 @@ def main(batch: int = DEFAULT_BATCH, *, new: bool = False) -> None:
         new: When true, batch only the latest-pull delta from ``results/corpus.json``
             (offers whose ``first_seen`` equals the most recent ``last_seen``) for an
             incremental re-screen (#226), instead of the full ``results/jobs-raw.json``.
+        decision_gate: When true, ask the Jev decision model whether each JD fits any lane and
+            leave confident misfits out of the batches (see :mod:`ajoa_kit.decision_prefilter`).
     """
-    results = AppSettings().results_dir
+    settings = AppSettings()
+    results = settings.results_dir
     jobs = _new_offers(results) if new else json.loads((results / "jobs-raw.json").read_text())
+    if decision_gate:
+        from ajoa_kit.decision_prefilter import GATE_BACKEND, gate, make_scorer
+
+        jobs = gate(jobs, results, score=make_scorer(GATE_BACKEND, results, settings.config_dir))
     out = results / "batches"
     out.mkdir(parents=True, exist_ok=True)
     for stale in out.glob("batch-*.json"):  # clear previous run

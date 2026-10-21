@@ -18,6 +18,7 @@ from ajoa_kit import decision_prefilter as prefilter
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
 
 KEYS = prefilter.DecisionKeys(
     typesafe_api_key=SecretStr("ts-secret"),
@@ -86,6 +87,17 @@ def test_missing_key_sends_the_jd_on_without_calling_out() -> None:
     out = prefilter.fit("s", "jev", no_keys, post=lambda *a: called.append(a) or {})
     assert out is None
     assert called == []
+
+
+def test_gate_skips_only_confident_misfits_and_records_each_skip(tmp_path: Path) -> None:
+    jds = [{"id": "fit", "title": "AI Engineer"}, {"id": "miss", "title": "Sales Lead"}]
+    jds.append({"id": "error", "title": "Unknown"})
+    probs = {"fit": 0.9, "miss": 0.1, "error": None}
+    kept = prefilter.gate(jds, tmp_path, score=lambda jd: probs[jd["id"]], threshold=0.25)
+    # A failed call (None) goes on to the LLM screen; only a confident low score is skipped.
+    assert [jd["id"] for jd in kept] == ["fit", "error"]
+    lines = (tmp_path / "decision-prefilter" / "skipped.jsonl").read_text().splitlines()
+    assert [json.loads(line) for line in lines] == [{"id": "miss", "title": "Sales Lead", "p": 0.1}]
 
 
 def test_shadow_report_counts_recall_drops_and_escalations() -> None:
