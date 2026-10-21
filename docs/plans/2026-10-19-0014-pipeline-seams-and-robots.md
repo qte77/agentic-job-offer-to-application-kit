@@ -7,15 +7,15 @@
   decision-model pre-filter, and close the robots.txt / crawl-delay gap ADR-0002 names as out of
   scope (#454).
 - **Shipped:** #458 (`startBatch` slices for the relevance workflow); #459 (PR-A, #365); #460
-  (PR-B, #346); PR-D (#454) in the PR that strikes its row.
-- **Next, in order:** PR-C (#342 + #344, with headless offload), then PR-E (decision-model
-  pre-filter; keys are in the git-ignored `.env`). PR-C waits until any in-flight relevance screen has finished and been persisted:
-  never re-run `chunk` while a screen is running.
+  (PR-B, #346); #461 (PR-D, #454); the PR-E shadow tool in the PR that strikes its row.
+- **Next, in order:** the owner's call on the pre-filter (see the Remaining work table), then PR-C
+  (#342 + #344, with headless offload). Never re-run `chunk` while a relevance screen is running.
 - **Loop per PR:** topic branch from main, red test first, `make check` last, changelog fragment,
   docs audit, push, squash-merge with `--admin` only when that PR's own checks are green, delete
   the branch, strike the row below in the same PR.
-- **Owner gates:** none open. `TYPESAFE_API_KEY` and `CLOUDFLARE_API_TOKEN` are in `.env`; the
-  Cloudflare account id for Clef is looked up with the token (or set `CLOUDFLARE_ACCOUNT_ID`).
+- **Owner gates:** whether and how to switch the pre-filter on (shadow results below miss the
+  98% / 50% bar). Keys are in `.env`: `TYPESAFE_API_KEY`, `CLOUDFLARE_API_TOKEN`,
+  `CLOUDFLARE_ACCOUNT_ID`.
 - **Watch-outs:**
   - A workflow resume only works inside the Claude Code session that started it.
   - Each workflow run caps concurrent agents (2 on this 2-CPU devcontainer). Raise it with
@@ -59,15 +59,23 @@
   `--allowedTools "Workflow" "Edit(results/**)" "Read"`, `--permission-mode acceptEdits`. A
   4-agent smoke test confirmed that headless workflows run to completion, write under `results/`
   and honour the concurrency setting. The tailor -> `persist-offer` hand-off stays manual.
-- **PR-E decision-model pre-filter (owner: both backends, shadow mode first):** a `prefilter`
-  subcommand sends each JD plus a short candidate summary from the evidence library to a decision
-  model, one yes/no fit question per lane in a single call, and records the probabilities. Two
-  backends: Jev (`POST https://api.typesafe.ai/v1/systemone`, model `jev-1.13.0`) and Clef-flash
-  (Workers AI `@cf/cloudflare/clef-flash`). Shadow mode: score the 2026-10-19 screen, whose
-  kept/dropped verdicts and scores are the labels, and pick a backend and threshold from that
-  before the pre-filter gates anything. A 403, an error or a missing confidence escalates to the
-  LLM screen, never a verdict. Stdlib HTTP only; switch to the shared `decide()` action once it
-  merges.
+- **PR-E decision-model pre-filter, shadow tool (shipped):** `ajoa-kit decision-prefilter`
+  (`src/ajoa_kit/decision_prefilter.py`) sends each JD plus the evidence library's headline and positioning
+  summary to a decision model with ONE question ("a plausible fit in any lane?"). Backends: Jev
+  (`POST https://api.typesafe.ai/v1/systemone`, `jev-1.13.0`) and Clef-flash (Workers AI
+  `@cf/cloudflare/clef-flash`, reply wrapped in `result`). Any failure returns `None`, so the JD
+  goes on to the LLM screen. Stdlib HTTP; our own small client (the shared `decide()` is unmerged
+  and has no Clef backend). Shadow result 2026-10-21, 500 JDs from the 2026-10-19 screen (250 kept
+  incl. 118 score 4+ and 18 score 5, 250 dropped), no errors on either backend:
+
+  | | Jev | Clef-flash |
+  | --- | --- | --- |
+  | AUC (kept vs dropped) | 0.880 | 0.859 |
+  | Gate keeping all 118 score-4+ offers | 0.25, about 30% of JDs dropped | 0.10, about 20% dropped |
+  | Gate at 0.30 | 98.3% of score-4+ kept, 37.5% dropped | 93.2% kept, 50.4% dropped |
+
+  Neither meets the 98% recall / 50% drop bar with one question. The labels are the LLM screen's
+  verdicts, so this measures agreement with it, not ground truth.
 - **PR-D #454 (shipped):** `polite_fetch` in `src/ajoa_kit/polite.py`, used by all six fetch
   call sites; per-origin `urllib.robotparser` cache checked with `User-agent: *` (polyfetch rotates
   browser UAs); per-host spacing max(1 s, crawl-delay); robots 4xx = no rules (including 4xx that
@@ -82,9 +90,10 @@
 | Item | Gate | Done when |
 | --- | --- | --- |
 | ~~PR-A #365: packs keep `result.json`; `generated_from` frontmatter; `OfferMeta`~~ | agent | shipped in #459 |
-| Persist the 4 in-flight relevance slices, re-run `pack-plan` at score 4 and 5, report | agent | shortlists merged; pack numbers reported to the owner |
-| ~~PR-B #346: refresh hint; `last-pull.json`; `scored_against` / `tailored_against`~~ | agent | shipped in this PR |
+| ~~Persist the 4 in-flight relevance slices, re-run `pack-plan` at score 4 and 5, report~~ | agent | done 2026-10-20: score 5 = 121 live (25 packed), score 4+ = 956 live (44 packed) |
+| ~~PR-B #346: refresh hint; `last-pull.json`; `scored_against` / `tailored_against`~~ | agent | shipped in #460 |
 | PR-C #342 + #344: `batch_set_id`; per-batch files; `persist --from-batches`; `make relevance`; `make relevance_headless` | agent | merged; a headless one-batch run is picked up by `persist --from-batches` |
-| PR-E: `prefilter` subcommand with Jev and Clef backends; shadow-mode report on the 2026-10-19 screen | agent | merged; report shows per-backend recall of kept offers and the drop rate at the chosen threshold |
+| ~~PR-E: `decision-prefilter` subcommand with Jev and Clef backends; shadow-mode report on the 2026-10-19 screen~~ | agent | shipped in this PR (results above) |
+| Pre-filter next step: switch Jev on at a zero-loss threshold, or add per-lane questions and re-run the shadow test | owner | decision recorded here; the chosen step merged with its own shadow or live numbers |
 | ~~PR-D step 1: robots audit over every configured source~~ | agent | done: the live ingest found no source blocked by robots.txt |
-| ~~PR-D #454: `polite_fetch` with robots + crawl-delay~~ | agent | shipped in this PR |
+| ~~PR-D #454: `polite_fetch` with robots + crawl-delay~~ | agent | shipped in #461 |
