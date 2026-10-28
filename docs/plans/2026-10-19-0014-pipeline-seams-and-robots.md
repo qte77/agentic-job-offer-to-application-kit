@@ -6,15 +6,19 @@
   #344), run long relevance screens outside the interactive session, cut their cost with a cheap
   decision-model pre-filter, and close the robots.txt / crawl-delay gap ADR-0002 names as out of
   scope (#454).
+- **PAUSED 2026-10-28.** The owner moved focus to other repos. This arc is closed; every open item
+  now lives in an issue (see Remaining work). Ask the owner before resuming any of it.
 - **Shipped:** #458 (`startBatch` slices for the relevance workflow); #459 (PR-A, #365); #460
-  (PR-B, #346); #461 (PR-D, #454); #462 (PR-E shadow tool); the Jev decision gate
-  (`chunk --decision-gate`) in the PR that strikes its row.
-- **Next:** PR-C (#342 + #344, with headless offload). Never re-run `chunk` while a relevance
-  screen is running. Use `chunk --new --decision-gate` for the next re-screen.
+  (PR-B, #346); #461 (PR-D, #454); #462 (PR-E shadow tool); #463 (Jev decision gate,
+  `chunk --decision-gate`); #464 (merge-flag wording removed from committed docs).
+- **If resumed:** PR-C first; its design is in the comments on #342 and #344. Never re-run
+  `chunk` while a relevance screen is running. Use `chunk --new --decision-gate` for the next
+  re-screen, then work through #468.
 - **Loop per PR:** topic branch from main, red test first, `make check` last, changelog fragment,
   docs audit, push, squash-merge only when that PR's own checks are green, delete
   the branch, strike the row below in the same PR.
-- **Owner gates:** none open. The owner chose (2026-10-21) to switch Jev on at 0.25 rather than
+- **Owner gates:** whether to tailor the 96 live score-5 offers that have no pack (roughly
+  250-410k tokens per pack). The owner chose (2026-10-21) to switch Jev on at 0.25 rather than
   wait for per-lane questions. Keys are in `.env`: `TYPESAFE_API_KEY`, `CLOUDFLARE_API_TOKEN`,
   `CLOUDFLARE_ACCOUNT_ID`.
 - **Watch-outs:**
@@ -40,7 +44,7 @@
 | Fetch call sites | `sources.py` `get_json`/`get_bytes`, `slug_probe.py` `fetch_status`/`_count`, `prefill.py`, `startups_gallery.py` | PR-D routes all through one helper |
 | ToS policy | `docs/decisions/0002-source-tos-tiers.md` "Out of scope" | PR-D marks robots implemented |
 | Upstream | polyfetch-scrape `throttle.py` `Throttle`; polyfetch #147 (planned robots helper) | no polyfetch change in this arc |
-| Shared decision action | qte77/.github `actions/decide/` (PR qte77/.github#45, open) | PR-E switches to it once merged |
+| Shared decision action | qte77/.github `actions/decide/decide.py` (merged 2026-10-24 in qte77/.github#45; backends `jev` and `clef`) | switching to it is tracked in #468 |
 
 ## Approach
 
@@ -65,8 +69,9 @@
   summary to a decision model with ONE question ("a plausible fit in any lane?"). Backends: Jev
   (`POST https://api.typesafe.ai/v1/systemone`, `jev-1.13.0`) and Clef-flash (Workers AI
   `@cf/cloudflare/clef-flash`, reply wrapped in `result`). Any failure returns `None`, so the JD
-  goes on to the LLM screen. Stdlib HTTP; our own small client (the shared `decide()` is unmerged
-  and has no Clef backend). Shadow result 2026-10-21, 500 JDs from the 2026-10-19 screen (250 kept
+  goes on to the LLM screen. Stdlib HTTP; our own small client, because the shared `decide()` was
+  unmerged and had no Clef backend at the time (it merged 2026-10-24 with one; switching is in
+  #468). Shadow result 2026-10-21, 500 JDs from the 2026-10-19 screen (250 kept
   incl. 118 score 4+ and 18 score 5, 250 dropped), no errors on either backend:
 
   | | Jev | Clef-flash |
@@ -93,9 +98,9 @@
 | ~~PR-A #365: packs keep `result.json`; `generated_from` frontmatter; `OfferMeta`~~ | agent | shipped in #459 |
 | ~~Persist the 4 in-flight relevance slices, re-run `pack-plan` at score 4 and 5, report~~ | agent | done 2026-10-20: score 5 = 121 live (25 packed), score 4+ = 956 live (44 packed) |
 | ~~PR-B #346: refresh hint; `last-pull.json`; `scored_against` / `tailored_against`~~ | agent | shipped in #460 |
-| PR-C #342 + #344: `batch_set_id`; per-batch files; `persist --from-batches`; `make relevance`; `make relevance_headless` | agent | merged; a headless one-batch run is picked up by `persist --from-batches` |
-| ~~PR-E: `decision-prefilter` subcommand with Jev and Clef backends; shadow-mode report on the 2026-10-19 screen~~ | agent | shipped in this PR (results above) |
-| ~~Pre-filter next step: switch Jev on at a zero-loss threshold, or add per-lane questions and re-run the shadow test~~ | owner | shipped in this PR: `chunk --decision-gate` (Jev below 0.25 skipped). Live check on one 40-JD batch: 26 skipped, none of Claude's 5 kept JDs among them |
-| Per-lane decision questions (7 nouls per call) to push the skip share past 50% at the same recall | agent | deferred: only if the 30% saving proves too small; needs its own shadow run first |
+| PR-C #342 + #344: `batch_set_id`; per-batch files; `persist --from-batches`; `make relevance`; `make relevance_headless` | agent | moved to #342 / #344 (design in their comments); merged when a headless one-batch run is picked up by `persist --from-batches` |
+| ~~PR-E: `decision-prefilter` subcommand with Jev and Clef backends; shadow-mode report on the 2026-10-19 screen~~ | agent | shipped in #462 (results above) |
+| ~~Pre-filter next step: switch Jev on at a zero-loss threshold, or add per-lane questions and re-run the shadow test~~ | owner | shipped in #463: `chunk --decision-gate` (Jev below 0.25 skipped). Live check on one 40-JD batch: 26 skipped, none of Claude's 5 kept JDs among them |
+| Decision pre-filter follow-ups: shared `decide()` (merged 2026-10-24 with a Clef backend), re-validation, per-lane questions | agent | moved to #468 |
 | ~~PR-D step 1: robots audit over every configured source~~ | agent | done: the live ingest found no source blocked by robots.txt |
 | ~~PR-D #454: `polite_fetch` with robots + crawl-delay~~ | agent | shipped in #461 |
