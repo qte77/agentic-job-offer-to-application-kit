@@ -11,7 +11,7 @@
 
 .PHONY: \
 	help \
-	install_uv install install_docs_tools \
+	install_uv install install_docs_tools doctor \
 	check lint format check_types check_complexity docs_lint \
 	ingest chunk persist probe \
 	preview trends_data ui_check ui_e2e ui_shots \
@@ -33,6 +33,9 @@ install: ## Sync the dev environment (uv) — needs uv (see `make install_uv`)
 install_docs_tools: ## Install docs_lint tools — markdownlint-cli2 (npm) + lychee (cargo); needs npm + cargo
 	npm install -g markdownlint-cli2
 	cargo install lychee
+
+doctor: ## Preflight: polyfetch checkout, Chromium on disk + launch, evidence library (FIX=1 installs Chromium — run unsandboxed)
+	scripts/doctor.sh $(if $(FIX),--fix)
 
 # MARK: Quality gates
 
