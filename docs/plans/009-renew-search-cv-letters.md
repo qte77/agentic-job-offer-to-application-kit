@@ -73,7 +73,7 @@ repos, so they lost the cut.
 **Resolved 2026-08-07: shipped at 24.** The `maxProjects: 34` re-resume was attempted and its
 assemble step was **rejected by the schema** (`must have required property 'toneApplied'`) before it
 could return; the run was interrupted mid-retry. The recovered draft held 31 projects — it gained
-`sabi` (2 060 commits, never mined before), `gha-rxiv-feed-action` and `gha-sec-feed-eval`, but
+a private repo (2 060 commits, never mined before), `gha-rxiv-feed-action` and `gha-sec-feed-eval`, but
 **lost `qte77`, the profile repo** — so the owner chose the schema-valid 24-project library already
 on disk. `agentic-cax-gauge`, a private sibling repo, and `protocols` remain uncovered, and 5 of the 7 original
 `gha-*` repos are still absent. Not carried into arc 010: the 24-project library grounds every
