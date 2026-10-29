@@ -60,7 +60,7 @@ cached miners and got further (26 → 36 → 55 → complete). Written to `resul
 
 **Done-when: 9 of 12.** Covered — this kit, `claude-azure-workflows-gui`, `web-recon-kit`,
 `a2ui-agui-kit`, `fo-scraper-miwi`, `agenthud-agui-a2ui`, `ai-agents-research`, `polyfetch-scrape`,
-`claude-code-plugins`. **Not covered — `agentic-cax-gauge`, `__SABI`, `protocols`**: all three exist
+`claude-code-plugins`. **Not covered — `agentic-cax-gauge`, one private repo, `protocols`**: all three exist
 and are recent but small (11 / 19 / 2 commits), and `maxProjects: 24` selected 24 of 84 workspace
 repos, so they lost the cut.
 
@@ -73,9 +73,9 @@ repos, so they lost the cut.
 **Resolved 2026-08-07: shipped at 24.** The `maxProjects: 34` re-resume was attempted and its
 assemble step was **rejected by the schema** (`must have required property 'toneApplied'`) before it
 could return; the run was interrupted mid-retry. The recovered draft held 31 projects — it gained
-`sabi` (2 060 commits, never mined before), `gha-rxiv-feed-action` and `gha-sec-feed-eval`, but
+another private repo (2 060 commits, never mined before), `gha-rxiv-feed-action` and `gha-sec-feed-eval`, but
 **lost `qte77`, the profile repo** — so the owner chose the schema-valid 24-project library already
-on disk. `agentic-cax-gauge`, `__SABI` and `protocols` remain uncovered, and 5 of the 7 original
+on disk. `agentic-cax-gauge`, one private repo and `protocols` remain uncovered, and 5 of the 7 original
 `gha-*` repos are still absent. Not carried into arc 010: the 24-project library grounds every
 current pack and no downstream work is blocked by it.
 
