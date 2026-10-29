@@ -297,6 +297,8 @@ class OfferMeta(BaseModel):
     slug: str
     tailored_against: str = ""
     """The ingest pull the pack was tailored against (#346); "" when unknown."""
+    evidence_library: str = ""
+    """Stamp of the evidence library the pack was tailored against (#414); "" when unknown."""
 
 
 class PullStamp(BaseModel):

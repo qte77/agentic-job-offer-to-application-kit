@@ -6,6 +6,7 @@ Usage::
     ajoa-kit chunk [--batch-size N] [--new]
     ajoa-kit persist <workflow-result.json> [--merge]
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
+    ajoa-kit evidence-diff <old-library.json> [new-library.json]
     ajoa-kit refresh [--lane NAME] [--delete] [--dry-run]
     ajoa-kit verify-sources [--dry-run]
     ajoa-kit ats-check <cv.md>
@@ -60,6 +61,13 @@ def _persist_offer(args: argparse.Namespace) -> None:
     from ajoa_kit.persist_offer import main as run
 
     run(src=Path(args.file), slug=args.slug)
+
+
+def _evidence_diff(args: argparse.Namespace) -> None:
+    """Show which top-level evidence-library fields changed between two builds (#414)."""
+    from ajoa_kit.evidence_diff import main as run
+
+    run(old=Path(args.old), new=Path(args.new) if args.new else None)
 
 
 def _status(args: argparse.Namespace) -> None:
@@ -294,6 +302,16 @@ def main() -> None:
     offer_p.add_argument("file", metavar="FILE", help="Path to workflow-result.json.")
     offer_p.add_argument("--slug", default=None, help="Offer slug (default: pack slug/id).")
     offer_p.set_defaults(func=_persist_offer)
+
+    ediff_p = sub.add_parser(
+        "evidence-diff",
+        help="List evidence-library fields a rebuild added/removed/changed (#414).",
+    )
+    ediff_p.add_argument("old", metavar="OLD", help="The earlier evidence-library.json.")
+    ediff_p.add_argument(
+        "new", metavar="NEW", nargs="?", default=None, help="Default: the live library."
+    )
+    ediff_p.set_defaults(func=_evidence_diff)
 
     status_p = sub.add_parser(
         "status", help="Set/read a local application-outcome status per offer (#273)."

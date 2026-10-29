@@ -293,6 +293,7 @@ def test_write_pack_writes_meta_json_when_id_present(tmp_path: Path) -> None:
         "id": "ashby:acme-ai:101",
         "slug": "pretty-name",
         "tailored_against": "",
+        "evidence_library": "",
     }
 
 
