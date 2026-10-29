@@ -35,6 +35,7 @@ from pydantic import ValidationError
 from ajoa_kit.ats_check import parse_safety_warnings
 from ajoa_kit.coverage import coverage_summary, honesty_warnings
 from ajoa_kit.defaults import DESC_CAP
+from ajoa_kit.evidence_diff import library_stamp
 from ajoa_kit.grounding import grounding_warnings
 from ajoa_kit.models import OfferMeta
 from ajoa_kit.pull import pull_date
@@ -301,7 +302,10 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     # record the JD id -> this offer so build_ui_shortlist can attach cv/cover-letter by id.
     if jd_id:
         meta = OfferMeta(
-            id=str(jd_id), slug=safe_slug(slug), tailored_against=pull_date(results_dir)
+            id=str(jd_id),
+            slug=safe_slug(slug),
+            tailored_against=pull_date(results_dir),
+            evidence_library=library_stamp(results_dir / "evidence-library.json"),
         )
         (offer_dir / "meta.json").write_text(meta.model_dump_json())
     return offer_dir
