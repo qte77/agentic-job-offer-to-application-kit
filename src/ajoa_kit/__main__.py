@@ -7,6 +7,7 @@ Usage::
     ajoa-kit persist <workflow-result.json> [--merge]
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
     ajoa-kit drift-check
+    ajoa-kit evidence-diff <old-library.json> [new-library.json]
     ajoa-kit refresh [--lane NAME] [--delete] [--dry-run]
     ajoa-kit verify-sources [--dry-run]
     ajoa-kit ats-check <cv.md>
@@ -68,6 +69,13 @@ def _drift_check(args: argparse.Namespace) -> None:
     from ajoa_kit.drift import main as run
 
     raise SystemExit(run())
+
+
+def _evidence_diff(args: argparse.Namespace) -> None:
+    """Show which top-level evidence-library fields changed between two builds (#414)."""
+    from ajoa_kit.evidence_diff import main as run
+
+    run(old=Path(args.old), new=Path(args.new) if args.new else None)
 
 
 def _status(args: argparse.Namespace) -> None:
@@ -308,6 +316,16 @@ def main() -> None:
         help="Report offer packs whose rendered files no longer match result.json (#366).",
     )
     drift_p.set_defaults(func=_drift_check)
+
+    ediff_p = sub.add_parser(
+        "evidence-diff",
+        help="List evidence-library fields a rebuild added/removed/changed (#414).",
+    )
+    ediff_p.add_argument("old", metavar="OLD", help="The earlier evidence-library.json.")
+    ediff_p.add_argument(
+        "new", metavar="NEW", nargs="?", default=None, help="Default: the live library."
+    )
+    ediff_p.set_defaults(func=_evidence_diff)
 
     status_p = sub.add_parser(
         "status", help="Set/read a local application-outcome status per offer (#273)."
