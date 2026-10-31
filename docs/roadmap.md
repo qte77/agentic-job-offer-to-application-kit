@@ -266,5 +266,5 @@
   needed range.
 - Naming: consider renaming `results/offers/<slug>/` → `results/packs/<slug>/` — "offer" is used loosely
   for a job *posting*, which reads oddly (a pack is the application package, not an offer extended to you).
-  Cross-cutting: `persist_offer.write_pack`, the dashboard JD-id join, and docs; note existing `__jobs`
-  backup snapshots use the old path. Mechanical but repo-wide — low priority.
+  Cross-cutting: `persist_offer.write_pack`, the dashboard JD-id join, and docs; note existing backup
+  snapshots in a private sibling repo use the old path. Mechanical but repo-wide — low priority.
