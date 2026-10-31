@@ -27,7 +27,9 @@ Workflow tool runs the relevance/tailor phases), and a
 `git clone https://github.com/qte77/polyfetch-scrape ../polyfetch-scrape && (cd ../polyfetch-scrape && uv sync)`
 — the network-fetch layer every network-touching subcommand borrows (`ingest`, `probe`,
 `refresh`, `verify-sources`, `discover`); see
-[CONTRIBUTING §Polyfetch venv-borrow](../CONTRIBUTING.md#polyfetch-venv-borrow). The Makefile is the
+[CONTRIBUTING §Polyfetch venv-borrow](../CONTRIBUTING.md#polyfetch-venv-borrow). `make doctor`
+checks that checkout, its Chromium and the evidence library, and prints what is missing
+(`make doctor FIX=1` installs Chromium; run it outside a sandbox). The Makefile is the
 command source of truth (`make help`); the CLI flags and the `AJOA_CONFIG_DIR` / `AJOA_RESULTS_DIR` /
 `POLYFETCH_DIR` overrides are tabulated in [CONTRIBUTING.md](../CONTRIBUTING.md#commands) for
 contributors. What you author first is the **source list**:
