@@ -6,6 +6,7 @@ Usage::
     ajoa-kit chunk [--batch-size N] [--new]
     ajoa-kit persist <workflow-result.json> [--merge]
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
+    ajoa-kit drift-check
     ajoa-kit refresh [--lane NAME] [--delete] [--dry-run]
     ajoa-kit verify-sources [--dry-run]
     ajoa-kit ats-check <cv.md>
@@ -60,6 +61,13 @@ def _persist_offer(args: argparse.Namespace) -> None:
     from ajoa_kit.persist_offer import main as run
 
     run(src=Path(args.file), slug=args.slug)
+
+
+def _drift_check(args: argparse.Namespace) -> None:
+    """Report offer packs whose rendered files differ from their result.json (#366)."""
+    from ajoa_kit.drift import main as run
+
+    raise SystemExit(run())
 
 
 def _status(args: argparse.Namespace) -> None:
@@ -294,6 +302,12 @@ def main() -> None:
     offer_p.add_argument("file", metavar="FILE", help="Path to workflow-result.json.")
     offer_p.add_argument("--slug", default=None, help="Offer slug (default: pack slug/id).")
     offer_p.set_defaults(func=_persist_offer)
+
+    drift_p = sub.add_parser(
+        "drift-check",
+        help="Report offer packs whose rendered files no longer match result.json (#366).",
+    )
+    drift_p.set_defaults(func=_drift_check)
 
     status_p = sub.add_parser(
         "status", help="Set/read a local application-outcome status per offer (#273)."
