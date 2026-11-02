@@ -4,6 +4,7 @@ Usage::
 
     ajoa-kit ingest
     ajoa-kit chunk [--batch-size N] [--new]
+    ajoa-kit collect-relevance <sessions.txt> --out <relevant.json>
     ajoa-kit persist <workflow-result.json> [--merge]
     ajoa-kit persist-offer <workflow-result.json> [--slug SLUG]
     ajoa-kit drift-check
@@ -48,6 +49,13 @@ def _chunk(args: argparse.Namespace) -> None:
         new=args.new,
         decision_gate=args.decision_gate,
     )
+
+
+def _collect_relevance(args: argparse.Namespace) -> None:
+    """Combine headless relevance slices from their workflow journals (#342)."""
+    from ajoa_kit.workflow_runs import main as run
+
+    raise SystemExit(run(Path(args.sessions), out=Path(args.out)))
 
 
 def _persist(args: argparse.Namespace) -> None:
@@ -292,6 +300,14 @@ def main() -> None:
         help="Skip JDs the Jev decision model scores below 0.25 (needs TYPESAFE_API_KEY).",
     )
     chunk_p.set_defaults(func=_chunk)
+
+    collect_p = sub.add_parser(
+        "collect-relevance",
+        help="Combine headless relevance slices from their workflow journals (#342).",
+    )
+    collect_p.add_argument("sessions", metavar="SESSIONS", help="File of slice session ids.")
+    collect_p.add_argument("--out", required=True, help="Combined result for `persist --merge`.")
+    collect_p.set_defaults(func=_collect_relevance)
 
     persist_p = sub.add_parser(
         "persist", help="Write scored artifacts from a workflow-result JSON."

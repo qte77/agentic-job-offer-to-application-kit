@@ -64,6 +64,13 @@
   `--allowedTools "Workflow" "Edit(results/**)" "Read"`, `--permission-mode acceptEdits`. A
   4-agent smoke test confirmed that headless workflows run to completion, write under `results/`
   and honour the concurrency setting. The tailor -> `persist-offer` hand-off stays manual.
+  **Superseded 2026-11-02 for the relevance half** (shipped as `make relevance_headless` +
+  `make relevance_collect`): a 201-batch headless run showed that Claude Code already keeps every
+  finished agent's result in the session's workflow journal, and that the script's return value
+  is just their concatenation. So no `batch_set_id`, per-batch files, agent write access or JS
+  change were needed: slices start with a pre-recorded `--session-id`, `collect-relevance` reads
+  their journals, and `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` lifts the 10-minute `-p` wait
+  limit that cut the first run short. Findings: #342 comment of 2026-11-02.
 - **PR-E decision-model pre-filter, shadow tool (shipped):** `ajoa-kit decision-prefilter`
   (`src/ajoa_kit/decision_prefilter.py`) sends each JD plus the evidence library's headline and positioning
   summary to a decision model with ONE question ("a plausible fit in any lane?"). Backends: Jev
@@ -98,7 +105,8 @@
 | ~~PR-A #365: packs keep `result.json`; `generated_from` frontmatter; `OfferMeta`~~ | agent | shipped in #459 |
 | ~~Persist the 4 in-flight relevance slices, re-run `pack-plan` at score 4 and 5, report~~ | agent | done 2026-10-20: score 5 = 121 live (25 packed), score 4+ = 956 live (44 packed) |
 | ~~PR-B #346: refresh hint; `last-pull.json`; `scored_against` / `tailored_against`~~ | agent | shipped in #460 |
-| PR-C #342 + #344: `batch_set_id`; per-batch files; `persist --from-batches`; `make relevance`; `make relevance_headless` | agent | moved to #342 / #344 (design in their comments); merged when a headless one-batch run is picked up by `persist --from-batches` |
+| ~~PR-C #342, relevance half: `make relevance_headless` + `make relevance_collect` (journal-based, replaces the `batch_set_id` / per-batch-files design)~~ | agent | shipped 2026-11-02 (see the PR-C note above) |
+| #342 tailor half (`persist-offer` from the run record) and #344 (resume vs a recomputed delta) | agent | open in #342 / #344 |
 | ~~PR-E: `decision-prefilter` subcommand with Jev and Clef backends; shadow-mode report on the 2026-10-19 screen~~ | agent | shipped in #462 (results above) |
 | ~~Pre-filter next step: switch Jev on at a zero-loss threshold, or add per-lane questions and re-run the shadow test~~ | owner | shipped in #463: `chunk --decision-gate` (Jev below 0.25 skipped). Live check on one 40-JD batch: 26 skipped, none of Claude's 5 kept JDs among them |
 | Decision pre-filter follow-ups: shared `decide()` (merged 2026-10-24 with a Clef backend), re-validation, per-lane questions | agent | moved to #468 |
