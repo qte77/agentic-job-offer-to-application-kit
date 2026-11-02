@@ -122,6 +122,7 @@ built).
 | Trends month | `models.MonthCounts` | **pydantic** (write-side) | trend-snapshot → dashboard (#188) | `public-data/trends-monthly.ndjson` |
 | Batches + manifest | `chunk.main` | dict — untyped | chunk → relevance | `results/batches/*.json` |
 | Shortlist | relevance.js schema / `persist_scored` / `refresh` | JSON-Schema (JS) → **pydantic** `ScoredItem` parse-on-read (persist + merge/refresh re-reads) + `stale`/`last_checked` (#214) + `deadline`/`deal_breaker` (#271) | relevance → persist → refresh → dashboard | `results/LANE/shortlist.json` / `.md` |
+| Workflow journal | Claude Code (undocumented format) / `workflow_runs` | JSONL → **pydantic** `JournalEntry`, rows via `parse_relevant` (parse-on-read) | headless relevance → `collect-relevance` → persist (#342) | `~/.claude/projects/<cwd-slug>/<session>/subagents/workflows/*/journal.jsonl` |
 | Offer pack | tailor.js schema / `persist_offer` | JSON-Schema (JS) → dict (Py) | tailor → persist | `results/offers/SLUG/*.md` |
 | `must_haves` | tailor.js / `coverage.py` | JSON-Schema (JS) → dict (Py) | tailor → coverage | `coverage-report.md` |
 | Evidence library `LIB` | `cc-workflow-evidence-library.js` | JSON-Schema (JS) | Stage 1 → relevance / tailor | `results/evidence-library.json` |
@@ -219,6 +220,7 @@ agentic-job-offer-to-application-kit/
 ├── src/ajoa_kit/               # engine: ingest, corpus, chunk, persist_scored, persist_offer, ats_check,
 │                               #   style, prefill, slug_probe, refresh, settings, open_offers, __main__ (CLI)
 ├── scripts/ingest.sh           # thin env shim -> ajoa-kit ingest (borrows polyfetch's uv env via POLYFETCH_DIR)
+├── scripts/relevance_headless.sh # relevance screen as detached `claude -p` slices (make relevance_headless)
 ├── config/                     # your inputs — git-ignored except the tracked default-seed.json
 │                               #   default-seed.json (shipped sources) · your seed.json overrides it
 ├── tests/                      # value-add suite (pre-filter, canonical_url, dedup, adapters)

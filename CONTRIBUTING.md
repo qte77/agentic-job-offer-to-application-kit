@@ -40,6 +40,10 @@ make chunk                                            # -> results/batches/ + ma
 # relevance (Workflow tool) — batchCount = results/batches/manifest.json .batch_count:
 #   Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js", args: { rootDir: ".", batchCount: <N> } })
 make persist FILE=<workflow-output.json>              # -> results/<lane>/shortlist.*
+# or headless: detached `claude -p` slices (SLICES / RANGES / MAX_AGENTS / MIN_FREE_MB), then
+# collect them from their workflow journals + persist --merge (#342):
+make relevance_headless                               # log + sessions.txt in results/run/relevance/
+make relevance_collect                                # stops with a RANGES="..." re-run line on gaps
 uv run ajoa-kit pack-plan --min-score 5 --json        # -> results/pack-plan.json (missing-pack work list, ADR-0005)
 # tailor one shortlisted offer (Workflow tool); add `critique: true` for the draft→critique→revise pass (#272):
 #   Workflow({ scriptPath: ".claude/workflows/cc-workflow-tailor-offer.js", args: { rootDir: ".", lane: "engineering", offerId: "<id>" } })
@@ -79,6 +83,7 @@ ingest/chunk/persist ones). Most take a positional path or no args; the flags:
 |---|---|
 | `ingest` | `--merge` — also fold the pull into a running `results/corpus.json` (4-state dedup-merge) · reads `config/seed.json`, else `config/default-seed.json` · injects `config/manual-jds.json` into every pull (hand-captured postings; absent file is inert — see [`examples/alexis-doe`](examples/alexis-doe/README.md#adding-a-posting-no-adapter-can-reach)) |
 | `chunk` | `--batch-size N` (default 40) · `--new` — batch only the latest-pull `corpus.json` delta (offers new or changed this pull) for an incremental re-screen (#226/#235) · `--decision-gate` — skip JDs the Jev decision model scores below 0.25 before batching; a failed call keeps the JD; skips listed in `results/decision-prefilter/skipped.jsonl` (needs `TYPESAFE_API_KEY`) |
+| `collect-relevance` | `SESSIONS` — the slices' session-id file `scripts/relevance_headless.sh` writes · `--out FILE` — the combined `{"relevant": [...]}` for `persist --merge` · reads each session's workflow journal under `~/.claude/projects/<cwd-slug>/`; exits 1 with a `RANGES="..."` re-run line when batches are missing (#342) |
 | `persist` | `FILE` — the relevance workflow result · `--merge` — union into the existing shortlists / `jobs-scored.json` by id instead of overwriting (#226) |
 | `persist-offer` | `FILE` — the tailor workflow result · `--slug <slug>` · writes a `jd-truncation-check.md` review aid when the source JD sat at the ingest description cap (#347) |
 | `refresh` | reconcile shortlists vs the corpus `delisted` state + a read-only URL re-probe · `--lane <name>` (default: all buckets) · `--delete` (remove vs flag `stale`) · `--dry-run` · runs via the [venv-borrow](#polyfetch-venv-borrow) (the re-probe imports `polyfetch_scrape`) |

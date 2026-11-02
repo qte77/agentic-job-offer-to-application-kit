@@ -13,7 +13,7 @@
 	help \
 	install_uv install install_docs_tools doctor \
 	check lint format check_types check_complexity docs_lint \
-	ingest chunk persist probe \
+	ingest chunk persist relevance_headless relevance_collect probe \
 	preview trends_data ui_check ui_e2e ui_shots \
 	changelog_new changelog_preview changelog_release
 
@@ -73,6 +73,15 @@ chunk: ## Batch the ingested corpus into results/batches/
 persist: ## Persist a relevance result: make persist FILE=<output.json>
 	test -n "$(FILE)" || { echo "usage: make persist FILE=<workflow-output.json>"; exit 2; }
 	uv run ajoa-kit persist "$(FILE)"
+
+relevance_headless: ## Screen results/batches/ as detached `claude -p` slices (SLICES=4 or RANGES="s:n ..."); log in results/run/relevance/
+	mkdir -p results/run/relevance
+	setsid nohup scripts/relevance_headless.sh >> results/run/relevance/run.log 2>&1 < /dev/null &
+	echo "started detached; follow results/run/relevance/run.log, then run: make relevance_collect"
+
+relevance_collect: ## Combine the slices from their workflow journals, then persist --merge (stops with a RANGES re-run line on gaps)
+	uv run ajoa-kit collect-relevance results/run/relevance/sessions.txt --out results/run/relevance/relevant.json
+	uv run ajoa-kit persist results/run/relevance/relevant.json --merge
 
 probe: ## Probe candidate slugs across ATS platforms (set POLYFETCH_DIR)
 	uv run ajoa-kit probe

@@ -60,6 +60,10 @@ make chunk                                           # -> results/batches/ (+ ma
 Workflow({ scriptPath: ".claude/workflows/cc-workflow-relevance.js",
            args: { rootDir: ".", batchCount: <N> } })
 make persist FILE=<relevance-output.json>            # -> results/<lane>/shortlist.*
+# ...or, for a large batch set, skip the manual hand-off: run the screen as detached headless
+# `claude -p` slices, then collect them from their workflow journals and persist (#342):
+make relevance_headless                              # SLICES=4 default; logs in results/run/relevance/
+make relevance_collect                               # on gaps it stops and prints a RANGES="..." re-run
 POLYFETCH_DIR=../polyfetch-scrape uv run ajoa-kit refresh  # flags stale/delisted rows before pack-plan skips them
 uv run ajoa-kit pack-plan --min-score 5 --json       # -> results/pack-plan.json (which offer ids still need a pack)
 
