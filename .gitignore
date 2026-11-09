@@ -31,3 +31,7 @@ __pycache__/
 # it) and the compound-learning log is AGENT_LEARNINGS.md; a root MEMORY.md is a local tool
 # artifact and must never shadow them in git.
 /MEMORY.md
+
+# Per-machine Claude Code permissions and plugin toggles (paths, session-specific rules). Shared
+# project settings, if any, belong in .claude/settings.json.
+.claude/settings.local.json
