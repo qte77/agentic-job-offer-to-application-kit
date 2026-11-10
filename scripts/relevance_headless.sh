@@ -50,10 +50,12 @@ print(json.dumps({'rootDir': '.', 'batchCount': int(sys.argv[1]), 'startBatch': 
   'location': json.load(open(f'{out}/location.json')), 'tenure': json.load(open(f'{out}/tenure.json'))}))
 " "$N" "$start" "$limit" "$OUT")
   # -p stops background workflows 10 min after its last turn unless this ceiling is 0.
+  # Read-only on purpose: the screen only reads batches; write access let agents drop scratch
+  # files (with personal data) into the repo root. Results come back via the workflow journal.
   CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS="$MAX_AGENTS" \
     claude -p --session-id "$sid" \
     "Call the Workflow tool with scriptPath '$HERE/.claude/workflows/cc-workflow-relevance.js' and args $args. Wait for it to finish, then reply with only: done" \
-    --allowedTools "Workflow" "Read" --permission-mode acceptEdits --output-format json \
+    --allowedTools "Workflow" "Read" --output-format json \
     > "$OUT/slice-$start.json" 2> "$OUT/slice-$start.err" &
   echo "$(date -u +%FT%TZ) slice $sid: batches $start..$((start + limit - 1)) of $N (${free} MB free)"
 done
