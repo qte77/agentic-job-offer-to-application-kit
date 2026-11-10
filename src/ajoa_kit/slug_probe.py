@@ -24,14 +24,17 @@ def fetch_status(url: str) -> int | None:
 
     A read-only liveness probe (no auth, no body) shared by the shortlist refresh (#214) and the
     source freshness re-probe (#217). ``None`` means inconclusive (non-http(s), network error,
-    or timeout) — treated as *not dead*, so a flaky network never expires a live entry.
+    5xx or timeout) — treated as *not dead*, so a flaky network never expires a live entry.
+    polyfetch raises some terminal 4xx (404/410 ``GoneError``, 401/403 ``AuthRequired``) as typed
+    errors carrying ``.status``; that status is the answer, so it is returned, not swallowed.
     """
     if not url.lower().startswith(("http://", "https://")):  # sec: no file:/javascript:/… schemes
         return None
     try:
         return polite_fetch(url, timeout=PROBE_TIMEOUT).status
-    except Exception:  # unreachable, blocked or robots-disallowed is inconclusive, not "dead"
-        return None
+    except Exception as exc:  # unreachable, blocked or robots-disallowed is inconclusive
+        status = getattr(exc, "status", None)
+        return status if isinstance(status, int) and 400 <= status < 500 else None
 
 
 def _count(url: str, key: str | None) -> int | None:
