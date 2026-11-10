@@ -90,7 +90,9 @@
   Neither meets the 98% recall / 50% drop bar with one question. The labels are the LLM screen's
   verdicts, so this measures agreement with it, not ground truth.
 - **PR-D #454 (shipped):** `polite_fetch` in `src/ajoa_kit/polite.py`, used by all six fetch
-  call sites; per-origin `urllib.robotparser` cache checked with `User-agent: *` (polyfetch rotates
+  call sites; per-origin robots.txt cache (`urllib.robotparser`, replaced 2026-11-10 by the RFC 9309
+  matcher `RobotsRules`, since the stdlib parser ignored `*`/`$` before Python 3.14) checked with
+  `User-agent: *` (polyfetch rotates
   browser UAs); per-host spacing max(1 s, crawl-delay); robots 4xx = no rules (including 4xx that
   polyfetch raises as typed errors such as `AuthRequired`), 5xx/network error = skip with a reason
   (inconclusive in `refresh`/`verify-sources`); skips show in ingest's `sources ok / failed`
