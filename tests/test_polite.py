@@ -66,6 +66,46 @@ def test_disallowed_url_is_skipped_without_fetching_it(monkeypatch: pytest.Monke
     assert "https://b.example/api/jobs" not in calls
 
 
+_RFC9309 = (
+    b"User-agent: Googlebot\nDisallow: /\n\n"  # a named group never applies to us
+    b"User-agent: *\n"
+    b"Disallow: /en/vacancies/detail/*/*/*\n"  # jobs.ch: slugged detail pages, 2026-11-09
+    b"Disallow: /*?*feat=\n"
+    b"Disallow: /*.pdf$\n"
+    b"Disallow: /jobs/\n"
+    b"Allow: /jobs/public/\n"
+)
+
+
+@pytest.mark.parametrize(
+    ("path", "allowed"),
+    [
+        ("/en/vacancies/detail/9db78101/", True),  # bare detail page: no rule matches
+        ("/en/vacancies/detail/9db78101/ai-engineer/x", False),  # `*` spans path segments
+        ("/en/vacancies/?term=ai&feat=1", False),  # `*` matches in the query too
+        ("/files/cv.pdf", False),  # `$` anchors the end
+        ("/files/cv.pdf?download=1", True),
+        ("/jobs/internal/1", False),
+        ("/jobs/public/1", True),  # the longest matching rule wins, not the first listed
+    ],
+)
+def test_rules_follow_rfc9309_wildcards_and_longest_match(
+    monkeypatch: pytest.MonkeyPatch, path: str, allowed: bool
+) -> None:
+    # Before Python 3.14, urllib.robotparser ignored `*`/`$` and applied the first matching rule, so
+    # it allowed the slugged jobs.ch detail URL that site's robots.txt disallows. RFC 9309
+    # 2.2.2-2.2.3: `*` matches any characters, `$` ends the pattern, the longest match wins.
+    calls = _install(monkeypatch, {"https://r.example/robots.txt": _Resp(200, _RFC9309)})
+    url = f"https://r.example{path}"
+    if allowed:
+        polite.polite_fetch(url)
+        assert url in calls
+    else:
+        with pytest.raises(polite.RobotsDisallowedError, match="disallows"):
+            polite.polite_fetch(url)
+        assert url not in calls
+
+
 def test_missing_robots_means_no_rules(monkeypatch: pytest.MonkeyPatch) -> None:
     # 4xx (incl. 401/403) = no robots.txt to obey (RFC 9309 2.3.1.3).
     calls = _install(monkeypatch, {"https://c.example/robots.txt": _Resp(401)})
