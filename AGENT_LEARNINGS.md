@@ -80,11 +80,8 @@ account lost write access, the owner must re-auth" — is wrong, and acting on i
 fix a credential that is fine. Cost on 2026-08-10: two failed writes plus a wrong diagnosis
 committed into a plan.
 
-**Fix:** Unset **both** on every `gh` and `git push`:
-
-```bash
-env -u GH_TOKEN -u GITHUB_TOKEN gh pr merge <n> --squash
-```
+**Fix:** Make sure neither env var is set for `gh` / `git push`, so the stored login is used. How to
+do that on a given machine is a local, owner-approved step and lives in private notes, not here.
 
 The tell is `Active account: false` on the stored token in `gh auth status` — check that line, not
 the scope list, before concluding anything about permissions. Generally: when a write 403s but reads
@@ -107,3 +104,32 @@ identical failures, caught it. **When the workflow file was edited this session,
 `scriptPath` pointed at the real repo file — never `name`, and never a `workflows/scripts/*-wf_*.js`
 snapshot path a "stopped/resume" recovery notification suggests.** Cheap pre-flight before trusting
 any result: grep the file actually being read for a string unique to the edit.
+
+## Headless runs: the 10-minute wait limit, dying containers and silent gaps (2026-11-02/09)
+
+**Pattern:** A 201-batch relevance screen run as detached `claude -p` slices lost work three ways.
+(1) `claude -p` stops its background workflows 10 minutes after its last turn, so long slices were
+cut off at about 20 minutes ("Background tasks still running 10m after the last turn ... stopping
+them"). (2) A detached process does not survive the container stopping, and logs written to `/tmp`
+vanished with it. (3) A run whose status read "completed" was still missing batches: individual
+agents had failed with `Request timed out`.
+
+**Fix:** Use `make relevance_headless` / `make relevance_collect` (#476): they set
+`CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0`, start each slice with a session id recorded *before*
+launch, keep logs under the git-ignored `results/run/relevance/`, and refuse to persist until every
+batch is accounted for (a missing batch prints a ready `RANGES="..."` re-run line). Finished work
+survives every outcome because it is collected from the workflow journal, not the run's reply.
+
+## Headless agents with write permission leave scratch files in the repo root (2026-11-02)
+
+**Pattern:** Tailor runs launched with `--permission-mode acceptEdits` let the workflow's agents
+write files, and they did: 175 untracked CV drafts, cover-letter drafts and JD extracts appeared in
+the repo root (`.cv-draft-*`, `.cover-letter-draft-*`, `.tmp_*`, and some with no prefix at all).
+None were git-ignored, so a broad `git add` would have committed personal data. A `.gitignore`
+pattern cannot fix this reliably, because agents pick arbitrary file names.
+
+**Fix:** Run headless relevance and tailor workflows read-only (`--allowedTools "Workflow" "Read"`,
+no `acceptEdits`); both stages need only to read, and their results come back through the workflow
+journal / run record. Verified 2026-11-09: a 4-batch screen and two tailor runs completed with no
+permission denials and no files in the repo root. Before committing after any headless run, check
+`git status --short` for untracked files at the root.
