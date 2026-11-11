@@ -90,6 +90,18 @@ def test_write_pack_flags_stuffed_cv_without_failing(tmp_path: Path) -> None:
     assert "stuffing" in (offer_dir / "cv-stuffing-check.md").read_text().lower()
 
 
+def test_rewrite_with_clean_check_removes_stale_sidecar(tmp_path: Path) -> None:
+    # Re-persisting a fixed pack over its old dir must drop the sidecar its earlier, flagged run
+    # wrote; otherwise the dir keeps warning about a problem the current CV no longer has.
+    wall = ", ".join(f"Tool{i}" for i in range(30))
+    stuffed = {**PACK, "cv": f"## Summary\nEngineer.\n\n## Skills\n{wall}\n\n## Experience\n- x\n"}
+    offer_dir = persist_offer.write_pack(stuffed, slug="acme-ai-101", results_dir=tmp_path)
+    assert (offer_dir / "cv-stuffing-check.md").exists()
+    persist_offer.write_pack(PACK, slug="acme-ai-101", results_dir=tmp_path)
+    assert not (offer_dir / "cv-stuffing-check.md").exists()
+    assert (offer_dir / "cv.md").exists()
+
+
 def test_write_pack_normalizes_embedded_frontmatter(tmp_path: Path) -> None:
     # Tailor agents sometimes embed the ---title--- block inside the artifact value itself
     # (once or even twice); render() wraps it again, stacking 2-3 blocks that leak into the
