@@ -237,8 +237,8 @@ def _honesty_check(pack: dict, results_dir: Path) -> list[str]:
 
 
 # (sidecar title, filename, check) — each check takes (pack, results_dir) and returns warnings;
-# an empty list writes nothing. Registry so a new deterministic check is one more entry, not a
-# new inline block (arc-011 Slice C).
+# an empty list writes nothing and removes that check's stale file. Registry so a new deterministic
+# check is one more entry, not a new inline block (arc-011 Slice C).
 CHECKS: list[tuple[str, str, Callable[[dict, Path], list[str]]]] = [
     ("CV ATS parse-safety", "cv-ats-check.md", _cv_ats_check),
     ("CV keyword-stuffing check", "cv-stuffing-check.md", _cv_stuffing_check),
@@ -250,8 +250,13 @@ CHECKS: list[tuple[str, str, Callable[[dict, Path], list[str]]]] = [
 
 
 def _emit_check(offer_dir: Path, title: str, filename: str, warnings: list[str]) -> None:
-    """Write one sidecar review-aid file, only when its check flagged something."""
+    """Write one sidecar review-aid file when its check flags something, else remove a stale one.
+
+    A re-persist over an existing offer dir must not keep a warning an earlier run wrote for a
+    problem the current pack no longer has.
+    """
     if not warnings:
+        (offer_dir / filename).unlink(missing_ok=True)
         return
     items = "\n".join(f"- {w}" for w in warnings)
     (offer_dir / filename).write_text(
@@ -269,8 +274,8 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     the all-or-nothing artifact set, so packs without it are unaffected. :data:`CHECKS` then runs
     each deterministic review-aid check (CV parse-safety #75, keyword-stuffing #272, source-JD
     truncation #347, lane grounding #348, CV number-grounding and honesty, both arc-011 Slice C),
-    writing its sidecar only when it flags something — all non-blocking, outside the
-    all-or-nothing set.
+    writing its sidecar only when it flags something and removing a stale one from an earlier
+    run when it does not — all non-blocking, outside the all-or-nothing set.
 
     Args:
         pack: The tailor result.
