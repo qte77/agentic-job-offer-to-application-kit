@@ -205,7 +205,12 @@ ats-check so the CV passes by construction): single-column with NO tables; NO im
 raw HTML tags and NO HTML comments (no hidden text / keyword-stuffing — dishonest and detectable);
 and use standard, recognizable section headings (Summary, Experience, Education, Skills, Projects).
 Reorder and select from masterCvBullets/perProject to lead with what this JD weighs most. Use only
-evidenced bullets.${styleLine('cv')} Return it as "cv".`,
+evidenced bullets. STATE EACH FACT ONCE: a project, metric or technique detailed in one section
+(e.g. Projects) must not be restated in Summary, Experience or Skills with the same wording; refer
+to it briefly instead ("see Projects", or a short name). Outside Projects, attach a given project's
+source tag (e.g. "(project-name, team build)") to at most two bullets; do not tag every bullet. The
+same three-word phrase appearing four or more times is flagged as copy-paste keyword
+stuffing.${styleLine('cv')} Return it as "cv".`,
       { schema: strField('cv', 'markdown tailored CV'), phase: 'Tailor', label: 'cv' },
     ),
   () =>
