@@ -1,5 +1,7 @@
 # Plan 004 — #271 relevance fit rubric (LEAN): explainable rationale + deadline & deal-breaker flags
 
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
+
 **Status: SHIPPED** — implemented in #271 (#280). Approved 2026-07-08 (lean); scope expanded 2026-07-09
 to type `deadline`/`deal_breaker` on `ScoredItem` + carry `ScoredItem` end-to-end (ADR-0003). Handoff:
 [§Handoff](#handoff). A cloud
