@@ -1,6 +1,6 @@
-> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
-
 # Plan 003 — deploy hygiene (#251) · hardening batch (#256) · StyleBrief typing (#257)
+
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
 
 Three small PRs, each closing one issue filed 2026-07-05, each grounded in evidence gathered that
 session (the #251/#252 deploy incidents and the verified security-teardown triage). Approved in-session

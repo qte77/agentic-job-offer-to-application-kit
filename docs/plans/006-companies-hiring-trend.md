@@ -1,6 +1,6 @@
-> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
-
 # Plan 006 — companies-hiring: tab UX (#3 date · #4 sort) + hiring trend series (#2 local + publishable)
+
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
 
 **Status: SHIPPED (2026-07-12)** — Companies-tab date/sort (#305), geo-by-field + local hiring series (#306), hiring charts (#308), parse_geo noise-folding (#309). Follow-ups to the shipped #284 company
 tracker (`ajoa_kit.companies` + `scripts/build_ui_companies.py` + the local-only Companies tab) and the

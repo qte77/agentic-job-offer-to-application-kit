@@ -1,6 +1,6 @@
-> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
-
 # Plan 010 — screen quality + shortlist usability
+
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
 
 > **CLOSED 2026-08-25.** All 13 items shipped. Nothing migrates — every open thread this arc raised
 > is resolved (including item 9's finding, which reversed the arc's own earlier assumption; see

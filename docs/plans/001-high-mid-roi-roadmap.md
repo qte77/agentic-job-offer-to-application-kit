@@ -1,6 +1,6 @@
-> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
-
 # Plan 001 — high & mid-ROI issue roadmap
+
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
 
 > Status: 2026-06-30. From the approved plan-mode plan over the open-issue ROI/feasibility pass.
 >

@@ -1,6 +1,6 @@
-> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
-
 # Plan 008 — `render-pdf`: optional light Markdown→PDF for tailored packs (#275)
+
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
 
 **Status: SHIPPED (2026-07-19)** — #275 CLOSED via #335 (`render-pdf` feature) + #336 (glue smoke test).
 Spike done → **GO via fpdf2**. Kept as history; carries the symbol-level source map from the build.

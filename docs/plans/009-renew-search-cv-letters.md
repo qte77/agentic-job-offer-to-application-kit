@@ -1,6 +1,6 @@
-> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
-
 # Plan 009 — renew the local job search, CV and letters
+
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
 
 > **CLOSED 2026-08-07.** Every item below is shipped, except two that migrated to
 > [plan 010](010-screen-quality-shortlist-usability.md): **Phase C** (re-screen the delta) and the
