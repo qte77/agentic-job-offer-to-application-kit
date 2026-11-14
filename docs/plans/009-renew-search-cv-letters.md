@@ -1,3 +1,5 @@
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
+
 # Plan 009 — renew the local job search, CV and letters
 
 > **CLOSED 2026-08-07.** Every item below is shipped, except two that migrated to

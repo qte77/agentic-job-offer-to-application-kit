@@ -1,3 +1,5 @@
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
+
 # Plan 005 — post-#271 sprint: docs hygiene + trends-UI + dashboard flags + market-intel tracker
 
 **Status: Sprints 1–2 SHIPPED (2026-07-11)** — docs hygiene #282 · trends-granularity UI #285 · dashboard

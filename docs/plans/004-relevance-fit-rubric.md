@@ -1,3 +1,5 @@
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
+
 # Plan 004 — #271 relevance fit rubric (LEAN): explainable rationale + deadline & deal-breaker flags
 
 **Status: SHIPPED** — implemented in #271 (#280). Approved 2026-07-08 (lean); scope expanded 2026-07-09

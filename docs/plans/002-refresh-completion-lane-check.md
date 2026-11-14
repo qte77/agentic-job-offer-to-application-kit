@@ -1,3 +1,5 @@
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
+
 # Plan 002 — refresh completion + lane-check (+ a lint one-liner)
 
 > Status: 2026-06-30. From the ROI/feasibility pass over the open issues (handoff-001 roadmap shipped).

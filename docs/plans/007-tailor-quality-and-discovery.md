@@ -1,3 +1,5 @@
+> **Closed plan, kept as a record.** Commands in it are one machine's history, not procedure; for current steps see the repo's CONTRIBUTING and the newest plan.
+
 # Plan 007 — tailor-quality (#272 critique loop · #274 upskilling pointers) + discovery (#292)
 
 **Status: SHIPPED (2026-07-13)** — S1 #272 (#317) · S2 #274 (#318) · S3 #292 (#319). Three backlog features, two clusters.
