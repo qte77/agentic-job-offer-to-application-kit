@@ -102,6 +102,17 @@ def test_rewrite_with_clean_check_removes_stale_sidecar(tmp_path: Path) -> None:
     assert (offer_dir / "cv.md").exists()
 
 
+def test_rewrite_without_must_haves_removes_stale_coverage_report(tmp_path: Path) -> None:
+    # Re-persisting a pack that no longer carries must_haves must drop the coverage-report.md an
+    # earlier run wrote; otherwise the dir keeps showing a stale coverage table (#487).
+    with_mh = {**PACK, "must_haves": [{"requirement": "Python", "covered": True, "evidence": "x"}]}
+    offer_dir = persist_offer.write_pack(with_mh, slug="acme-ai-101", results_dir=tmp_path)
+    assert (offer_dir / "coverage-report.md").exists()
+    persist_offer.write_pack(PACK, slug="acme-ai-101", results_dir=tmp_path)
+    assert not (offer_dir / "coverage-report.md").exists()
+    assert (offer_dir / "cv.md").exists()
+
+
 def test_write_pack_normalizes_embedded_frontmatter(tmp_path: Path) -> None:
     # Tailor agents sometimes embed the ---title--- block inside the artifact value itself
     # (once or even twice); render() wraps it again, stacking 2-3 blocks that leak into the
