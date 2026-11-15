@@ -47,3 +47,48 @@ def test_network_errors_and_5xx_stay_inconclusive(
     got = slug_probe.fetch_status("https://boards.example/jobs/1")
     assert got is None
     assert not refresh.classify(corpus_delisted=False, status=got)
+
+
+class _Redirect:
+    """A polyfetch response for an unfollowed 3xx: httpx/curl tiers set ``redirect_to`` (#260)."""
+
+    def __init__(self, status: int, redirect_to: str | None) -> None:
+        self.status = status
+        self.redirect_to = redirect_to
+
+
+POSTING = "https://job-boards.greenhouse.io/acme/jobs/123"
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://job-boards.greenhouse.io/acme?error=true",  # Greenhouse closed-posting bounce
+        "https://job-boards.greenhouse.io/acme",  # board listing is the posting's parent
+        "/acme/",  # relative Location, listing with trailing slash
+    ],
+)
+def test_a_redirect_to_the_board_listing_is_gone_and_marked_stale(
+    monkeypatch: pytest.MonkeyPatch, target: str
+) -> None:
+    # #488: a closed posting 302s to the board listing instead of answering 404.
+    monkeypatch.setattr(slug_probe, "polite_fetch", lambda *_a, **_k: _Redirect(302, target))
+    got = slug_probe.fetch_status(POSTING)
+    assert got == 404
+    assert refresh.classify(corpus_delisted=False, status=got)
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://job-boards.greenhouse.io/acme/jobs/123",  # same URL, e.g. http -> https
+        "https://job-boards.greenhouse.io/acme/jobs/123/",  # trailing slash
+        "/acme/jobs/123?gh_jid=123",  # same posting, tracking query
+        "https://job-boards.greenhouse.io/acme/jobs/456",  # canonical posting id: still a posting
+    ],
+)
+def test_a_redirect_to_a_posting_stays_live(monkeypatch: pytest.MonkeyPatch, target: str) -> None:
+    monkeypatch.setattr(slug_probe, "polite_fetch", lambda *_a, **_k: _Redirect(301, target))
+    got = slug_probe.fetch_status(POSTING)
+    assert got == 301
+    assert not refresh.classify(corpus_delisted=False, status=got)

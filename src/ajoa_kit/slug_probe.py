@@ -12,11 +12,27 @@ Candidates are read from ``config/seed-candidates.json``. Run via polyfetch's en
 from __future__ import annotations
 
 import json
+from urllib.parse import parse_qs, urljoin, urlsplit
 
 from ajoa_kit.polite import polite_fetch
 from ajoa_kit.settings import AppSettings
 
 PROBE_TIMEOUT = 8.0
+
+
+def _bounces_to_listing(url: str, location: str) -> bool:
+    """True if a redirect from ``url`` lands on its board listing (#488).
+
+    Some ATS boards answer a closed posting with a 302 to the board root, e.g. Greenhouse's
+    ``/<board>?error=true``, instead of a 404. That is the posting's parent path (or an explicit
+    ``error=true`` bounce). A redirect to the same or another posting path (http to https,
+    trailing slash, canonical id) is not.
+    """
+    target = urlsplit(urljoin(url, location))
+    if "true" in parse_qs(target.query).get("error", []):
+        return True
+    src_path, dst_path = urlsplit(url).path.rstrip("/"), target.path.rstrip("/")
+    return dst_path != src_path and src_path.startswith(dst_path + "/")
 
 
 def fetch_status(url: str) -> int | None:
@@ -31,10 +47,14 @@ def fetch_status(url: str) -> int | None:
     if not url.lower().startswith(("http://", "https://")):  # sec: no file:/javascript:/… schemes
         return None
     try:
-        return polite_fetch(url, timeout=PROBE_TIMEOUT).status
+        resp = polite_fetch(url, timeout=PROBE_TIMEOUT)
     except Exception as exc:  # unreachable, blocked or robots-disallowed is inconclusive
         status = getattr(exc, "status", None)
         return status if isinstance(status, int) and 400 <= status < 500 else None
+    # The default httpx tier does not follow redirects; it returns the 3xx with its Location.
+    if resp.redirect_to and _bounces_to_listing(url, resp.redirect_to):
+        return 404  # a closed posting that redirects to the board listing is gone (#488)
+    return resp.status
 
 
 def _count(url: str, key: str | None) -> int | None:
