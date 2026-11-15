@@ -40,6 +40,7 @@ class Response(Protocol):
     status: int
     body: bytes
     backend: str
+    redirect_to: str | None  # Location of an unfollowed 3xx (httpx/curl tiers); else None
 
 
 class RobotsDisallowedError(Exception):
