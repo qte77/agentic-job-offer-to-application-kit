@@ -298,6 +298,9 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
         body = coverage_summary(pack["must_haves"], pack.get("gap_report", ""))
         cov = f'---\ntitle: "Coverage report"\n---\n\n{body}'
         (offer_dir / "coverage-report.md").write_text(cov)
+    else:
+        # A re-persist without must_haves must not keep an earlier run's coverage table (#487).
+        (offer_dir / "coverage-report.md").unlink(missing_ok=True)
     # Deterministic review-aid sidecars (#75, #272, #347, #348; arc-011 Slice C) — each is
     # non-blocking, opt-out-free, and appears only when it flags something; never raises.
     for title, filename, check in CHECKS:
