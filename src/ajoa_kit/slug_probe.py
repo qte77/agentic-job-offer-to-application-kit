@@ -26,12 +26,15 @@ def _bounces_to_listing(url: str, location: str) -> bool:
     Some ATS boards answer a closed posting with a 302 to the board root, e.g. Greenhouse's
     ``/<board>?error=true``, instead of a 404. That is the posting's parent path (or an explicit
     ``error=true`` bounce). A redirect to the same or another posting path (http to https,
-    trailing slash, canonical id) is not.
+    trailing slash, canonical id) is not. Neither is a redirect to another host or to a non-http(s)
+    target (#499): only the posting's own host can serve its listing, so both checks need it.
     """
-    target = urlsplit(urljoin(url, location))
+    source, target = urlsplit(url), urlsplit(urljoin(url, location))
+    if target.scheme not in ("http", "https") or target.hostname != source.hostname:
+        return False
     if "true" in parse_qs(target.query).get("error", []):
         return True
-    src_path, dst_path = urlsplit(url).path.rstrip("/"), target.path.rstrip("/")
+    src_path, dst_path = source.path.rstrip("/"), target.path.rstrip("/")
     return dst_path != src_path and src_path.startswith(dst_path + "/")
 
 

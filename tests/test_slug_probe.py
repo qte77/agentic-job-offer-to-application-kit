@@ -92,3 +92,44 @@ def test_a_redirect_to_a_posting_stays_live(monkeypatch: pytest.MonkeyPatch, tar
     got = slug_probe.fetch_status(POSTING)
     assert got == 301
     assert not refresh.classify(corpus_delisted=False, status=got)
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://other.example/",  # another host's root
+        "https://other.example/acme",  # another host, an ancestor path of the posting
+        "https://other.example/acme?error=true",  # error=true on another host
+        "ftp://job-boards.greenhouse.io/acme",  # not an http(s) target
+    ],
+)
+def test_a_redirect_off_the_posting_host_is_not_a_listing_bounce(
+    monkeypatch: pytest.MonkeyPatch, target: str
+) -> None:
+    # #499: only a redirect on the posting's own host can be its board listing.
+    monkeypatch.setattr(slug_probe, "polite_fetch", lambda *_a, **_k: _Redirect(302, target))
+    got = slug_probe.fetch_status(POSTING)
+    assert got == 302
+    assert not refresh.classify(corpus_delisted=False, status=got)
+
+
+def test_a_same_host_redirect_to_the_root_is_a_listing_bounce(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(slug_probe, "polite_fetch", lambda *_a, **_k: _Redirect(302, "/"))
+    assert slug_probe.fetch_status(POSTING) == 404
+
+
+def test_an_empty_location_keeps_the_redirect_status(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(slug_probe, "polite_fetch", lambda *_a, **_k: _Redirect(302, ""))
+    assert slug_probe.fetch_status(POSTING) == 302
+
+
+def test_a_feed_moved_to_another_host_is_not_reported_gone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # verify_sources probes feeds through fetch_status: a feed moved to a CDN root stays live.
+    monkeypatch.setattr(
+        slug_probe, "polite_fetch", lambda *_a, **_k: _Redirect(301, "https://cdn.example.net/")
+    )
+    assert slug_probe.fetch_status("https://blog.example.org/news/feed.xml") == 301
