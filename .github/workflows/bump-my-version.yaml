@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   bump:
-    uses: qte77/.github/.github/workflows/bump-version.yml@a32769a925e4d056b5d389ad727f7831973f7161  # main 2026-11-12 (qte77/.github#64)
+    uses: qte77/.github/.github/workflows/bump-version.yml@5ab0cecea3fee43a9c8f5858f7970a088313115e  # main 2026-11-12 (qte77/.github#64)
     with:
       bump_type: ${{ inputs.bump_type }}
       use_uv: true
