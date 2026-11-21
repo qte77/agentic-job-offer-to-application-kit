@@ -1,0 +1,570 @@
+/* Inter (vendored WOFF2 with a TTF fallback, OFL 1.1) — same fonts as the paperverse UI.
+   Offline-first, no CDN; system-ui paints first, then Inter swaps in (font-display: swap).
+   Modern browsers take the WOFF2 (~64% smaller); the TTF is only for legacy fallback. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    url("../public/vendor/fonts/Inter-Regular.woff2") format("woff2"),
+    url("../public/vendor/fonts/Inter-Regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    url("../public/vendor/fonts/Inter-Bold.woff2") format("woff2"),
+    url("../public/vendor/fonts/Inter-Bold.ttf") format("truetype");
+}
+
+/* EyeRest theme tokens — qte77 brand DESIGN.md (zero-blue, warm amber).
+   Never a blue accent. Same source as the analyze-stock-kpi dashboard. */
+/* Light tokens — the default, and the explicit "light" choice (which wins over the
+   prefers-dark media query below via higher specificity). theme.js sets data-theme
+   on <html> for an explicit choice and removes it for auto. */
+:root,
+:root[data-theme="light"] {
+  --bg: #ece8d8;
+  --surface: #e2dec8;
+  --text: #2c2818;
+  --text-muted: #686040;
+  --border: #c8c4b0;
+  --primary: #7a6010;
+  /* GitHub Invertocat logo — brand-mandated black/white (not a palette color): GitHub's
+     guidelines forbid recoloring its logo, so this is the only header icon NOT on currentColor. */
+  --gh-logo: #181717;
+  /* Zero-blue data arc — drives score chips + chart lines + lane badges. */
+  --data-positive: #4a6818;
+  --data-caution: #787010;
+  --data-negative: #983828;
+  --data-alt: #587818;
+}
+
+/* Auto (no data-theme) follows the OS. Explicit light above out-specifies this;
+   explicit dark below reinforces it. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1a14;
+    --surface: #242018;
+    --text: #d8d0b8;
+    --text-muted: #a89878;
+    --border: #383428;
+    --primary: #c8a858;
+    --gh-logo: #ffffff; /* GitHub Invertocat — white on dark */
+    --data-positive: #8aa860;
+    --data-caution: #c8b868;
+    --data-negative: #c08060;
+    --data-alt: #a8b870;
+    color-scheme: dark;
+  }
+}
+
+/* Explicit dark — always wins, regardless of OS preference. */
+:root[data-theme="dark"] {
+  --bg: #1c1a14;
+  --surface: #242018;
+  --text: #d8d0b8;
+  --text-muted: #a89878;
+  --border: #383428;
+  --primary: #c8a858;
+  --gh-logo: #ffffff; /* GitHub Invertocat — white on dark */
+  --data-positive: #8aa860;
+  --data-caution: #c8b868;
+  --data-negative: #c08060;
+  --data-alt: #a8b870;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  /* Inter (vendored above) with system fallbacks — same stack as the paperverse UI. */
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  line-height: 1.6;
+}
+
+header {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Neutral header mark — inherits --text via currentColor (zero-blue, theme-adaptive). */
+.brand-mark {
+  color: var(--text);
+  flex: none;
+}
+
+.brand h1 {
+  font-size: 1.125rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.brand .sub {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+main {
+  padding: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.count { color: var(--text-muted); font-size: 0.8125rem; }
+
+/* Inputs sit on --bg so they read as inset against the --surface section. */
+#filter {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  min-width: 12rem;
+  /* Keep the two shortlist controls clustered at the right of the space-between .section-head
+     (h2 | filter + toggle) instead of the toggle being pushed away from the search box. */
+  margin-left: auto;
+}
+#filter:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+/* Has-pack filter (plan 010 item 5) — a checkbox chip beside the search box, same inset
+   (--bg on --surface) look as #filter; ticking it narrows the table to rows carrying a tailored
+   pack. accent-color paints the tick in the brand amber and follows color-scheme, so it reads
+   correctly in both themes without a per-theme override. */
+.pack-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pack-filter:hover { border-color: var(--primary); color: var(--primary); }
+.pack-filter:focus-within { outline: 2px solid var(--primary); outline-offset: 1px; }
+.pack-filter input { margin: 0; accent-color: var(--primary); cursor: pointer; }
+
+/* Trends granularity + time-frame pickers — both `.range-picker` selects share one look (the
+   styling targets the class, not an id, so #trends-gran and #trends-range match). */
+.range-picker { display: inline-flex; align-items: center; }
+.range-picker + .range-picker { margin-left: 0.4rem; }
+.range-picker select {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.range-picker select:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.section-head .count { margin-left: auto; }
+
+/* ── Shortlist table ── */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+thead th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--border);
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Sortable company headers (#4) — click/Enter/Space cycles asc<->desc; the .sort-ind arrow and
+   aria-sort reflect the active column. Scoped to #companies-table so the shortlist headers stay
+   static. */
+#companies-table thead th[data-sort] { cursor: pointer; user-select: none; }
+#companies-table thead th[data-sort]:hover { color: var(--primary); }
+#companies-table thead th[data-sort]:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+#companies-table thead th[aria-sort="ascending"],
+#companies-table thead th[aria-sort="descending"] { color: var(--primary); }
+.sort-ind { font-size: 0.7rem; }
+
+tbody td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+
+td .role-title { font-weight: 500; }
+td .role-title a { color: var(--text); text-decoration: none; }
+td .role-title a:hover { color: var(--primary); text-decoration: underline; }
+td .rationale { color: var(--text-muted); font-size: 0.8125rem; margin-top: 0.15rem; max-width: 38ch; }
+
+.num { text-align: center; font-variant-numeric: tabular-nums; }
+
+td.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 2rem 1rem;
+}
+
+/* ── Expandable offer rows — click/Enter/Space reveals the tailored CV + cover letter + prefill pack ── */
+.offer-row { cursor: pointer; }
+.offer-row:hover td { background: var(--surface); }
+.offer-row:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+/* Caret affordance in the first cell, flipped when the row is expanded. */
+.offer-row > td:first-child { padding-left: 1.5rem; position: relative; }
+.offer-row > td:first-child::before {
+  content: "\25B8"; /* ▸ */
+  position: absolute;
+  left: 0.7rem;
+  color: var(--text-muted);
+}
+.offer-row[aria-expanded="true"] > td:first-child::before { content: "\25BE"; color: var(--primary); } /* ▾ */
+
+.offer-detail[hidden] { display: none; }
+.offer-detail > td { background: var(--bg); }
+/* One consistent layout: each doc (CV / cover letter / prefill pack) is a full-width pane, stacked in
+   a single column, each bounded to the same `.tailor-md`/`.tailor-pre` max-height with internal scroll.
+   Uniform width + height regardless of doc count or content size (a wide CV no longer squeezes a
+   side-by-side cover letter into an unreadable sliver — the old 1fr 1fr grid's min-content overflow). */
+.tailor-pack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+/* Pane head: the section title on the left, a Copy-raw-markdown button on the right. */
+.tailor-doc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.tailor-doc h4 {
+  margin: 0; /* spacing now lives on .tailor-doc-head */
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* Small, unobtrusive copy button; highlights on hover/focus and while showing "Copied". */
+.tailor-copy {
+  flex: none;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.tailor-copy:hover { border-color: var(--primary); color: var(--primary); }
+.tailor-copy:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tailor-copy.is-copied { border-color: var(--data-positive); color: var(--data-positive); }
+.tailor-pre,
+.tailor-md {
+  margin: 0;
+  padding: 0.75rem;
+  max-height: 22rem;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.tailor-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Rendered-markdown typography — scoped to .tailor-md so the .tailor-doc h4 title rule is untouched. */
+.tailor-md > :first-child { margin-top: 0; }
+.tailor-md > :last-child { margin-bottom: 0; }
+.tailor-md h1,
+.tailor-md h2,
+.tailor-md h3 {
+  margin: 0.6rem 0 0.3rem;
+  line-height: 1.25;
+  color: var(--text);
+  font-weight: 600;
+  text-transform: none; /* override the global uppercase/muted h2 — render as a document, not a UI label */
+  letter-spacing: normal;
+}
+.tailor-md h1 { font-size: 1.05rem; }
+.tailor-md h2 { font-size: 0.95rem; }
+.tailor-md h3 { font-size: 0.875rem; }
+.tailor-md p { margin: 0.4rem 0; }
+.tailor-md ul,
+.tailor-md ol { margin: 0.4rem 0; padding-left: 1.2rem; }
+.tailor-md li { margin: 0.15rem 0; }
+.tailor-md strong { font-weight: 600; }
+.tailor-md a { color: var(--primary); }
+.tailor-md code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95em;
+}
+
+/* Lane badge — outlined pill in the accent. */
+.lane {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  color: var(--primary);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Offer flags (#283) — outlined pills in the Role cell, mirroring .lane: a soft deadline (caution)
+   and a hard deal-breaker (negative). Rendered only when the ScoredItem field is present.
+   .has-pack (plan 010 item 5) joins the same idiom in the data-arc's positive: the row went through
+   the tailor phase and carries a CV + cover letter. Both themes come free — every color here is a
+   --data-* token, redefined under prefers-dark and :root[data-theme="dark"]. */
+.due,
+.deal-breaker,
+.has-pack {
+  display: inline-block;
+  margin: 0.3rem 0.35rem 0 0;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+.due { border-color: var(--data-caution); color: var(--data-caution); white-space: nowrap; }
+.deal-breaker { border-color: var(--data-negative); color: var(--data-negative); }
+.has-pack {
+  border-color: var(--data-positive);
+  color: var(--data-positive);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Score chip — data-arc by band: >=4 positive, 3 caution, <=2 negative. */
+.score {
+  display: inline-block;
+  min-width: 1.6rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 6px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #1c1a14;
+}
+.score-good { background: var(--data-positive); }
+.score-mid { background: var(--data-caution); }
+.score-bad { background: var(--data-negative); }
+
+.verdict { font-size: 0.8125rem; color: var(--text-muted); text-transform: capitalize; }
+.verdict.is-shortlist { color: var(--data-positive); font-weight: 500; }
+
+/* Momentum tag (#284) — the company-hiring tracker's heating/cooling/steady signal. Heating = a
+   growth signal (positive), cooling = slowing (caution), steady = muted. Zero-blue, like the rest. */
+.momentum { display: inline-block; font-size: 0.75rem; white-space: nowrap; }
+.momentum.is-heating { color: var(--data-positive); font-weight: 600; }
+.momentum.is-cooling { color: var(--data-caution); }
+.momentum.is-steady { color: var(--text-muted); }
+
+/* ── Trends charts ── */
+.chart-wrap { position: relative; height: 300px; }
+.chart-block + .chart-block { margin-top: 1.5rem; }
+/* The per-company hiring chart follows the companies TABLE (not another chart-block), so the
+   adjacent-sibling rule above wouldn't give it a top margin. */
+#hiring-companies-block { margin-top: 1.5rem; }
+.chart-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text-muted);
+}
+
+footer {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+footer a { color: var(--primary); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+.synthetic-note {
+  margin: 0 0 1.5rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+/* ── View tabs (Shortlist / Market trends) — pill row; selection is the filled
+   accent state (no font-weight change), so switching causes no layout shift. ── */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.tab {
+  padding: 0.4rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.tab:hover { color: var(--primary); border-color: var(--primary); }
+.tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tab[aria-selected="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--bg);
+}
+
+/* De-nativize every styled button: with `appearance: auto`, some engines (WebKit/Safari notably)
+   paint the NATIVE button face underneath our authored transparent/--surface backgrounds — it
+   reads as a white overlay on the inactive controls in both themes and kills contrast. Chromium
+   drops the native face on its own once a background is authored; this makes it explicit
+   everywhere. (The #trends-range select keeps `auto` for its native dropdown arrow.) */
+.tab,
+.theme-toggle,
+.tailor-copy {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ── Theme toggle — auto/light/dark cycle button (mirrors qte77.github.io) ── */
+/* Chip visuals are shared with .header-link below (see the grouped rule); here just the
+   button-specific resets. Default inline-block display is kept so the ::before width-sizer works. */
+.theme-toggle { font: inherit; cursor: pointer; }
+
+/* Reserve the widest label ("◐ System") so the chip doesn't resize as it cycles
+   system/light/dark — same sizer trick as the analyze-stock-kpi toggle. */
+.theme-toggle::before {
+  content: "◐ System";
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+/* ── Header action cluster — theme toggle + Repo/Issues links, right-aligned ── */
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+/* Bordered chips on --surface (4px, border turns primary on hover), matching the agenthud
+   dashboard — now shared by the Repo/Issues links AND the theme toggle (the third such control,
+   so the shared base is extracted per AHA). Visuals only here; each control keeps its own layout. */
+.header-link,
+.theme-toggle {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1;
+  transition: border-color 0.15s ease;
+}
+.header-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  text-decoration: none;
+}
+.header-link svg { width: 1em; height: 1em; flex: none; }
+/* GitHub Invertocat keeps its brand color (black on light, white on dark) — never recolored to
+   the theme's text/accent, per GitHub's logo guidelines. --gh-logo is set per theme above. */
+.gh-mark { fill: var(--gh-logo); }
+.header-link:hover,
+.theme-toggle:hover { border-color: var(--primary); }
+.header-link:focus-visible,
+.theme-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Screen-reader-only: visually hidden but exposed to assistive tech (the theme
+   live region #theme-status announces the selected mode on change). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  main { padding: 0.75rem; }
+  section { padding: 0.9rem; }
+  td .rationale { display: none; }
+}

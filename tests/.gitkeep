@@ -1,0 +1,3 @@
+# Keeps ui/tests/ tracked for paperverse-parity folder layout.
+# No JS test runner here by design — this repo tests Python modules only
+# (see AGENTS.md "Quality gates"); the dashboard is no-build vanilla JS.
