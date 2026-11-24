@@ -17,8 +17,9 @@
 - **Loop per PR:** topic branch from main, red test first, `make check` last, changelog fragment,
   docs audit, push, squash-merge only when that PR's own checks are green, delete
   the branch, strike the row below in the same PR.
-- **Owner gates:** whether to tailor the 96 live score-5 offers that have no pack (roughly
-  250-410k tokens per pack). The owner chose (2026-10-21) to switch Jev on at 0.25 rather than
+- **Owner gates:** which offers still to tailor. Since 2026-11-02 the packs cover almost every
+  live score-5 offer (on 2026-11-24, 4 were left without a pack, 2 of them with no stored JD) and a
+  hand-picked set of score-4 offers. A pack costs roughly 290-330k tokens (measured 2026-11-23). The owner chose (2026-10-21) to switch Jev on at 0.25 rather than
   wait for per-lane questions. Keys are in `.env`: `TYPESAFE_API_KEY`, `CLOUDFLARE_API_TOKEN`,
   `CLOUDFLARE_ACCOUNT_ID`.
 - **Watch-outs:**
