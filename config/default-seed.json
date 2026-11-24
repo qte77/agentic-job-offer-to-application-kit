@@ -175,6 +175,8 @@
      "_reason": "No public read API (api.stepstone.com is inbound-only); ToS bars scraping; robots.txt disallows /public-api + parameterized URLs — paste only."},
     {"_platform": "jobs.ch", "_date_verified": "2026-06-19",
      "_reason": "No public API/RSS (JobCloud); ToS bars crawlers/scrapers/automation; robots.txt disallows /api + detail pages — paste only."},
+    {"_platform": "jobup.ch", "_date_verified": "2026-11-24",
+     "_reason": "Run by JobCloud, like jobs.ch: no public API/RSS; Terms of use for job seekers (Dec 2025) s.7 bar crawlers, scrapers, data mining, bots and automated access. robots.txt disallows /api/ but not detail pages; the ToS decides — paste only."},
     {"_platform": "google-for-jobs", "_date_verified": "2026-06-20",
      "_reason": "Search surface, not a data source — no public candidate-side listings API; the only path is scraping SERPs, which violates Google ToS + robots.txt (Disallow: /search). See ADR-0002."},
     {"_platform": "workatastartup", "_date_verified": "2026-08-25",
