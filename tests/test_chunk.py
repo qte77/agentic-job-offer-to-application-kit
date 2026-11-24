@@ -200,7 +200,8 @@ def test_chunk_carries_constraints_that_scoping_and_the_cap_cut(
         "About us We build secure systems. An active TS/SCI clearance is required. "
         "Requirements You know Python well. Fluent German is required. "
         + ("Ship code. " * 120)
-        + "Benefits Health cover and a gym. This role is remote, and based in India only."
+        + "Benefits Health cover and a gym. This role is remote, and based in India only. "
+        + "We hire regardless of citizenship status or national origin."
     )
     plain = "Requirements You know Python well. " + ("Ship code. " * 20)
     (results / "jobs-raw.json").write_text(
@@ -220,6 +221,7 @@ def test_chunk_carries_constraints_that_scoping_and_the_cap_cut(
     assert "An active TS/SCI clearance is required." in a["constraints"]
     assert "This role is remote, and based in India only." in a["constraints"]
     assert "German" not in a["constraints"]  # already visible in the description
+    assert "regardless of citizenship" not in a["constraints"]  # EEO text is not a limit
     assert len(a["constraints"]) <= chunk.CONSTRAINTS_CAP
     assert "constraints" not in b
 

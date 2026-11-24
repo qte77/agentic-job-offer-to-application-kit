@@ -99,6 +99,13 @@ _CONSTRAINT = re.compile(
     rf"{_LANGUAGES}\W+(?:is\W+)?(?:required|essential|mandatory|fluency|proficiency))\b",
     re.IGNORECASE,
 )
+# Equal-opportunity boilerplate names citizenship, national origin and the like as things the
+# employer does NOT screen on. Those sentences are not limits, so they never enter the field.
+_EEO = re.compile(
+    r"equal (?:employment )?opportunit|regardless of|without regard|discriminat|"
+    r"protected (?:class|characteristic|veteran)|affirmative action",
+    re.IGNORECASE,
+)
 # Flat single-line prose (see the marker note above): split after . ! or ? when a capital follows,
 # but not after a single-letter abbreviation, so "U.S. export control" stays one sentence.
 _SENTENCE = re.compile(r"(?<=[.!?])(?<!\b[A-Z]\.)\s+(?=[A-Z])")
@@ -119,7 +126,7 @@ def _constraints(desc: str, shown: str) -> str:
     for sentence in _SENTENCE.split(desc):
         s = sentence.strip()
         hit = _CONSTRAINT.search(s)
-        if not hit or s in shown or s in picked:
+        if not hit or s in shown or s in picked or _EEO.search(s):
             continue
         if len(s) > SENTENCE_MAX:
             start = max(0, hit.start() - SENTENCE_MAX // 3)
