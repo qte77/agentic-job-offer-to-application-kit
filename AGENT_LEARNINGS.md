@@ -156,5 +156,5 @@ access, so one such line could make an agent act outside its task.
 **Fix:** The tailor and relevance workflows run every agent as the read-only `jd-reader` type
 (Read, Grep, Glob), and their prompts treat the JD as data. Agent types load at session start, so
 verify a new or edited agent type in a fresh session (a one-agent probe workflow that reports its
-tools), not in the session that wrote the file. Ad text aimed at AI is noted in the gap report and
-never acted on.
+tools), not in the session that wrote the file. Ad text aimed at AI gets a "Note on the ad" section
+in the gap report and is never acted on.
