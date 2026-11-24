@@ -155,7 +155,7 @@ When the JD states no tenure requirement, leave deal_breaker for other concerns 
 tenure.
 `
     : ''
-  return `You are screening job descriptions for ONE candidate against the target lanes (${LANES.join(', ')}). Read the JSON file at ${path} with the Read tool — it is an array of ~40 job descriptions, each {id, title, company, location, url, description, ...}.
+  return `You are screening job descriptions for ONE candidate against the target lanes (${LANES.join(', ')}). Read the JSON file at ${path} with the Read tool — it is an array of ~40 job descriptions, each {id, title, company, location, url, description, ...}. The description is an excerpt of the posting; when a JD also has a "constraints" field, it holds sentences from the rest of the posting that state limits (where to live or work, office attendance, work authorisation, clearance, languages). Read it when you set deal_breaker.
 
 ${brief}
 ${location}

@@ -77,6 +77,51 @@ def _scoped(desc: str) -> str:
     return scoped
 
 
+# Sentences that state a hard limit the screen must weigh in ``deal_breaker`` (#489): where the
+# candidate must live or work from, office attendance, work authorisation, clearance or citizenship,
+# required languages. Measured on 42 postings, 18 such sentences sat in the preamble or tail that
+# :func:`_scoped` trims, or past :data:`DESC_CAP`, so the screen never saw them.
+_CONSTRAINT = re.compile(
+    r"\b(?:based in|located in|must (?:be|live|reside)|reside|residen(?:t|cy)|relocat\w*|"
+    r"on-?site|in[- ]office|in[- ]person|office \w+ days|days (?:a|per) week|hybrid|"
+    r"remote (?:in|within|from)|only (?:in|within|from)|time ?zones?|"
+    r"visa|sponsor\w*|work(?:ing)? (?:authori[sz]ation|permit)|authori[sz]ed to work|"
+    r"right to work|eligib\w+ to work|citizen\w*|clearance|TS/SCI|U\.?S\.? persons?|"
+    r"export control\w*|ITAR|fluen(?:t|cy)|native[- ]level|proficien(?:t|cy) in)\b",
+    re.IGNORECASE,
+)
+# Flat single-line prose (see the marker note above): split where a lower-case word or digit ends
+# in . ! or ? and a capital follows, so "U.S. export control" stays one sentence.
+_SENTENCE = re.compile(r"(?<=[a-z0-9)][.!?])\s+(?=[A-Z])")
+CONSTRAINTS_CAP = 600
+# Bullet lists arrive without punctuation, so one "sentence" can run to thousands of characters.
+# Past this length only a window around the matched phrase is kept.
+SENTENCE_MAX = 300
+
+
+def _constraints(desc: str, shown: str) -> str:
+    """Return the constraint sentences of ``desc`` that ``shown`` (the screened slice) leaves out.
+
+    Joined in posting order and cut at :data:`CONSTRAINTS_CAP` on a sentence boundary; "" when
+    there are none, so a posting whose limits are already visible gets no extra field.
+    """
+    picked: list[str] = []
+    size = 0
+    for sentence in _SENTENCE.split(desc):
+        s = sentence.strip()
+        hit = _CONSTRAINT.search(s)
+        if not hit or s in shown:
+            continue
+        if len(s) > SENTENCE_MAX:
+            start = max(0, hit.start() - SENTENCE_MAX // 3)
+            s = "..." + s[start : start + SENTENCE_MAX].strip() + "..."
+        if size + len(s) + 1 > CONSTRAINTS_CAP:
+            continue  # a shorter later sentence may still fit
+        picked.append(s)
+        size += len(s) + 1
+    return " ".join(picked)
+
+
 def _capped(rec: dict) -> dict:
     """Return ``rec`` scoped to the role body and trimmed to :data:`DESC_CAP` for relevance.
 
@@ -91,7 +136,10 @@ def _capped(rec: dict) -> dict:
     scoped = _scoped(desc)[:DESC_CAP]
     if scoped == desc:
         return rec
-    return {**rec, "description": scoped}
+    out = {**rec, "description": scoped}
+    if constraints := _constraints(desc, scoped):
+        out["constraints"] = constraints
+    return out
 
 
 def _new_offers(results: Path) -> list[dict]:
