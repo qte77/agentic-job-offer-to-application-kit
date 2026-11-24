@@ -222,3 +222,36 @@ def test_chunk_carries_constraints_that_scoping_and_the_cap_cut(
     assert "German" not in a["constraints"]  # already visible in the description
     assert len(a["constraints"]) <= chunk.CONSTRAINTS_CAP
     assert "constraints" not in b
+
+
+def test_chunk_constraints_survive_the_cap_and_skip_skill_noise(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A limit past ``DESC_CAP`` still arrives, cut to a window if it sits in an unpunctuated run.
+
+    Skill lines such as "proficient in Python" or "hybrid cloud" are not limits and must not crowd
+    real ones out of the 600-char field; a repeated limit is kept once.
+    """
+    results = _setup(tmp_path, monkeypatch)
+    bullets = " - ".join(["write Python services"] * 60)  # one long run with no full stops
+    desc = (
+        "Requirements You are proficient in Python. We run a hybrid cloud. "
+        + ("Ship code. " * 400)
+        + f"What you do {bullets} - must be based in Berlin - {bullets}. "
+        + "Must be based in Paris. Must be based in Paris. Fluent German is required."
+    )
+    (results / "jobs-raw.json").write_text(
+        json.dumps([{"id": "a", "title": "role", "description": desc}]),
+    )
+
+    chunk.main(batch=40)
+
+    rec = json.loads((results / "batches" / "batch-000.json").read_text())[0]
+    field = rec["constraints"]
+    assert "Paris" not in rec["description"]  # premise: past the cap
+    assert field.count("Must be based in Paris.") == 1
+    assert "Fluent German is required." in field
+    assert "based in Berlin" in field  # kept as a window of the long unpunctuated run
+    assert len(field) <= chunk.CONSTRAINTS_CAP
+    assert "proficient in Python" not in field
+    assert "hybrid cloud" not in field

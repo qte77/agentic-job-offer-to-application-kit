@@ -81,18 +81,27 @@ def _scoped(desc: str) -> str:
 # candidate must live or work from, office attendance, work authorisation, clearance or citizenship,
 # required languages. Measured on 42 postings, 18 such sentences sat in the preamble or tail that
 # :func:`_scoped` trims, or past :data:`DESC_CAP`, so the screen never saw them.
+_LANGUAGES = (
+    r"(?:English|German|French|Spanish|Italian|Dutch|Portuguese|Polish|Swedish|Danish|Norwegian|"
+    r"Finnish|Japanese|Korean|Mandarin|Chinese|Hebrew|Arabic|Turkish)"
+)
 _CONSTRAINT = re.compile(
     r"\b(?:based in|located in|must (?:be|live|reside)|reside|residen(?:t|cy)|relocat\w*|"
-    r"on-?site|in[- ]office|in[- ]person|office \w+ days|days (?:a|per) week|hybrid|"
+    r"on-?site|in[- ]office|in[- ]person|office \w+ days|days (?:a|per) week|"
+    r"in (?:one of )?our offices?|"
+    r"hybrid (?:role|position|work\w*|schedule|model|setup)|"
     r"remote (?:in|within|from)|only (?:in|within|from)|time ?zones?|"
-    r"visa|sponsor\w*|work(?:ing)? (?:authori[sz]ation|permit)|authori[sz]ed to work|"
+    r"visa|sponsorship|(?:not|unable to|cannot|can't) sponsor|"
+    r"work(?:ing)? (?:authori[sz]ation|permit)|authori[sz]ed to work|"
     r"right to work|eligib\w+ to work|citizen\w*|clearance|TS/SCI|U\.?S\.? persons?|"
-    r"export control\w*|ITAR|fluen(?:t|cy)|native[- ]level|proficien(?:t|cy) in)\b",
+    r"export control\w*|ITAR|"
+    rf"(?:fluen(?:t|cy)|native[- ]level|proficien(?:t|cy)|professional)\W+(?:in\W+)?{_LANGUAGES}|"
+    rf"{_LANGUAGES}\W+(?:is\W+)?(?:required|essential|mandatory|fluency|proficiency))\b",
     re.IGNORECASE,
 )
-# Flat single-line prose (see the marker note above): split where a lower-case word or digit ends
-# in . ! or ? and a capital follows, so "U.S. export control" stays one sentence.
-_SENTENCE = re.compile(r"(?<=[a-z0-9)][.!?])\s+(?=[A-Z])")
+# Flat single-line prose (see the marker note above): split after . ! or ? when a capital follows,
+# but not after a single-letter abbreviation, so "U.S. export control" stays one sentence.
+_SENTENCE = re.compile(r"(?<=[.!?])(?<!\b[A-Z]\.)\s+(?=[A-Z])")
 CONSTRAINTS_CAP = 600
 # Bullet lists arrive without punctuation, so one "sentence" can run to thousands of characters.
 # Past this length only a window around the matched phrase is kept.
@@ -110,7 +119,7 @@ def _constraints(desc: str, shown: str) -> str:
     for sentence in _SENTENCE.split(desc):
         s = sentence.strip()
         hit = _CONSTRAINT.search(s)
-        if not hit or s in shown:
+        if not hit or s in shown or s in picked:
             continue
         if len(s) > SENTENCE_MAX:
             start = max(0, hit.start() - SENTENCE_MAX // 3)
