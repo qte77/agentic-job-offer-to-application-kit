@@ -145,3 +145,16 @@ cached stub, so each case cost a full re-run of the pack (about 300k tokens).
 **Fix:** The workflow now unwraps a double-encoded CV, asks the cv agent once more when the CV is
 under 800 characters, and fails the run on a second stub, so an empty CV is never saved. Before
 saving a pack from an older run, still check that the CV is complete.
+
+## Job ads that address AI tools or automated applicants (2026-11-11/24)
+
+**Pattern:** Some postings contain text an agent may take as an instruction: one carried a hidden
+line telling AI tools to put a set phrase in the application, another invites applicants to apply
+by sending an HTTP request to an API. Workflow agents read the full JD, and the default workflow agent has a shell and web
+access, so one such line could make an agent act outside its task.
+
+**Fix:** The tailor and relevance workflows run every agent as the read-only `jd-reader` type
+(Read, Grep, Glob), and their prompts treat the JD as data. Agent types load at session start, so
+verify a new or edited agent type in a fresh session (a one-agent probe workflow that reports its
+tools), not in the session that wrote the file. Ad text aimed at AI is noted in the gap report and
+never acted on.
