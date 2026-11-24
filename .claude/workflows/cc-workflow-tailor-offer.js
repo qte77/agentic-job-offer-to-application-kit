@@ -86,6 +86,20 @@ const strField = (name, desc) => ({
   required: [name],
 })
 
+// The cv agent has returned a stub instead of a CV ('{"placeholder":"see below"}') and the CV
+// double-encoded as JSON ('{"cv": "..."}'). unwrapField undoes the second; the Tailor step asks
+// once more on the first, so one bad agent turn does not cost a full re-run of the pack.
+const MIN_CV_CHARS = 800
+const unwrapField = (text, name) => {
+  try {
+    const inner = JSON.parse(text)
+    if (inner && typeof inner[name] === 'string') return inner[name]
+  } catch {
+    // not JSON: the normal case
+  }
+  return text
+}
+
 // Match schema: the prose assessment PLUS a structured must_haves array (one object per JD
 // must-have). strField() only builds single-string schemas, so this is hand-written. must_haves
 // is OPTIONAL (not in `required`) so a refusal or older run still validates on `match` alone.
@@ -202,9 +216,10 @@ phase('Tailor')
 const [cv, cover, gap] = await parallel([
   // The CV prompt enforces ats_check.parse_safety_warnings' five categories up front, so the CV is
   // ATS-clean by construction; persist_offer's cv-ats-check.md stays the deterministic backstop.
-  () =>
-    agent(
-      `${SOURCES}
+  async () => {
+    const askCv = (label) =>
+      agent(
+        `${SOURCES}
 
 MATCH ASSESSMENT (already produced):
 ${match.match}
@@ -225,9 +240,17 @@ evidenced bullets. STATE EACH FACT ONCE: a project, metric or technique detailed
 to it briefly instead ("see Projects", or a short name). Outside Projects, attach a given project's
 source tag (e.g. "(project-name, team build)") to at most two bullets; do not tag every bullet. The
 same three-word phrase appearing four or more times is flagged as copy-paste keyword
-stuffing.${styleLine('cv')} Return it as "cv".`,
-      { schema: strField('cv', 'markdown tailored CV'), phase: 'Tailor', label: 'cv' },
-    ),
+stuffing.${styleLine('cv')} Return the full CV text itself as "cv", never a placeholder.`,
+        { schema: strField('cv', 'markdown tailored CV'), phase: 'Tailor', label },
+      )
+    let text = unwrapField((await askCv('cv')).cv, 'cv')
+    if (text.length < MIN_CV_CHARS) {
+      log(`cv came back as a ${text.length}-char stub; asking once more`)
+      text = unwrapField((await askCv('cv-retry')).cv, 'cv')
+    }
+    if (text.length < MIN_CV_CHARS) throw new Error(`cv agent returned a stub twice (${text.length} chars)`)
+    return { cv: text }
+  },
   () =>
     agent(
       `${SOURCES}

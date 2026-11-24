@@ -133,3 +133,15 @@ no `acceptEdits`); both stages need only to read, and their results come back th
 journal / run record. Verified 2026-11-09: a 4-batch screen and two tailor runs completed with no
 permission denials and no files in the repo root. Before committing after any headless run, check
 `git status --short` for untracked files at the root.
+
+## The tailor's cv agent sometimes returns a stub instead of a CV (2026-11-18/23)
+
+**Pattern:** The cv step's structured output was a placeholder object such as
+`{"placeholder":"see below"}` or `{"placeholder":"x"}` instead of the CV text, in three runs
+(ElevenLabs Ads on 2026-11-18, Scale AI and Tempo on 2026-11-23). Two older packs had been saved
+with a few-word stub as their CV. Six more runs returned the CV double-encoded as `{"cv": "..."}`. A resume replays the
+cached stub, so each case cost a full re-run of the pack (about 300k tokens).
+
+**Fix:** The workflow now unwraps a double-encoded CV, asks the cv agent once more when the CV is
+under 800 characters, and fails the run on a second stub, so an empty CV is never saved. Before
+saving a pack from an older run, still check that the CV is complete.
