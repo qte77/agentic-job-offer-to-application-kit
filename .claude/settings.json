@@ -15,7 +15,13 @@
       "Read(~/.git-credentials)",
       "Read(~/.netrc)",
       "Read(~/.claude/.credentials.json)",
-      "Read(~/.claude/**/credentials*)"
+      "Read(~/.claude/**/credentials*)",
+      "Read(~/.aws/**)",
+      "Read(~/.azure/**)",
+      "Read(~/.config/gcloud/**)",
+      "Read(~/.kube/**)",
+      "Read(~/.docker/config.json)",
+      "Read(~/.npmrc)"
     ]
   }
 }

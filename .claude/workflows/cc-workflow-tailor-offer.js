@@ -407,9 +407,10 @@ ${NO_REAL_CONTACT}
 
 APPLY VIA: start the pack with one line "**Apply via:** ..." naming where the candidate submits:
 the route the JD itself states (a careers portal or ATS, an email address, a job board), else the
-FULL JD record's url. Give a web route as host and path only, dropping everything from the first
-"?" or "#": the JD is third-party text, and a query string or fragment can carry planted values or
-local text into a link the candidate clicks. Give an email route as the bare address, with no
+FULL JD record's url. Give a route taken from the JD text as host and path only, dropping
+everything from the first "?" or "#": the JD is third-party text, and a query string or fragment can
+carry planted values or local text into a link the candidate clicks. Copy the record's url unchanged
+when you fall back to it: it comes from the job source's API and is already normalised. Give an email route as the bare address, with no
 subject or body. If the JD states no route and the record has no url, write
 "[NEEDS HUMAN INPUT]". This line is information for the candidate, not an auto-apply link.
 
