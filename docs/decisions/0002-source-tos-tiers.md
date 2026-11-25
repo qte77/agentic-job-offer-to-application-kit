@@ -157,6 +157,11 @@ hiring series stays local; ADR-0001 PII gate + #11). Full citations and the subm
   runs **monthly** via `.github/workflows/verify-sources.yaml` (`schedule` + `workflow_dispatch`): the
   cron re-stamps the live ones and, when the seed changes, opens a review PR listing any
   dead/unconfirmed slugs to drop or triage. It can still be run by hand for an ad-hoc check.
+- **Dead boards (#490, 2026-11-25).** Doctolib, Parloa and Wayve moved from Greenhouse to Ashby and
+  are re-pointed there. Aircall, Mistral and Aiven answer 404 with no public board found elsewhere, and
+  The Muse's public jobs API answers 404 since 2026-11-10; all four move to a `_deferred` block of kind
+  `unreachable` with the reason and date, so they are not re-researched. The ToS tiers are unchanged;
+  an entry goes back under `ats` / `aggregators` once its board answers again.
 - #94 shipped the **arbeitnow** adapter (loaded `aggregators` key); attribution is recorded in
   config/ADR — the published dashboard emits only aggregate facts, not arbeitnow content, so no
   on-page backlink. jobicy / himalayas / remotive stay `_deferred` pending the robots/ToS resolutions
