@@ -246,7 +246,7 @@ The long tail: national and regional general-purpose boards, grouped by region a
 | Jobsgarden | `www.jobsgarden.hu`, `jobsgarden.hu` | Feasible later | Jobsgarden (`www.jobsgarden.hu`, Hungary — a recruitment agency's own board): the «jobs-hu» posts through the WordPress REST API the site publishes, X-WP-Total as the count it states — 77 emitted, 77 stated, equal |
 | JobsIreland | `jobsireland.ie` | Infeasible | CES is a state work-placement scheme, not employment: part-time supervised |
 | JobTeaser France | `www.jobteaser.com`, `jobteaser.com` | Feasible later | Board measurement — JobTeaser France (`www.jobteaser.com`): the campus-and-graduate platform — the rules are READ and they OPEN the listings by name, Allow: //job-search/ and Allow: //job-offers?locale=, with no Disallow: / anywhere; and they close the subt... |
-| jobup.ch | `www.jobup.ch` | Feasible later | LinkedIn, and users expect to be asked. A logged-in session simply adds the |
+| jobup.ch | `www.jobup.ch` | Infeasible | ADR-0002 BLOCKED (jobup.ch / JobCloud, same operator as jobs.ch): terms bar automated access. |
 | Kariera | `www.kariera.gr`, `kariera.gr` | Infeasible | robots.txt read twice, certain: True, 2019 B, md5 7bc6de0d4c21 both times — User-agent: ClaudeBot / Disallow: /,  open |
 | Kariera.mk | `kariera.mk` | Infeasible | Disallow: /uploads/articles |
 | Kariyer KKTC | `kariyerkktc.com` | Feasible later | Board measurement — Kariyer KKTC (kariyerkktc.com, Northern Cyprus): «İş İlanları - Kariyer KKTC» — a WordPress 7.1 site (Elementor) whose /is-ilanlari/ page carries no ad, count or listing (its schema dates it modified 2023-09-20), a /jobs/ link and a post... |
