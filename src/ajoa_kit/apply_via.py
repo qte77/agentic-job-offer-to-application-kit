@@ -117,8 +117,12 @@ class Allowed:
 
 
 def _pattern(item: str) -> re.Pattern[str]:
-    # Reason: a whole string between delimiters, so nothing can be glued on either side
-    return re.compile(rf"(?<![\w.%+/@:\-]){re.escape(item)}(?![\w/?#@%=&:+\-]|\.\w)", re.IGNORECASE)
+    # Reason: a whole string between delimiters, so nothing can be glued on either side. After the
+    # item only whitespace, the end, or closing punctuation that is itself followed by whitespace
+    # or the end may come: an autolink would carry any other glued text (";x=1", ",x", "!x").
+    return re.compile(
+        rf"(?<![\w.%+/@:\-]){re.escape(item)}(?=$|\s|[.,;:!?)\]]+(?:\s|$))", re.IGNORECASE
+    )
 
 
 def scan(line: str, allowed: Allowed) -> tuple[bool, list[str]]:

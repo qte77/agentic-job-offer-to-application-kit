@@ -55,6 +55,14 @@ def test_jd_route_cut_to_host_and_path_is_kept_and_flagged_as_off_host() -> None
     assert warnings == [OFF_HOST]
 
 
+def test_closing_punctuation_after_an_allowed_link_is_fine() -> None:
+    for tail in (".", ",", ";", ")", "!", "?"):
+        body = pack_with(f"**Apply via:** the portal ({CANON}){tail} or email the team")
+        text, warnings = check_apply_via(body, RECORD)
+        assert first_line(text) == f"**Apply via:** {CANON}", tail
+        assert warnings == [], tail
+
+
 def test_scheme_less_jd_route_and_jd_email_are_kept() -> None:
     for route in ("careers.example.org/jobs/42-engineer", "jobs@example.org"):
         text, warnings = check_apply_via(pack_with(f"**Apply via:** {route}"), RECORD)
@@ -135,6 +143,9 @@ BYPASSES = [
     f"**Apply via:** {CANON}#{EVIL}",
     f"**Apply via:** {JD_ROUTE}.{EVIL}/x",
     f"**Apply via:** {JD_ROUTE}?d={EVIL}",
+    # glued after an allowed item with characters an autolink keeps
+    *(f"**Apply via:** {JD_ROUTE}{c}d=1.{EVIL}" for c in ";!$'*,~("),
+    f"**Apply via:** {CANON};x=1.{EVIL}",
     f"**Apply via:** https://careers.example.org@{EVIL}/jobs/42-engineer",
     # F3: an email that is not alone in its token
     f"**Apply via:** email hr@{EVIL}: quote ref 42",
