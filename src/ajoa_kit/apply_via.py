@@ -15,11 +15,14 @@ the WHOLE pack, default-deny:
    fragment), an email address from the JD, and the candidate's own links from the local evidence
    library. Scheme and host match case-insensitively; the path matches exactly.
 3. If anything that can become a link or carry hidden data remains, the line is replaced by a fixed
-   note: ``://``, ``//``, ``www.``, an email-shaped ``@``, a tag-like ``<``, a markdown link or
-   reference (``](``, ``][``, any ``]:``, so a ``[NEEDS HUMAN INPUT]:`` line too), a backslash, an
-   HTML entity, ``http(s):``, any ``scheme:`` directly followed by a word character, ``/`` or
-   ``%``, or a control character. On a route line a bare ``host.tld`` followed by ``/``, ``?``,
-   ``#`` or ``:`` also counts (elsewhere it is not auto-linked, so it is left as text).
+   note: ``://``, ``//``, ``www.``, any address shape (``x@y.z``, ``@[``), a tag-like ``<``, a
+   markdown link or reference (``](``, ``][``, any ``]:``, so a ``[NEEDS HUMAN INPUT]:`` line too),
+   a backslash, an HTML entity, ``http(s):``, a script or non-web scheme (``javascript:``,
+   ``data:``, ``mailto:``, ``file:``, ``vbscript:``, ``tel:``, ``sms:``, ``ftp:``, ``vscode:``) not
+   followed by a space, or a control character. Any other bare ``scheme:`` renders as text, since a
+   scheme only becomes a link through ``](``, ``<...>`` or ``]:``, which all count. On a route line
+   a bare ``host.tld`` followed by ``/``, ``?``, ``#`` or ``:`` also counts (elsewhere it is not
+   auto-linked, so it is left as text).
 
 The code then writes the route line itself: ``**Apply via:** <route>``, where the route is the
 first allowed item on the first line that starts with "apply via" (if that line passed), else the
@@ -75,7 +78,7 @@ _RESIDUE = re.compile(
             r"://",
             r"//",
             r"www\.",
-            r"@(?:[a-z0-9-]+\.|\[)",
+            r"[^\s@]@[^\s@]*\.[^\s@]|@\[",
             r"<[a-z/!?]",
             r"\]\(",
             r"\]\[",
@@ -84,7 +87,7 @@ _RESIDUE = re.compile(
             r"&#",
             r"&[a-z]+;",
             r"\bhttps?\s*:",
-            r"\b[a-z][a-z0-9+.-]*:(?=[\w/%])",
+            r"\b(?:javascript|data|mailto|file|vbscript|tel|sms|ftp|vscode):(?!\s)",
             r"[\x00-\x08\x0b-\x1f\x7f-\x9f]",
         )
     ),

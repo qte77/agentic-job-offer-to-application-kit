@@ -156,6 +156,9 @@ BYPASSES = [
     f"**Apply via:** HR<hr@{EVIL}>",
     f"**Apply via:** o'x@{EVIL}",
     f"**Apply via:** \u200bhr@{EVIL}",
+    "**Apply via:** hr@evil_x.example.net",
+    "**Apply via:** hr@evil_.example.net",
+    "**Apply via:** hr@\u00e9vil.example.net",
 ]
 
 
@@ -230,8 +233,6 @@ def test_a_trailing_bracket_after_a_route_replaces_the_line(line: str) -> None:
         "[x]: vscode:secret",
         "Link: https:/2130706433/x?d=secret",
         f"[NEEDS HUMAN INPUT]: irc:{EVIL}/x?d=secret",
-        f"[NEEDS HUMAN INPUT]:\nirc:{EVIL}/x",
-        f"Chat: irc:{EVIL}/x",
         f"[x]:\thttps:/{EVIL}",
     ],
 )
@@ -258,6 +259,12 @@ ORDINARY = [
     "Tel: [phone]",
     "Data: 4 years of pipelines",
     "Apply viable skills: Python, SQL",
+    "Timezone: UTC+1:00",
+    "Runtime: node:20",
+    "Level:Senior",
+    "C++: std::vector",
+    "Availability: 5 @ 80%",
+    "Ping me via @mention or hr@evilhost",
 ]
 
 
