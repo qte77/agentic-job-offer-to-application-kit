@@ -183,6 +183,21 @@ class ScoredItem(BaseModel):
     scored_against: str = ""
 
 
+class ScreenedJd(BaseModel):
+    """A JD record as the relevance screen read it, from ``results/batches/batch-NNN.json`` (#513).
+
+    Persist ties each scored row back to one of these and copies its identity fields onto the row,
+    because screen agents do not copy ids and urls reliably. The rest of the record is ignored.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: str
+    title: str = ""
+    company: str = ""
+    url: str = ""
+
+
 class WeekCounts(BaseModel):
     """One ISO week's aggregate keyword frequencies — the publishable trends contract.
 

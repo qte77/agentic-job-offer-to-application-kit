@@ -173,19 +173,21 @@ if (!batchCount) throw new Error('args.batchCount required (read results/batches
 log(`Screening batches ${start}..${end - 1} of ${batchCount} from ${dir}`)
 
 const batches = Array.from({ length: Math.max(end - start, 0) }, (_, i) => start + i)
-const results = (
-  await parallel(
-    batches.map((i) => () =>
-      agent(gatePrompt(`${dir}/batch-${pad(i)}.json`), {
-        // Read-only agent type (.claude/agents/jd-reader.md): the batch is third-party job-ad text.
-        agentType: 'jd-reader',
-        schema: RESULT,
-        phase: 'Screen',
-        label: `batch-${pad(i)}`,
-      })
-    )
+const raw = await parallel(
+  batches.map((i) => () =>
+    agent(gatePrompt(`${dir}/batch-${pad(i)}.json`), {
+      // Read-only agent type (.claude/agents/jd-reader.md): the batch is third-party job-ad text.
+      agentType: 'jd-reader',
+      schema: RESULT,
+      phase: 'Screen',
+      label: `batch-${pad(i)}`,
+    })
   )
-).filter(Boolean)
+)
+const results = raw.filter(Boolean)
+// The batches whose agent returned: persist --merge removes re-screen drops from these only, so a
+// sliced run or a failed agent never costs the rows of a batch nobody read (#515).
+const screenedBatches = batches.filter((_, k) => raw[k])
 
 const relevant = results.flatMap((r) => r.relevant || [])
 const dropped = results.reduce((a, r) => a + (r.dropped_count || 0), 0)
@@ -205,6 +207,7 @@ return {
   dropped,
   byLane,
   batchesProcessed: results.length,
+  screenedBatches,
   relevant,
   locationFlaggedCount: locationFlagged,
   tenureFlaggedCount: tenureFlagged,

@@ -208,7 +208,11 @@ complement: `chunk --new` batches offers new or changed in the latest pull
 (`last_changed == max(last_seen)` in the corpus, #235) and `persist --merge` unions them by id into the
 existing shortlists — new offers into current lanes, never a re-bucket. If a `--merge` re-screen does
 reassign an offer's `best_lane`, `persist` evicts it from the old lane bucket so it never
-double-buckets (#236).
+double-buckets (#236). A stored offer that a re-screened batch read but did not keep is removed, as a
+fresh screen would drop it; only the batches the result lists in `screenedBatches` count, and a run
+with an unmatched or malformed row, or with a kept row outside those batches, removes nothing (#515). Every persist first ties each row to the batch record
+it was screened from and takes the id, url, company and title from that record, not from the agent;
+unmatched rows are reported and not stored (#513).
 
 ## Repo structure
 

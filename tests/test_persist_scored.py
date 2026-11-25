@@ -32,12 +32,38 @@ def _item(jid: str, lane: str, score: object, **kw: object) -> dict:
     }
 
 
+def _record(jid: str, **kw: object) -> dict:
+    """A batch record as `chunk` writes it, matching what `_item` returns for the same id."""
+    return {
+        "id": jid,
+        "title": f"{jid} engineer",
+        "company": "Acme",
+        "url": f"https://x/{jid}",
+        **kw,
+    }
+
+
 def _run(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, result: dict, *, merge: bool = False
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    result: dict,
+    *,
+    merge: bool = False,
+    batches: list[list[dict]] | None = None,
 ) -> Path:
+    """Persist ``result``; ``batches`` are the screened records (default: one per result item)."""
     results = tmp_path / "results"
     results.mkdir(exist_ok=True)  # exist_ok: a merge test persists twice into one results dir
     monkeypatch.setenv("AJOA_RESULTS_DIR", str(results))
+    if batches is None:
+        items = [r for r in result.get("relevant", []) if isinstance(r, dict)]
+        batches = [[_record(r["id"]) for r in items]]
+    out = results / "batches"
+    out.mkdir(exist_ok=True)
+    for stale in out.glob("batch-*.json"):  # as `chunk` does: a new run replaces the old batches
+        stale.unlink()
+    for i, recs in enumerate(batches):
+        (out / f"batch-{i:03d}.json").write_text(json.dumps(recs))
     src = tmp_path / "result.json"
     src.write_text(json.dumps(result))
     persist_scored.main(src=src, merge=merge)
@@ -272,3 +298,144 @@ def test_deadline_and_deal_breaker_round_trip(
     assert (scored["deadline"], scored["deal_breaker"]) == ("2026-07-31", "clearance required")
     eng = json.loads((results / "engineering" / "shortlist.json").read_text())[0]
     assert (eng["deadline"], eng["deal_breaker"]) == ("2026-07-31", "clearance required")
+
+
+def _scored_ids(results: Path) -> set[str]:
+    return {j["id"] for j in json.loads((results / "jobs-scored.json").read_text())["relevant"]}
+
+
+def test_rows_are_matched_to_their_batch_records(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # #513: screen agents mangle ids and urls. The batch record, not the agent, is the source of
+    # id/url/company/title; a row that matches no record is reported, never stored.
+    records = [_record("a", url="https://jobs/a"), _record("c"), _record("d")]
+    rows = [
+        _item("a", "engineering", 4, url="https://wrong/a"),  # right id, wrong url
+        _item("c-1f3", "engineering", 4, title="c engineer"),  # mangled id, unique company+title
+        _item("zz", "engineering", 4, title="Ghost role", company="Nowhere"),  # matches nothing
+    ]
+    results = _run(tmp_path, monkeypatch, {"relevant": rows}, batches=[records])
+    rel = {j["id"]: j for j in json.loads((results / "jobs-scored.json").read_text())["relevant"]}
+    assert set(rel) == {"a", "c"}
+    assert rel["a"]["url"] == "https://jobs/a"
+    out = capsys.readouterr().out
+    assert "1 unmatched" in out
+    assert "Ghost role @ Nowhere" in out
+
+
+def test_title_fallback_skips_a_record_already_claimed_by_id(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Two rows must never collapse onto one record: a mangled row whose company+title points at a
+    # record another row already matched by id stays unmatched.
+    rows = [_item("a", "engineering", 4), _item("a-x", "engineering", 5, title="a engineer")]
+    results = _run(tmp_path, monkeypatch, {"relevant": rows}, batches=[[_record("a")]])
+    rel = json.loads((results / "jobs-scored.json").read_text())["relevant"]
+    assert [(j["id"], j["score"]) for j in rel] == [("a", 4)]
+
+
+def test_persist_without_batch_records_fails_loud(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # No batch files means nothing to match against; persisting anyway would store agent ids
+    # unchecked (or, matched against nothing, overwrite jobs-scored.json with an empty list).
+    with pytest.raises(FileNotFoundError, match="batches"):
+        _run(tmp_path, monkeypatch, {"relevant": [_item("a", "engineering", 4)]}, batches=[])
+    assert not (tmp_path / "results" / "jobs-scored.json").exists()
+
+
+def test_persist_fails_loud_when_no_row_matches(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Batches from a later `chunk` run than the result: nothing matches, and nothing is written.
+    rows = [_item("a", "engineering", 4)]
+    with pytest.raises(ValueError, match="matched no"):
+        _run(tmp_path, monkeypatch, {"relevant": rows}, batches=[[_record("other")]])
+    assert not (tmp_path / "results" / "jobs-scored.json").exists()
+
+
+def test_merge_removes_rows_the_rescreen_dropped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # #515: a stored row whose JD was in a screened batch but did not come back was dropped by the
+    # re-screen; it goes, as a fresh screen would drop it. Rows outside the screened batches stay.
+    first = [_item("a", "ml", 5), _item("b", "ml", 4), _item("z", "ml", 4)]
+    _run(tmp_path, monkeypatch, {"relevant": first})
+    rescreen = {"relevant": [_item("a", "ml", 4)], "screenedBatches": [0]}
+    results = _run(
+        tmp_path, monkeypatch, rescreen, merge=True, batches=[[_record("a"), _record("b")]]
+    )
+    assert _scored_ids(results) == {"a", "z"}
+    ml = [j["id"] for j in json.loads((results / "ml" / "shortlist.json").read_text())]
+    assert sorted(ml) == ["a", "z"]
+    assert "1 removed as dropped on re-screen" in capsys.readouterr().out
+
+
+def test_merge_removes_nothing_from_batches_the_result_did_not_screen(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # A sliced run (startBatch/limitBatches) or a failed batch agent: only the batches the result
+    # names were screened. Without that list nothing can be called dropped, so nothing is removed.
+    _run(tmp_path, monkeypatch, {"relevant": [_item("a", "ml", 5), _item("b", "ml", 4)]})
+    batches = [[_record("a")], [_record("b")]]
+    results = _run(
+        tmp_path,
+        monkeypatch,
+        {"relevant": [_item("a", "ml", 4)], "screenedBatches": [0]},
+        merge=True,
+        batches=batches,
+    )
+    assert _scored_ids(results) == {"a", "b"}  # b sat in batch 1, which this result did not screen
+    results = _run(
+        tmp_path, monkeypatch, {"relevant": [_item("a", "ml", 4)]}, merge=True, batches=batches
+    )
+    assert _scored_ids(results) == {"a", "b"}
+    assert "no screenedBatches" in capsys.readouterr().out
+
+
+def test_merge_removes_nothing_when_a_row_went_unmatched(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # An unmatched row may be a kept JD whose id the agent mangled past recognition; its real id
+    # would then look dropped. Removing nothing is the safe call, and the summary says why.
+    _run(tmp_path, monkeypatch, {"relevant": [_item("a", "ml", 5), _item("b", "ml", 4)]})
+    rescreen = {
+        "relevant": [_item("a", "ml", 4), _item("b??", "ml", 4, title="garbled")],
+        "screenedBatches": [0],
+    }
+    results = _run(
+        tmp_path, monkeypatch, rescreen, merge=True, batches=[[_record("a"), _record("b")]]
+    )
+    assert _scored_ids(results) == {"a", "b"}
+    assert "unmatched or malformed rows, none removed" in capsys.readouterr().out
+
+
+def test_merge_removes_nothing_when_a_row_was_malformed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A kept row that fails validation is dropped as malformed before matching; its id would look
+    # dropped by the re-screen, so the run removes nothing.
+    _run(tmp_path, monkeypatch, {"relevant": [_item("a", "ml", 5), _item("b", "ml", 4)]})
+    rescreen = {
+        "relevant": [_item("a", "ml", 4), _item("b", "ml", "high")],
+        "screenedBatches": [0],
+    }
+    results = _run(
+        tmp_path, monkeypatch, rescreen, merge=True, batches=[[_record("a"), _record("b")]]
+    )
+    assert _scored_ids(results) == {"a", "b"}
+
+
+def test_merge_removes_nothing_when_the_batches_were_rechunked(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The result screened batch 0 = [a, b]; a later chunk moved b out and c in. A kept row now sits
+    # outside the listed batch, so the indices no longer name what was read: remove nothing.
+    _run(tmp_path, monkeypatch, {"relevant": [_item("b", "ml", 5), _item("c", "ml", 4)]})
+    rescreen = {"relevant": [_item("b", "ml", 4)], "screenedBatches": [0]}
+    results = _run(
+        tmp_path, monkeypatch, rescreen, merge=True, batches=[[_record("c")], [_record("b")]]
+    )
+    assert _scored_ids(results) == {"b", "c"}
+    assert "re-chunked since the screen" in capsys.readouterr().out
