@@ -136,7 +136,13 @@ def main(
     if batch_count is None:
         manifest = AppSettings().results_dir / "batches" / "manifest.json"
         batch_count = int(json.loads(manifest.read_text())["batch_count"])
-    out.write_text(json.dumps({"relevant": [r.model_dump() for r in got.relevant]}))
+    # screenedBatches: the batches that returned, so persist --merge removes re-screen drops from
+    # those only and leaves rows in unfinished batches alone (#515).
+    result = {
+        "relevant": [r.model_dump() for r in got.relevant],
+        "screenedBatches": sorted(got.done),
+    }
+    out.write_text(json.dumps(result))
     print(f"{len(got.done)}/{batch_count} batches done, {len(got.relevant)} JDs kept -> {out}")
     gaps = missing_ranges(got.done, batch_count)
     if gaps:
