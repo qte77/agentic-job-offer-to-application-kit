@@ -86,7 +86,9 @@ def test_main_writes_the_result_and_fails_listing_the_rerun_ranges(
     sessions.write_text(f"{S1}  # batches 0..2\n\n")
     out = tmp_path / "relevant.json"
     assert workflow_runs.main(sessions, out=out, projects=projects, batch_count=3) == 1
-    assert [r["id"] for r in json.loads(out.read_text())["relevant"]] == ["a"]
+    written = json.loads(out.read_text())
+    assert [r["id"] for r in written["relevant"]] == ["a"]
+    assert written["screenedBatches"] == [0]  # persist --merge removes drops from these only (#515)
     assert 'RANGES="1:2"' in capsys.readouterr().out
 
 
