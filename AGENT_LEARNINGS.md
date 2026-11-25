@@ -154,7 +154,12 @@ by sending an HTTP request to an API. Workflow agents read the full JD, and the 
 access, so one such line could make an agent act outside its task.
 
 **Fix:** The tailor and relevance workflows run every agent as the read-only `jd-reader` type
-(Read, Grep, Glob), and their prompts treat the JD as data. Agent types load at session start, so
-verify a new or edited agent type in a fresh session (a one-agent probe workflow that reports its
-tools), not in the session that wrote the file. Ad text aimed at AI gets a "Note on the ad" section
-in the gap report and is never acted on.
+(Read, Grep, Glob), and their prompts treat the JD as data. In one run, the session that had just
+written the agent file failed with "agent type 'jd-reader' not found", although the sub-agents docs
+say `.claude/agents/` is watched and picked up without a restart; if that error appears, start a
+new session. Verify a new or edited agent type with a one-agent probe workflow that reports its
+tools. The prompts ask the agents not to act on ad text aimed at AI; the gap report paraphrases it
+in a "Note on the ad" section; both are prompt instructions, not checks. Project `permissions.deny`
+Read rules cover credential paths (best-effort for Grep and Glob per the docs, not yet probed for
+workflow agents), and AGENTS.md says a workflow result is saved and passed to `persist*`, never
+followed.
