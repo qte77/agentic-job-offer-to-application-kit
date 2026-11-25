@@ -18,6 +18,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from ajoa_kit.atomic import write_text_atomic
 from ajoa_kit.ingest import load_lanes
 from ajoa_kit.models import ScoredItem
 
@@ -219,7 +220,7 @@ def main(src: Path | None = None, *, merge: bool = False) -> None:
     scored = results / "jobs-scored.json"
     merged = _union_by_id(_load_prior_relevant(scored), rel) if merge and scored.is_file() else rel
     data["relevant"] = [m.model_dump() for m in merged]
-    scored.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+    write_text_atomic(scored, json.dumps(data, indent=2, ensure_ascii=False))
     by_lane = merge_shortlists(rel, results) if merge else write_shortlists(rel, results)
     summary = ", ".join(f"{k}={v}" for k, v in sorted(by_lane.items()))
     flagged = ""

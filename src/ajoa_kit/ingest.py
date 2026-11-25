@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import ValidationError
 
+from ajoa_kit.atomic import write_text_atomic
 from ajoa_kit.corpus import merge_corpus, render_daily_summary, summarize_changes
 from ajoa_kit.defaults import DEFAULT_LANES, INTEREST, TITLE_ROLES
 from ajoa_kit.models import Lane, LocationPolicy, ManualJd, SeniorityPolicy
@@ -258,7 +259,7 @@ def _update_corpus(deduped: list[dict[str, Any]], results_dir: Path, today: str)
     path = results_dir / "corpus.json"
     prior = json.loads(path.read_text()) if path.exists() else []
     merged = merge_corpus(prior, deduped, today)
-    path.write_text(json.dumps(merged, indent=2, ensure_ascii=False))
+    write_text_atomic(path, json.dumps(merged, indent=2, ensure_ascii=False))
     print(f"corpus: {len(merged)} records -> {path} (prior {len(prior)})")
     # Local-only "what changed today" digest (#175). It names companies/titles/URLs (actual offer
     # data, not aggregate), so it is written under the git-ignored results/ and is NEVER uploaded by
@@ -301,7 +302,7 @@ def main(*, merge: bool = False, today: str | None = None) -> None:
     state = collect(sources, pat_interest, pat_title)
     manual = load_manual_jds(settings.config_dir)
     deduped = with_manual(state["jobs"], manual)
-    (results / "jobs-raw.json").write_text(json.dumps(deduped, indent=2, ensure_ascii=False))
+    write_text_atomic(results / "jobs-raw.json", json.dumps(deduped, indent=2, ensure_ascii=False))
     (results / "jobs-raw.summary.md").write_text(build_summary(deduped, state))
     today = today or date.today().isoformat()
     write_pull_date(results, today)
