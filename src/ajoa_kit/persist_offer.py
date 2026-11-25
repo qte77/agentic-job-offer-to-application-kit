@@ -12,8 +12,9 @@ pass, #272, a ``jd-truncation-check.md`` when the source JD sat at the ingest de
 #347, a ``lane-grounding-check.md`` when the evidence library lacks the pack's lane angle, #348, a
 ``cv-grounding-check.md`` when the CV cites a distinctive number absent from the evidence library,
 an ``honesty-check.md`` when a must-have looks marked covered without real evidence — arc-011
-Slice C — and an ``apply-via-check.md`` when the prefill pack's "Apply via" line named a link or
-address its job record and JD do not allow, which is then replaced, #526), a ``meta.json``
+Slice C — and an ``apply-via-check.md`` when a prefill pack line held a link or address its job
+record, JD and the local evidence library do not allow, which is then replaced, #526), a
+``meta.json``
 recording the JD id so the local dashboard can join the pack back to its shortlist row (#209),
 and ``result.json``, the pack itself, so a hand-edited artifact can be re-rendered from source
 (#365). The results root comes from
@@ -34,8 +35,9 @@ from typing import TYPE_CHECKING
 
 from pydantic import ValidationError
 
+from ajoa_kit.apply_via import OFF_HOST as APPLY_VIA_OFF_HOST
 from ajoa_kit.apply_via import WARNING as APPLY_VIA_WARNING
-from ajoa_kit.apply_via import check_apply_via
+from ajoa_kit.apply_via import check_apply_via, own_links
 from ajoa_kit.ats_check import parse_safety_warnings
 from ajoa_kit.coverage import coverage_summary, honesty_warnings
 from ajoa_kit.defaults import DESC_CAP
@@ -158,7 +160,10 @@ def jd_truncation_warning(jd_id: str | None, results_dir: Path, cap: int = DESC_
         return None
     try:
         records = json.loads((results_dir / "jobs-raw.json").read_text())
-    except (OSError, json.JSONDecodeError):
+    except (
+        OSError,
+        ValueError,
+    ):  # Reason: also UnicodeDecodeError; never raise from a sidecar check
         return None
     rec = _find_jd_record(jd_id, records)
     if rec is None:
@@ -240,9 +245,11 @@ def _honesty_check(pack: dict, results_dir: Path) -> list[str]:
     return honesty_warnings(pack.get("must_haves") or [])
 
 
-# Count of "Apply via" lines replaced (#526), kept in result.json so a re-render from it re-emits
-# the sidecar; capped, since the key could also arrive in agent output (it only adds warnings).
+# Counts behind the "Apply via" sidecar (#526): lines replaced, and an off-host route (0 or 1). Kept
+# in result.json so a re-render from it re-emits the sidecar; capped, since the keys could also
+# arrive in agent output (they only add fixed warnings).
 APPLY_VIA_KEY = "apply_via_replaced"
+APPLY_VIA_OFF_HOST_KEY = "apply_via_off_host"
 _APPLY_VIA_CAP = 10
 
 
@@ -251,7 +258,7 @@ def _replaced_count(value: object) -> int:
 
 
 def enforce_apply_via(pack: dict, results_dir: Path) -> dict:
-    """Return ``pack`` with its "Apply via" lines checked against the job record (#526).
+    """Return ``pack`` with its prefill pack checked and its route line written by code (#526).
 
     The record (url and JD text) comes only from ``jobs-raw.json``, never from the pack; an unknown
     record fails closed. The returned copy carries :data:`APPLY_VIA_KEY` when a line was replaced.
@@ -262,20 +269,31 @@ def enforce_apply_via(pack: dict, results_dir: Path) -> dict:
     jd_id = pack.get("offer_id") or pack.get("id")
     try:
         records = json.loads((results_dir / "jobs-raw.json").read_text())
-    except (OSError, json.JSONDecodeError):
+    except (
+        OSError,
+        ValueError,
+    ):  # Reason: a non-UTF-8 file raises UnicodeDecodeError, a ValueError
         records = []
     record = _find_jd_record(str(jd_id), records) if jd_id else None
-    checked, warnings = check_apply_via(text, record)
+    checked, warnings = check_apply_via(
+        text, record, own_links(results_dir / "evidence-library.json")
+    )
     out = {**pack, "prefill_pack": checked}
-    count = max(len(warnings), _replaced_count(pack.get(APPLY_VIA_KEY)))
-    out.pop(APPLY_VIA_KEY, None)
-    if count:
-        out[APPLY_VIA_KEY] = count
+    counts = {
+        APPLY_VIA_KEY: warnings.count(APPLY_VIA_WARNING),
+        APPLY_VIA_OFF_HOST_KEY: min(warnings.count(APPLY_VIA_OFF_HOST), 1),
+    }
+    for key, now in counts.items():
+        count = max(now, _replaced_count(pack.get(key)))
+        out.pop(key, None)
+        if count:
+            out[key] = count
     return out
 
 
 def _apply_via_check(pack: dict, results_dir: Path) -> list[str]:
-    return [APPLY_VIA_WARNING] * _replaced_count(pack.get(APPLY_VIA_KEY))
+    off_host = [APPLY_VIA_OFF_HOST] if _replaced_count(pack.get(APPLY_VIA_OFF_HOST_KEY)) else []
+    return [APPLY_VIA_WARNING] * _replaced_count(pack.get(APPLY_VIA_KEY)) + off_host
 
 
 # (sidecar title, filename, check) — each check takes (pack, results_dir) and returns warnings;
@@ -328,8 +346,9 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     Returns:
         The offer directory that was written.
     """
-    # The "Apply via" line is checked in code before anything renders, so a planted link never
-    # reaches prefill-pack.md, result.json or the dashboard (#526).
+    # The prefill pack is checked in code before anything renders, and its route line is written by
+    # code, so a detected planted link never reaches prefill-pack.md, result.json or the dashboard
+    # (#526).
     pack = enforce_apply_via(pack, results_dir)
     files = render(pack)  # validate first — all-or-nothing
     offer_dir = results_dir / "offers" / safe_slug(slug)

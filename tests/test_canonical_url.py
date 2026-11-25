@@ -67,8 +67,21 @@ def test_unparseable_url_is_returned_unchanged() -> None:
     assert canonical_url("http://[broken") == "http://[broken"
 
 
+def test_query_addressed_feeds_keep_their_item_keys_and_never_collapse() -> None:
+    # Reason: RSS ids embed the link, so two items must keep two canonical urls (#526 review F8)
+    a = canonical_url("https://blog.example.com/jobs?p=1&utm_source=x#top", "rss")
+    b = canonical_url("https://blog.example.com/jobs?p=2", "rss")
+    assert a == "https://blog.example.com/jobs?p=1"
+    assert b == "https://blog.example.com/jobs?p=2"
+    assert a != b
+    assert canonical_url("https://example.com/about#join", "manual") == "https://example.com/about"
+
+
+_PATH_ATS = {"greenhouse": {"gh_jid", "board"}, "ashby": set(), "lever": set()}
+
+
 class TestAllowlistProperties:
-    @given(u=st.text(), ats=st.sampled_from(["greenhouse", "ashby", "lever", "rss", ""]))
+    @given(u=st.text(), ats=st.sampled_from(["greenhouse", "ashby", "lever", "rss", "manual", ""]))
     @settings(deadline=None)
     def test_idempotent_never_raises_and_keeps_only_allowlisted_keys(
         self, u: str, ats: str
@@ -82,4 +95,6 @@ class TestAllowlistProperties:
         keys = {k for k, _ in parse_qsl(parts.query, keep_blank_values=True)}
         if once != u:
             assert parts.fragment == ""
-            assert keys <= ({"gh_jid", "board"} if ats == "greenhouse" else set())
+            if ats in _PATH_ATS:
+                assert keys <= _PATH_ATS[ats]
+            assert not any(k.lower().startswith("utm_") for k in keys)

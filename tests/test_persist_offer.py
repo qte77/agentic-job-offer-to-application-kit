@@ -26,7 +26,11 @@ PACK = {
     "cv": "## Summary\nInfrastructure-first AI engineer.\n\n## Experience\n- Built an engine.",
     "cover_letter": "Dear hiring team, I am excited to apply...",
     "gap_report": "Gap: production-at-scale ops and on-call rotations.",
-    "prefill_pack": "First name: Alexis\nEmail: alexis@example.com\n(Human reviews + submits.)",
+    # Reason: contact fields are placeholders (owner rule); a real address would be removed (#526)
+    "prefill_pack": (
+        "**Apply via:** [NEEDS HUMAN INPUT]\n\nFirst name: Alexis\nEmail: [email]\n"
+        "(Human reviews + submits.)"
+    ),
 }
 
 
@@ -418,12 +422,27 @@ def test_write_pack_replaces_a_planted_apply_via_link_everywhere(tmp_path: Path)
     assert (offer_dir / "cv.md").is_file()  # non-blocking: the pack still wrote
 
 
-def test_write_pack_keeps_a_valid_apply_via_line_and_writes_no_sidecar(tmp_path: Path) -> None:
+def test_write_pack_keeps_the_record_url_line_and_writes_no_sidecar(tmp_path: Path) -> None:
+    (tmp_path / "jobs-raw.json").write_text(json.dumps([_APPLY_RECORD]))
+    line = "**Apply via:** https://jobs.example.com/careers/42?gh_jid=42"
+    offer_dir = persist_offer.write_pack(_apply_pack(line), slug="acme-42", results_dir=tmp_path)
+    assert line in (offer_dir / "prefill-pack.md").read_text()
+    assert not (offer_dir / "apply-via-check.md").exists()
+
+
+def test_write_pack_keeps_a_jd_route_and_flags_the_other_host(tmp_path: Path) -> None:
     (tmp_path / "jobs-raw.json").write_text(json.dumps([_APPLY_RECORD]))
     line = "**Apply via:** https://careers.example.org/jobs/42-engineer"
     offer_dir = persist_offer.write_pack(_apply_pack(line), slug="acme-42", results_dir=tmp_path)
     assert line in (offer_dir / "prefill-pack.md").read_text()
-    assert not (offer_dir / "apply-via-check.md").exists()
+    assert "another host" in (offer_dir / "apply-via-check.md").read_text()
+
+
+def test_an_unreadable_corpus_fails_closed_instead_of_raising(tmp_path: Path) -> None:
+    (tmp_path / "jobs-raw.json").write_bytes(b"\xff\xfe not utf-8")
+    pack = _apply_pack("**Apply via:** https://jobs.example.com/careers/42?gh_jid=42")
+    offer_dir = persist_offer.write_pack(pack, slug="acme-42", results_dir=tmp_path)
+    assert "**Apply via:** [NEEDS HUMAN INPUT]" in (offer_dir / "prefill-pack.md").read_text()
 
 
 def test_write_pack_apply_via_without_a_corpus_fails_closed(tmp_path: Path) -> None:

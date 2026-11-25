@@ -141,19 +141,27 @@ def rss_company_salary(source: str, title: str) -> tuple[str, str]:
     return (m.group("company").strip(), (m.groupdict().get("salary") or "").strip())
 
 
-# Query keys an ATS needs to open its posting (#526); with an ATS, every other key and the fragment
-# are dropped. Greenhouse-hosted career pages select the posting by ``gh_jid``; embedded boards
-# also carry ``board`` (kept: whether those pages need it is unverified).
-_KEEP_QUERY: dict[str, frozenset[str]] = {"greenhouse": frozenset({"gh_jid", "board"})}
+# Query keys a path-addressed ATS needs to open its posting (#526); for these, every other key and
+# the fragment are dropped. Greenhouse-hosted career pages select the posting by ``gh_jid``;
+# embedded boards also carry ``board`` (kept: whether those pages need it is unverified). The
+# others address a posting by its path alone.
+_KEEP_QUERY: dict[str, frozenset[str]] = {
+    "greenhouse": frozenset({"gh_jid", "board"}),
+    "ashby": frozenset(),
+    "lever": frozenset(),
+    "recruitee": frozenset(),
+    "personio": frozenset(),
+}
 
 
 def canonical_url(url: str, ats: str | None = None) -> str:
     """Return a clean, stable form of ``url``; unparseable input comes back unchanged.
 
-    With ``ats`` (a record's ATS, #526): keep only the query keys that ATS needs
-    (:data:`_KEEP_QUERY`, e.g. Greenhouse ``gh_jid``) and drop every other key and the fragment,
-    so third-party query text cannot ride along. Without it (callers that hold no ATS): drop only
-    tracking params (``utm_*``, gclid, ...).
+    With a path-addressed ``ats`` (#526, :data:`_KEEP_QUERY`): keep only the query keys that ATS
+    needs (e.g. Greenhouse ``gh_jid``) and drop every other key and the fragment, so third-party
+    query text cannot ride along. With any other ``ats`` (rss, manual, unknown, ...), whose items
+    may be addressed by query (``?p=123``): drop tracking params and the fragment, keep the rest.
+    Without ``ats`` (callers that hold none): drop only tracking params (``utm_*``, gclid, ...).
     """
     if not url:
         return url
@@ -162,16 +170,17 @@ def canonical_url(url: str, ats: str | None = None) -> str:
     except ValueError:
         return url
     pairs = parse_qsl(s.query, keep_blank_values=True)
-    if ats is not None:
-        keep = _KEEP_QUERY.get(ats.lower(), frozenset())
+    keep = _KEEP_QUERY.get(ats.lower()) if ats is not None else None
+    if keep is not None:
         kept = [(k, v) for k, v in pairs if k in keep]
         return urlunsplit((s.scheme, s.netloc, s.path, urlencode(kept), ""))
-    if not s.query:
+    if not s.query and (ats is None or not s.fragment):
         return url
     kept = [
         (k, v) for k, v in pairs if not k.lower().startswith("utm_") and k.lower() not in _TRACKING
     ]
-    return urlunsplit((s.scheme, s.netloc, s.path, urlencode(kept), s.fragment))
+    fragment = s.fragment if ats is None else ""
+    return urlunsplit((s.scheme, s.netloc, s.path, urlencode(kept), fragment))
 
 
 def record(**kw: object) -> dict[str, Any]:

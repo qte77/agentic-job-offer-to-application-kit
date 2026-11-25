@@ -65,7 +65,7 @@ TAILOR_PACK = {
     "- Built an agentic pipeline.\n\n## Skills\n- Python, LLMs\n",
     "cover_letter": "Dear hiring team, I am excited to apply for this role.",
     "gap_report": "Gap: production-at-scale ops and on-call rotations.",
-    "prefill_pack": "First name: Alexis\nEmail: alexis@example.com\n(Human reviews + submits.)",
+    "prefill_pack": "First name: Alexis\nEmail: [email]\n(Human reviews + submits.)",
 }
 
 
