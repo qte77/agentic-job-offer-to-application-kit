@@ -35,7 +35,7 @@ Classify every candidate source into one of three tiers. Only **OK** sources shi
 | --- | --- | --- |
 | **OK — ship/ingest** | Greenhouse, Lever, Ashby, Personio (no-auth public GET board APIs); RSS/Atom feeds (built for consumption); the arbeitnow + The Muse aggregator APIs (robots-allowed, attribution requested) | Documented public endpoints; Lever README states postings "may be scraped by third parties" |
 | **CAUTION — keep in `_blocked` / `_deferred`, do not ship** | Recruitee, Workable; JSON aggregators jobicy / himalayas / remotive | API exists but a robots/ToS conflict is unresolved (see per-source) |
-| **BLOCKED — never ingest (paste-only or structurally impossible)** | LinkedIn, Indeed, StepStone, jobs.ch, RemoteOK, Google for Jobs, Work at a Startup (workatastartup.com) | ToS bars automation, robots disallows job/api paths, or there is no public listings API |
+| **BLOCKED — never ingest (paste-only or structurally impossible)** | LinkedIn, Indeed, StepStone, jobs.ch, jobup.ch, RemoteOK, Google for Jobs, Work at a Startup (workatastartup.com) | ToS bars automation, robots disallows job/api paths, or there is no public listings API |
 
 ### Per-source findings (read-only polyfetch probes, 2026-06-20)
 
@@ -144,6 +144,11 @@ hiring series stays local; ADR-0001 PII gate + #11). Full citations and the subm
   plan's own prior "wanted, but opt-in" framing is superseded, since BLOCKED forecloses any adapter
   including one added to a user's personal `config/seed.json` — the sanctioned path stays paste-only
   hand capture under "conduct, not destination" below.
+- `_blocked` gains `jobup.ch` (2026-11-24). It is run by JobCloud, like jobs.ch, and has no public
+  feed or API. Its Terms of use for job seekers (December 2025, section 7) bar
+  crawlers, scrapers, data mining, bots and automated access, so it is BLOCKED like jobs.ch, even
+  though its robots.txt leaves the job detail pages open. Postings that name Jobup
+  as the apply route stay paste-only hand captures.
 - **Freshness upkeep (#217).** Every `feeds` / `ats` entry now also carries a `_date_verified` stamp
   (previously only `_blocked` / `_deferred` did), and it is **expected on new `feeds` / `ats`
   entries**. `ajoa-kit verify-sources [--dry-run]` re-probes them read-only (no auth) and re-stamps the
