@@ -229,6 +229,9 @@ def test_a_trailing_bracket_after_a_route_replaces_the_line(line: str) -> None:
         f"Open [a\nb] here.\n\n[a\nb]: https:/{EVIL}",
         "[x]: vscode:secret",
         "Link: https:/2130706433/x?d=secret",
+        f"[NEEDS HUMAN INPUT]: irc:{EVIL}/x?d=secret",
+        f"[NEEDS HUMAN INPUT]:\nirc:{EVIL}/x",
+        f"Chat: irc:{EVIL}/x",
         f"[x]:\thttps:/{EVIL}",
     ],
 )
@@ -250,7 +253,6 @@ ORDINARY = [
     "Relocation: yes -> Berlin",
     "GitHub handle: @alexis-doe",
     "Work authorization: [NEEDS HUMAN INPUT]",
-    "[NEEDS HUMAN INPUT]: start date",
     "Email: [email]",
     "Phone: [phone]",
     "Tel: [phone]",
@@ -264,6 +266,14 @@ def test_ordinary_field_lines_are_never_replaced() -> None:
     text, warnings = check_apply_via(body, RECORD)
     assert text == body
     assert warnings == []
+
+
+def test_a_unicode_lookalike_host_never_matches_and_never_raises() -> None:
+    rec = {**RECORD, "description": "Apply at https://hiring.example.org/x today."}
+    lookalike = "Portal: https://h\u0131ring.example.org/x"  # dotless i
+    text, warnings = check_apply_via(pack_with(f"**Apply via:** {CANON}") + lookalike, rec)
+    assert REMOVED in text.splitlines()
+    assert WARNING in warnings
 
 
 def test_a_second_route_line_is_dropped_with_a_warning() -> None:

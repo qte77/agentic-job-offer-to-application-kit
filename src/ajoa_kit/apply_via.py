@@ -16,9 +16,10 @@ the WHOLE pack, default-deny:
    library. Scheme and host match case-insensitively; the path matches exactly.
 3. If anything that can become a link or carry hidden data remains, the line is replaced by a fixed
    note: ``://``, ``//``, ``www.``, an email-shaped ``@``, a tag-like ``<``, a markdown link or
-   reference (``](``, ``][``, ``]:``), a backslash, an HTML entity, a web or script scheme, or a
-   control character. On a route line a bare ``host.tld`` followed by ``/``, ``?``, ``#`` or ``:``
-   also counts.
+   reference (``](``, ``][``, any ``]:``, so a ``[NEEDS HUMAN INPUT]:`` line too), a backslash, an
+   HTML entity, ``http(s):``, any ``scheme:`` directly followed by a word character, ``/`` or
+   ``%``, or a control character. On a route line a bare ``host.tld`` followed by ``/``, ``?``,
+   ``#`` or ``:`` also counts (elsewhere it is not auto-linked, so it is left as text).
 
 The code then writes the route line itself: ``**Apply via:** <route>``, where the route is the
 first allowed item on the first line that starts with "apply via" (if that line passed), else the
@@ -78,12 +79,12 @@ _RESIDUE = re.compile(
             r"<[a-z/!?]",
             r"\]\(",
             r"\]\[",
-            r"(?<!\[NEEDS HUMAN INPUT)\]\s*:",
+            r"\]\s*:",
             r"\\",
             r"&#",
             r"&[a-z]+;",
             r"\bhttps?\s*:",
-            r"\b(?:javascript|data|mailto|file|vbscript|tel|sms|ftp|vscode):(?!\s)",
+            r"\b[a-z][a-z0-9+.-]*:(?=[\w/%])",
             r"[\x00-\x08\x0b-\x1f\x7f-\x9f]",
         )
     ),
@@ -126,18 +127,20 @@ def _split(item: str) -> tuple[str, str]:
     return (item, "") if cut == -1 else (item[:cut], item[cut:])
 
 
+_ASCII_LOWER = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
+
+
 def _item_re(item: str) -> str:
+    # Reason: ASCII-only case folding, so a Unicode lookalike (dotless i, ...) never matches a host
     head, tail = _split(item)
-    return f"(?i:{re.escape(head)}){re.escape(tail)}"
+    return f"(?ai:{re.escape(head)}){re.escape(tail)}"
 
 
 def _same(item: str, text: str) -> bool:
     head, tail = _split(item)
-    return (
-        len(text) == len(item)
-        and text[: len(head)].lower() == head.lower()
-        and text[len(head) :] == tail
-    )
+    if len(text) != len(item) or text[len(head) :] != tail:
+        return False
+    return text[: len(head)].translate(_ASCII_LOWER) == head.translate(_ASCII_LOWER)
 
 
 class Allowed:
@@ -166,9 +169,9 @@ class Allowed:
         alts = "|".join(_item_re(i) for i in self.items)
         self.regex = re.compile(f"{_BEFORE}(?:{alts}){_AFTER}") if self.items else None
 
-    def item_for(self, text: str) -> str:
-        """The allowed item a match spells (scheme and host may differ in case)."""
-        return next(i for i in self.items if _same(i, text))
+    def item_for(self, text: str) -> str | None:
+        """The allowed item a match spells (scheme and host may differ in ASCII case), or None."""
+        return next((i for i in self.items if _same(i, text)), None)
 
 
 def scan(line: str, allowed: Allowed, route_line: bool = False) -> tuple[bool, list[str]]:
@@ -176,7 +179,10 @@ def scan(line: str, allowed: Allowed, route_line: bool = False) -> tuple[bool, l
     if allowed.regex is None:
         rest, found = line, []
     else:
-        found = [allowed.item_for(m.group(0)) for m in allowed.regex.finditer(line)]
+        hits = [allowed.item_for(m.group(0)) for m in allowed.regex.finditer(line)]
+        found = [h for h in hits if h is not None]
+        if len(found) != len(hits):  # Reason: a match no item spells is never trusted, nor raises
+            return False, []
         rest = allowed.regex.sub(lambda m: " " * len(m.group(0)), line)
     dirty = _RESIDUE.search(rest) is not None
     if route_line:
