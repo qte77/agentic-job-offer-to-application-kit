@@ -183,3 +183,77 @@ def test_chunk_keeps_the_jd_whole_when_a_marker_lands_in_prose(
     batched = json.loads((results / "batches" / "batch-000.json").read_text())[0]["description"]
     assert len(desc) < DESC_CAP  # the cap is not what is under test here
     assert batched == desc  # the spurious match is rejected, the posting survives intact
+
+
+def test_chunk_carries_constraints_that_scoping_and_the_cap_cut(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Location, clearance and language limits must reach the screen even when cut (#489).
+
+    Measured on 42 postings: 18 stated constraints never reached the screen. 14 sat in the trimmed
+    preamble or benefits tail, and 4 fell past ``DESC_CAP``. They arrive as a separate, capped
+    ``constraints`` field. A sentence the scoped description already shows is not repeated, and a
+    posting with no such sentence gets no field.
+    """
+    results = _setup(tmp_path, monkeypatch)
+    desc = (
+        "About us We build secure systems. An active TS/SCI clearance is required. "
+        "Requirements You know Python well. Fluent German is required. "
+        + ("Ship code. " * 120)
+        + "Benefits Health cover and a gym. This role is remote, and based in India only. "
+        + "We hire regardless of citizenship status or national origin."
+    )
+    plain = "Requirements You know Python well. " + ("Ship code. " * 20)
+    (results / "jobs-raw.json").write_text(
+        json.dumps(
+            [
+                {"id": "a", "title": "role", "description": desc},
+                {"id": "b", "title": "role", "description": plain},
+            ]
+        ),
+    )
+
+    chunk.main(batch=40)
+
+    a, b = json.loads((results / "batches" / "batch-000.json").read_text())
+    assert "TS/SCI" not in a["description"]  # premise: scoping cut the preamble
+    assert "India" not in a["description"]  # premise: scoping cut the tail
+    assert "An active TS/SCI clearance is required." in a["constraints"]
+    assert "This role is remote, and based in India only." in a["constraints"]
+    assert "German" not in a["constraints"]  # already visible in the description
+    assert "regardless of citizenship" not in a["constraints"]  # EEO text is not a limit
+    assert len(a["constraints"]) <= chunk.CONSTRAINTS_CAP
+    assert "constraints" not in b
+
+
+def test_chunk_constraints_survive_the_cap_and_skip_skill_noise(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A limit past ``DESC_CAP`` still arrives, cut to a window if it sits in an unpunctuated run.
+
+    Skill lines such as "proficient in Python" or "hybrid cloud" are not limits and must not crowd
+    real ones out of the 600-char field; a repeated limit is kept once.
+    """
+    results = _setup(tmp_path, monkeypatch)
+    bullets = " - ".join(["write Python services"] * 60)  # one long run with no full stops
+    desc = (
+        "Requirements You are proficient in Python. We run a hybrid cloud. "
+        + ("Ship code. " * 400)
+        + f"What you do {bullets} - must be based in Berlin - {bullets}. "
+        + "Must be based in Paris. Must be based in Paris. Fluent German is required."
+    )
+    (results / "jobs-raw.json").write_text(
+        json.dumps([{"id": "a", "title": "role", "description": desc}]),
+    )
+
+    chunk.main(batch=40)
+
+    rec = json.loads((results / "batches" / "batch-000.json").read_text())[0]
+    field = rec["constraints"]
+    assert "Paris" not in rec["description"]  # premise: past the cap
+    assert field.count("Must be based in Paris.") == 1
+    assert "Fluent German is required." in field
+    assert "based in Berlin" in field  # kept as a window of the long unpunctuated run
+    assert len(field) <= chunk.CONSTRAINTS_CAP
+    assert "proficient in Python" not in field
+    assert "hybrid cloud" not in field
