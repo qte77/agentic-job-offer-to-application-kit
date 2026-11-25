@@ -7,11 +7,13 @@ route line itself.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from ajoa_kit.apply_via import NEEDS_HUMAN, OFF_HOST, REMOVED, WARNING, check_apply_via, normalise
+from ajoa_kit.apply_via import NEEDS_HUMAN, OFF_HOST, REMOVED, WARNING, check_apply_via
 
 RECORD = {
     "id": "greenhouse:acme:42",
@@ -160,7 +162,7 @@ BYPASSES = [
 @pytest.mark.parametrize("body", BYPASSES)
 def test_bypass_strings_lose_the_attacker_host_and_warn(body: str) -> None:
     text, warnings = check_apply_via(pack_with(body), RECORD)
-    assert "example.net" not in normalise(text)
+    assert "example.net" not in text  # the emitted bytes, not a normalised view of them
     assert WARNING in warnings
     assert first_line(text) == f"**Apply via:** {CANON}"
 
@@ -184,9 +186,128 @@ def test_a_record_without_an_http_url_falls_back_to_needs_human_input() -> None:
     assert first_line(text) == f"**Apply via:** {NEEDS_HUMAN}"
 
 
+# --- round 2 (#527 review N1-N6): data hidden in characters normalisation removes, and noise ---
+
+ATTACKER_ROUTE = "https://attacker.example.net/apply"
+ATTACKER_JD = {**RECORD, "description": f"Apply at {ATTACKER_ROUTE} today."}
+_TAGS = "".join(chr(0xE0000 + ord(c)) for c in "secret")
+
+HIDDEN = [
+    f"Portal: {ATTACKER_ROUTE}{_TAGS}",
+    f"Portal: {ATTACKER_ROUTE}\u200b\u200c\u200b\u200c",
+    f"Portal: https://attacker.example.net/{_TAGS}apply",
+    "Portal: https://attacker.example.net/ap\u00adply",
+    f"Portal: {ATTACKER_ROUTE}\x1fsecret",
+    f"Portal: {ATTACKER_ROUTE}\x1csecret",
+    f"Portal: {ATTACKER_ROUTE}\x85secret",
+    "Portal: https://attacker.example.net/\uff41pply",
+    "Portal: https://attacker.example.net/ApPlY",
+]
+
+
+@pytest.mark.parametrize("line", HIDDEN)
+def test_nothing_the_check_did_not_see_is_emitted(line: str) -> None:
+    text, _ = check_apply_via(pack_with(f"**Apply via:** {CANON}") + line, ATTACKER_JD)
+    assert all(c == "\n" or " " <= c <= "~" for c in text), "only printable ASCII is emitted"
+    assert "secret" not in text
+    assert "ApPlY" not in text
+
+
+@pytest.mark.parametrize(
+    "line",
+    [f"Portal: {ATTACKER_ROUTE}?.,;:!]", f"Portal: {ATTACKER_ROUTE}.]", f"[see {ATTACKER_ROUTE}]"],
+)
+def test_a_trailing_bracket_after_a_route_replaces_the_line(line: str) -> None:
+    text, warnings = check_apply_via(pack_with(f"**Apply via:** {CANON}") + line, ATTACKER_JD)
+    assert REMOVED in text.splitlines()
+    assert WARNING in warnings
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        f"Open [a\nb] here.\n\n[a\nb]: https:/{EVIL}",
+        "[x]: vscode:secret",
+        "Link: https:/2130706433/x?d=secret",
+        f"[x]:\thttps:/{EVIL}",
+    ],
+)
+def test_reference_definitions_and_single_slash_schemes_are_removed(body: str) -> None:
+    text, warnings = check_apply_via(pack_with(f"**Apply via:** {CANON}") + body, RECORD)
+    assert EVIL not in text
+    assert "secret" not in text
+    assert WARNING in warnings
+
+
+ORDINARY = [
+    "Node.js/Express experience: 5 years",
+    "GPA: 3.85/4.0",
+    "Python 3.12: yes",
+    "ASP.NET/C# : intermediate",
+    "README.md: section 2",
+    "Salary expectation: > 80k",
+    "Notice period: < 3 months",
+    "Relocation: yes -> Berlin",
+    "GitHub handle: @alexis-doe",
+    "Work authorization: [NEEDS HUMAN INPUT]",
+    "[NEEDS HUMAN INPUT]: start date",
+    "Email: [email]",
+    "Phone: [phone]",
+    "Tel: [phone]",
+    "Data: 4 years of pipelines",
+    "Apply viable skills: Python, SQL",
+]
+
+
+def test_ordinary_field_lines_are_never_replaced() -> None:
+    body = f"**Apply via:** {CANON}\n" + "\n".join(ORDINARY)
+    text, warnings = check_apply_via(body, RECORD)
+    assert text == body
+    assert warnings == []
+
+
+def test_a_second_route_line_is_dropped_with_a_warning() -> None:
+    body = (
+        f"**Apply via:** {CANON}\nApply via LinkedIn Easy Apply: yes\nApply viable skills: Python"
+    )
+    text, warnings = check_apply_via(body, RECORD)
+    assert text == f"**Apply via:** {CANON}\nApply viable skills: Python"
+    assert warnings == [WARNING]
+
+
+def test_a_jd_route_without_a_record_url_is_flagged() -> None:
+    rec = {**RECORD, "url": ""}
+    text, warnings = check_apply_via(pack_with(f"**Apply via:** {JD_ROUTE}"), rec)
+    assert first_line(text) == f"**Apply via:** {JD_ROUTE}"
+    assert warnings == [OFF_HOST]
+
+
+def test_scheme_and_host_match_in_any_case_but_the_path_exactly() -> None:
+    upper = "HTTPS://Careers.Example.org/jobs/42-engineer"
+    text, warnings = check_apply_via(pack_with(f"**Apply via:** {upper}"), RECORD)
+    assert first_line(text) == f"**Apply via:** {JD_ROUTE}"  # the code writes the allowed string
+    assert warnings == [OFF_HOST]
+    _, w_path = check_apply_via(
+        pack_with(f"**Apply via:** {JD_ROUTE.upper()[:8]}{JD_ROUTE[8:].upper()}"), RECORD
+    )
+    assert WARNING in w_path
+
+
 class TestNoAttackerLinkSurvives:
     @given(pre=st.text(), post=st.text())
     @settings(deadline=None)
     def test_an_attacker_url_anywhere_in_a_line_is_removed(self, pre: str, post: str) -> None:
         text, _ = check_apply_via(f"{pre}https://{EVIL}/x?d=1{post}", RECORD)
-        assert f"{EVIL}/x" not in normalise(text)
+        assert f"{EVIL}/x" not in text
+
+    @given(post=st.text())
+    @settings(deadline=None)
+    def test_only_trimmable_text_follows_an_allowed_route(self, post: str) -> None:
+        text, _ = check_apply_via(f"Portal: {ATTACKER_ROUTE}{post}", ATTACKER_JD)
+        for line in text.split("\n"):
+            at = line.find(ATTACKER_ROUTE)
+            if at == -1 or line.startswith("**Apply via:**"):
+                continue
+            tail = re.split(r"[ \t]", line[at + len(ATTACKER_ROUTE) :], maxsplit=1)[0]
+            # Reason: an autolink ends at ASCII space or tab and trims only this closing punctuation
+            assert re.fullmatch(r"[.,;:!?)]*", tail), repr(tail)
