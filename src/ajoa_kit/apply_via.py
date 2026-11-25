@@ -51,6 +51,7 @@ if TYPE_CHECKING:
 NEEDS_HUMAN = "[NEEDS HUMAN INPUT]"
 LABEL = "**Apply via:**"
 REMOVED = "[removed: a link or address that is not from the job record or the posting]"
+LINK_REMOVED = "[removed: a link or address that is not allowed in this document]"
 WARNING = (
     "a line of the prefill pack held a link or address that is neither the job record's url, a "
     "link (exact host and path, no query, no fragment) or email from the posting, nor one of your "
@@ -87,7 +88,8 @@ _RESIDUE = re.compile(
             r"&#",
             r"&[a-z]+;",
             r"\bhttps?\s*:",
-            r"\b(?:javascript|data|mailto|file|vbscript|tel|sms|ftp|vscode):(?!\s)",
+            # Reason: ":**" then a space or the end closes a bold label ("and data:**"), no link
+            r"\b(?:javascript|data|mailto|file|vbscript|tel|sms|ftp|vscode):(?!\s|\*\*(?:\s|$))",
             r"[\x00-\x08\x0b-\x1f\x7f-\x9f]",
         )
     ),
@@ -222,6 +224,26 @@ def own_links(library: Path) -> tuple[str, ...]:
             if hp:
                 links += [f"{hp[0]}://{hp[1]}", hp[1]]
     return tuple(dict.fromkeys(links))
+
+
+def check_links(text: str, allowed: Allowed) -> tuple[str, int]:
+    """Check every line of another pack artifact (#530): the same scan, with no route line.
+
+    Each line is normalised and kept when :func:`scan` finds it clean, else replaced by
+    :data:`LINK_REMOVED`. The caller picks ``allowed``: a CV or cover letter gets only the
+    candidate's own links, the match and gap report also the record and its JD.
+
+    Returns:
+        The checked text and the number of replaced lines.
+    """
+    out: list[str] = []
+    replaced = 0
+    for line in text.replace("\r\n", "\n").split("\n"):
+        norm = normalise(line)
+        clean = scan(norm, allowed)[0]
+        replaced += not clean
+        out.append(norm if clean else LINK_REMOVED)
+    return "\n".join(out), replaced
 
 
 def _route(items: list[str], allowed: Allowed) -> str | None:

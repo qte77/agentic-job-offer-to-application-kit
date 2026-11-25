@@ -13,7 +13,16 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from ajoa_kit.apply_via import NEEDS_HUMAN, OFF_HOST, REMOVED, WARNING, check_apply_via
+from ajoa_kit.apply_via import (
+    LINK_REMOVED,
+    NEEDS_HUMAN,
+    OFF_HOST,
+    REMOVED,
+    WARNING,
+    Allowed,
+    check_apply_via,
+    check_links,
+)
 
 RECORD = {
     "id": "greenhouse:acme:42",
@@ -159,6 +168,8 @@ BYPASSES = [
     "**Apply via:** hr@evil_x.example.net",
     "**Apply via:** hr@evil_.example.net",
     "**Apply via:** hr@\u00e9vil.example.net",
+    # a bold label close is text, but a script scheme glued to anything else still counts
+    f"**Apply via:** data:**{EVIL}",
 ]
 
 
@@ -265,6 +276,8 @@ ORDINARY = [
     "C++: std::vector",
     "Availability: 5 @ 80%",
     "Ping me via @mention or hr@evilhost",
+    "- **Languages and data:** Python (Pydantic v2), SQL",
+    "**Data:**",
 ]
 
 
@@ -328,3 +341,29 @@ class TestNoAttackerLinkSurvives:
             tail = re.split(r"[ \t]", line[at + len(ATTACKER_ROUTE) :], maxsplit=1)[0]
             # Reason: an autolink ends at ASCII space or tab and trims only this closing punctuation
             assert re.fullmatch(r"[.,;:!?)]*", tail), repr(tail)
+
+
+# --- the other pack artifacts (#530): the same line scan, without a route line ---
+
+
+def test_check_links_keeps_allowed_items_and_replaces_only_the_failing_line() -> None:
+    text = f"See {JD_ROUTE} for details.\nMore at https://{EVIL}/x\nPlain line"
+    out, replaced = check_links(text, Allowed(RECORD))
+    assert out.splitlines() == [f"See {JD_ROUTE} for details.", LINK_REMOVED, "Plain line"]
+    assert replaced == 1
+
+
+def test_check_links_without_a_record_keeps_only_own_links() -> None:
+    own = ("https://github.com/alexis-doe/tool",)
+    text = f"Repo: https://github.com/alexis-doe/tool\nPosting: {JD_ROUTE}"
+    out, replaced = check_links(text, Allowed(None, own))
+    assert out.splitlines() == ["Repo: https://github.com/alexis-doe/tool", LINK_REMOVED]
+    assert replaced == 1
+
+
+def test_check_links_writes_no_route_line_and_is_idempotent() -> None:
+    text = "**Apply via:** the portal\nDear team,"
+    once, replaced = check_links(text, Allowed(RECORD))
+    assert once == text
+    assert replaced == 0
+    assert check_links(once, Allowed(RECORD)) == (once, 0)

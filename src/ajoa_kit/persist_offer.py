@@ -13,12 +13,17 @@ pass, #272, a ``jd-truncation-check.md`` when the source JD sat at the ingest de
 ``cv-grounding-check.md`` when the CV cites a distinctive number absent from the evidence library,
 an ``honesty-check.md`` when a must-have looks marked covered without real evidence — arc-011
 Slice C — and an ``apply-via-check.md`` when a prefill pack line held a link or address its job
-record, JD and the local evidence library do not allow, which is then replaced, #526), a
+record, JD and the local evidence library do not allow, which is then replaced, #526, and a
+``link-check.md`` when a line of the match, CV, cover letter or gap report did, #530), a
 ``meta.json``
 recording the JD id so the local dashboard can join the pack back to its shortlist row (#209),
 and ``result.json``, the pack itself, so a hand-edited artifact can be re-rendered from source
 (#365). The results root comes from
 ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate workspace works.
+
+The input file is never rewritten or removed: it is unchecked agent output, kept as the only copy
+of a line the link check replaced (a false positive can be recovered from it), and must be read as
+text, never opened as a rendered document (#530).
 
 No submission, no auto-apply: the prefill pack is a human-review artifact only — it lists
 application fields for a person to fill and submit manually, never a script or link that
@@ -37,7 +42,7 @@ from pydantic import ValidationError
 
 from ajoa_kit.apply_via import OFF_HOST as APPLY_VIA_OFF_HOST
 from ajoa_kit.apply_via import WARNING as APPLY_VIA_WARNING
-from ajoa_kit.apply_via import check_apply_via, own_links
+from ajoa_kit.apply_via import Allowed, check_apply_via, check_links, own_links
 from ajoa_kit.ats_check import parse_safety_warnings
 from ajoa_kit.coverage import coverage_summary, honesty_warnings
 from ajoa_kit.defaults import DESC_CAP
@@ -257,27 +262,30 @@ def _replaced_count(value: object) -> int:
     return min(value, _APPLY_VIA_CAP) if isinstance(value, int) and value > 0 else 0
 
 
-def enforce_apply_via(pack: dict, results_dir: Path) -> dict:
-    """Return ``pack`` with its prefill pack checked and its route line written by code (#526).
-
-    The record (url and JD text) comes only from ``jobs-raw.json``, never from the pack; an unknown
-    record fails closed. The returned copy carries :data:`APPLY_VIA_KEY` when a line was replaced.
-    """
-    text = pack.get("prefill_pack")
-    if not isinstance(text, str):
-        return pack  # render() rejects it
+def _job_record(pack: dict, results_dir: Path) -> dict | None:
+    """The pack's record from ``jobs-raw.json`` (never from the pack), or ``None`` (fail closed)."""
     jd_id = pack.get("offer_id") or pack.get("id")
+    if not jd_id:
+        return None
     try:
         records = json.loads((results_dir / "jobs-raw.json").read_text())
     except (
         OSError,
         ValueError,
     ):  # Reason: a non-UTF-8 file raises UnicodeDecodeError, a ValueError
-        records = []
-    record = _find_jd_record(str(jd_id), records) if jd_id else None
-    checked, warnings = check_apply_via(
-        text, record, own_links(results_dir / "evidence-library.json")
-    )
+        return None
+    return _find_jd_record(str(jd_id), records)
+
+
+def _enforce_apply_via(pack: dict, record: dict | None, own: tuple[str, ...]) -> dict:
+    """Return ``pack`` with its prefill pack checked and its route line written by code (#526).
+
+    The returned copy carries :data:`APPLY_VIA_KEY` when a line was replaced.
+    """
+    text = pack.get("prefill_pack")
+    if not isinstance(text, str):
+        return pack  # render() rejects it
+    checked, warnings = check_apply_via(text, record, own)
     out = {**pack, "prefill_pack": checked}
     counts = {
         APPLY_VIA_KEY: warnings.count(APPLY_VIA_WARNING),
@@ -291,9 +299,71 @@ def enforce_apply_via(pack: dict, results_dir: Path) -> dict:
     return out
 
 
+# The other artifacts (#530) and whether the record's url and the JD's links and emails are allowed
+# in them: a CV and a cover letter keep only the candidate's own links. Per-artifact counts of
+# replaced lines are kept in result.json under LINKS_KEY, capped like the Apply via counts.
+LINK_ARTIFACTS = {"match": True, "cv": False, "cover_letter": False, "gap_report": True}
+LINKS_KEY = "links_replaced"
+LINK_WARNING = (
+    "{count} line(s) of {filename} held a link or address that is not allowed there, so each was "
+    "replaced by a fixed note. A CV and a cover letter keep only your own links from the evidence "
+    "library; the match and the gap report also keep the job record's url and the posting's links "
+    "and emails. This can be a false positive: the original text is only in the tailor workflow's "
+    "result file, which is unchecked agent output, so read it as text, never open it as a document"
+)
+
+
+def _stored_link_counts(pack: dict) -> dict[str, int]:
+    stored = pack.get(LINKS_KEY)
+    if not isinstance(stored, dict):
+        return {}
+    counts = {key: _replaced_count(stored.get(key)) for key in LINK_ARTIFACTS}
+    return {key: count for key, count in counts.items() if count}
+
+
+def _enforce_links(pack: dict, record: dict | None, own: tuple[str, ...]) -> dict:
+    """Return ``pack`` with the match, CV, cover letter and gap report link-checked (#530)."""
+    allowed = {True: Allowed(record, own), False: Allowed(None, own)}
+    stored = _stored_link_counts(pack)
+    out = {k: v for k, v in pack.items() if k != LINKS_KEY}
+    counts: dict[str, int] = {}
+    for key, with_jd in LINK_ARTIFACTS.items():
+        text = pack.get(key)
+        now = 0
+        if isinstance(text, str):  # render() rejects anything else
+            out[key], now = check_links(text, allowed[with_jd])
+        count = min(max(now, stored.get(key, 0)), _APPLY_VIA_CAP)
+        if count:
+            counts[key] = count
+    if counts:
+        out[LINKS_KEY] = counts
+    return out
+
+
+def enforce_links(pack: dict, results_dir: Path) -> dict:
+    """Return ``pack`` with every artifact link-checked in code (#526, #530).
+
+    The record (url and JD text) comes only from ``jobs-raw.json``, never from the pack, and is
+    read once for both checks; an unknown record fails closed. The candidate's own links come from
+    the local evidence library.
+    """
+    record = _job_record(pack, results_dir)
+    own = own_links(results_dir / "evidence-library.json")
+    return _enforce_links(_enforce_apply_via(pack, record, own), record, own)
+
+
 def _apply_via_check(pack: dict, results_dir: Path) -> list[str]:
     off_host = [APPLY_VIA_OFF_HOST] if _replaced_count(pack.get(APPLY_VIA_OFF_HOST_KEY)) else []
     return [APPLY_VIA_WARNING] * _replaced_count(pack.get(APPLY_VIA_KEY)) + off_host
+
+
+def _link_check(pack: dict, results_dir: Path) -> list[str]:
+    counts = _stored_link_counts(pack)
+    return [
+        LINK_WARNING.format(count=counts[key], filename=filename)
+        for key, filename, _ in ARTIFACTS
+        if key in counts
+    ]
 
 
 # (sidecar title, filename, check) — each check takes (pack, results_dir) and returns warnings;
@@ -307,6 +377,7 @@ CHECKS: list[tuple[str, str, Callable[[dict, Path], list[str]]]] = [
     ("CV grounding check", "cv-grounding-check.md", _cv_grounding_check),
     ("Honesty check", "honesty-check.md", _honesty_check),
     ("Apply via check", "apply-via-check.md", _apply_via_check),
+    ("Link check", "link-check.md", _link_check),
 ]
 
 
@@ -346,10 +417,10 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     Returns:
         The offer directory that was written.
     """
-    # The prefill pack is checked in code before anything renders, and its route line is written by
-    # code, so a detected planted link never reaches prefill-pack.md, result.json or the dashboard
-    # (#526).
-    pack = enforce_apply_via(pack, results_dir)
+    # Every artifact is link-checked in code before anything renders, and the prefill pack's route
+    # line is written by code, so a detected planted link never reaches a .md file, result.json or
+    # the dashboard (#526, #530).
+    pack = enforce_links(pack, results_dir)
     files = render(pack)  # validate first — all-or-nothing
     offer_dir = results_dir / "offers" / safe_slug(slug)
     offer_dir.mkdir(parents=True, exist_ok=True)
