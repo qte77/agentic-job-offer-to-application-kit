@@ -233,7 +233,7 @@ def from_rss(f: dict[str, str]) -> Iterable[dict[str, Any]]:
     raw, backend = get_bytes(f["url"])
     root = xml_fromstring(raw)
     for item in root.iter("item"):
-        link = canonical_url((item.findtext("link") or "").strip())
+        link = canonical_url((item.findtext("link") or "").strip(), "rss")
         title = (item.findtext("title") or "").strip()
         company, salary = rss_company_salary(f["source"], title)
         yield record(

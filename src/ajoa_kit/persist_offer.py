@@ -11,10 +11,12 @@ trips the parse-safety pass, #75, a ``cv-stuffing-check.md`` when it trips the k
 pass, #272, a ``jd-truncation-check.md`` when the source JD sat at the ingest description cap,
 #347, a ``lane-grounding-check.md`` when the evidence library lacks the pack's lane angle, #348, a
 ``cv-grounding-check.md`` when the CV cites a distinctive number absent from the evidence library,
-and an ``honesty-check.md`` when a must-have looks marked covered without real evidence — arc-011
-Slice C), a ``meta.json`` recording the JD id so the local dashboard
-can join the pack back to its shortlist row (#209), and ``result.json``, the pack itself, so a
-hand-edited artifact can be re-rendered from source (#365). The results root comes from
+an ``honesty-check.md`` when a must-have looks marked covered without real evidence — arc-011
+Slice C — and an ``apply-via-check.md`` when the prefill pack's "Apply via" line named a link or
+address its job record and JD do not allow, which is then replaced, #526), a ``meta.json``
+recording the JD id so the local dashboard can join the pack back to its shortlist row (#209),
+and ``result.json``, the pack itself, so a hand-edited artifact can be re-rendered from source
+(#365). The results root comes from
 ``AppSettings`` (``AJOA_RESULTS_DIR`` / CWD), so an alternate workspace works.
 
 No submission, no auto-apply: the prefill pack is a human-review artifact only — it lists
@@ -32,6 +34,8 @@ from typing import TYPE_CHECKING
 
 from pydantic import ValidationError
 
+from ajoa_kit.apply_via import WARNING as APPLY_VIA_WARNING
+from ajoa_kit.apply_via import check_apply_via
 from ajoa_kit.ats_check import parse_safety_warnings
 from ajoa_kit.coverage import coverage_summary, honesty_warnings
 from ajoa_kit.defaults import DESC_CAP
@@ -236,6 +240,44 @@ def _honesty_check(pack: dict, results_dir: Path) -> list[str]:
     return honesty_warnings(pack.get("must_haves") or [])
 
 
+# Count of "Apply via" lines replaced (#526), kept in result.json so a re-render from it re-emits
+# the sidecar; capped, since the key could also arrive in agent output (it only adds warnings).
+APPLY_VIA_KEY = "apply_via_replaced"
+_APPLY_VIA_CAP = 10
+
+
+def _replaced_count(value: object) -> int:
+    return min(value, _APPLY_VIA_CAP) if isinstance(value, int) and value > 0 else 0
+
+
+def enforce_apply_via(pack: dict, results_dir: Path) -> dict:
+    """Return ``pack`` with its "Apply via" lines checked against the job record (#526).
+
+    The record (url and JD text) comes only from ``jobs-raw.json``, never from the pack; an unknown
+    record fails closed. The returned copy carries :data:`APPLY_VIA_KEY` when a line was replaced.
+    """
+    text = pack.get("prefill_pack")
+    if not isinstance(text, str):
+        return pack  # render() rejects it
+    jd_id = pack.get("offer_id") or pack.get("id")
+    try:
+        records = json.loads((results_dir / "jobs-raw.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        records = []
+    record = _find_jd_record(str(jd_id), records) if jd_id else None
+    checked, warnings = check_apply_via(text, record)
+    out = {**pack, "prefill_pack": checked}
+    count = max(len(warnings), _replaced_count(pack.get(APPLY_VIA_KEY)))
+    out.pop(APPLY_VIA_KEY, None)
+    if count:
+        out[APPLY_VIA_KEY] = count
+    return out
+
+
+def _apply_via_check(pack: dict, results_dir: Path) -> list[str]:
+    return [APPLY_VIA_WARNING] * _replaced_count(pack.get(APPLY_VIA_KEY))
+
+
 # (sidecar title, filename, check) — each check takes (pack, results_dir) and returns warnings;
 # an empty list writes nothing and removes that check's stale file. Registry so a new deterministic
 # check is one more entry, not a new inline block (arc-011 Slice C).
@@ -246,6 +288,7 @@ CHECKS: list[tuple[str, str, Callable[[dict, Path], list[str]]]] = [
     ("Lane grounding check", "lane-grounding-check.md", _lane_grounding_check),
     ("CV grounding check", "cv-grounding-check.md", _cv_grounding_check),
     ("Honesty check", "honesty-check.md", _honesty_check),
+    ("Apply via check", "apply-via-check.md", _apply_via_check),
 ]
 
 
@@ -285,6 +328,9 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
     Returns:
         The offer directory that was written.
     """
+    # The "Apply via" line is checked in code before anything renders, so a planted link never
+    # reaches prefill-pack.md, result.json or the dashboard (#526).
+    pack = enforce_apply_via(pack, results_dir)
     files = render(pack)  # validate first — all-or-nothing
     offer_dir = results_dir / "offers" / safe_slug(slug)
     offer_dir.mkdir(parents=True, exist_ok=True)
