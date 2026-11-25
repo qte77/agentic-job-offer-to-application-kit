@@ -210,7 +210,7 @@ existing shortlists — new offers into current lanes, never a re-bucket. If a `
 reassign an offer's `best_lane`, `persist` evicts it from the old lane bucket so it never
 double-buckets (#236). A stored offer that a re-screened batch read but did not keep is removed, as a
 fresh screen would drop it; only the batches the result lists in `screenedBatches` count, and a run
-with an unmatched row removes nothing (#515). Every persist first ties each row to the batch record
+with an unmatched or malformed row, or with a kept row outside those batches, removes nothing (#515). Every persist first ties each row to the batch record
 it was screened from and takes the id, url, company and title from that record, not from the agent;
 unmatched rows are reported and not stored (#513).
 

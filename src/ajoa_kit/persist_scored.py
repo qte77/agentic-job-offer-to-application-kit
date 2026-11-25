@@ -112,21 +112,26 @@ def match_batches(
 
 
 def _dropped_ids(
-    data: dict, batches: dict[int, list[ScreenedJd]], rel: list[ScoredItem], unmatched: int
+    data: dict, batches: dict[int, list[ScreenedJd]], rel: list[ScoredItem], lost: int
 ) -> tuple[set[str], str]:
     """Ids the re-screen read but did not keep (#515), or none plus the reason removal is skipped.
 
     Only the batches the result names in ``screenedBatches`` were read: a sliced run or a failed
-    batch agent leaves the rest unscreened. An unmatched row may be a kept JD whose id the agent
-    garbled, so its real id would look dropped; any unmatched row skips removal for the run.
+    batch agent leaves the rest unscreened. ``lost`` counts rows that were kept but cannot be tied
+    to an id (unmatched or malformed); such a row's real id would look dropped, so any lost row
+    skips removal for the run. So does a kept row outside the listed batches: the batch files then
+    no longer hold what was screened (re-chunked since), and the indices point at other records.
     """
     if "screenedBatches" not in data:
         return set(), "no screenedBatches in the result, none removed"
-    if unmatched:
-        return set(), f"{unmatched} unmatched rows, none removed"
+    if lost:
+        return set(), f"{lost} unmatched or malformed rows, none removed"
     screened = TypeAdapter(list[int]).validate_python(data["screenedBatches"])
     read = {r.id for i in screened for r in batches.get(i, [])}
-    return read - {j.id for j in rel}, ""
+    kept = {j.id for j in rel}
+    if not kept <= read:
+        return set(), "rows outside the listed batches (re-chunked since the screen?), none removed"
+    return read - kept, ""
 
 
 def load_shortlist(path: Path) -> list[ScoredItem]:
@@ -319,7 +324,7 @@ def main(src: Path | None = None, *, merge: bool = False) -> None:
     _normalize(rel, pull_date(results))
     valid = {lane.key for lane in load_lanes(settings.config_dir)}
     unlaned, invalid = _route_lanes(rel, valid)
-    gone, skipped = _dropped_ids(data, batches, rel, len(unmatched))
+    gone, skipped = _dropped_ids(data, batches, rel, len(unmatched) + dropped)
     scored = results / "jobs-scored.json"
     merged, removal = _merge_scored(scored, rel, gone, skipped) if merge else (rel, "")
     data["relevant"] = [m.model_dump() for m in merged]

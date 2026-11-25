@@ -408,4 +408,34 @@ def test_merge_removes_nothing_when_a_row_went_unmatched(
         tmp_path, monkeypatch, rescreen, merge=True, batches=[[_record("a"), _record("b")]]
     )
     assert _scored_ids(results) == {"a", "b"}
-    assert "unmatched rows, none removed" in capsys.readouterr().out
+    assert "unmatched or malformed rows, none removed" in capsys.readouterr().out
+
+
+def test_merge_removes_nothing_when_a_row_was_malformed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A kept row that fails validation is dropped as malformed before matching; its id would look
+    # dropped by the re-screen, so the run removes nothing.
+    _run(tmp_path, monkeypatch, {"relevant": [_item("a", "ml", 5), _item("b", "ml", 4)]})
+    rescreen = {
+        "relevant": [_item("a", "ml", 4), _item("b", "ml", "high")],
+        "screenedBatches": [0],
+    }
+    results = _run(
+        tmp_path, monkeypatch, rescreen, merge=True, batches=[[_record("a"), _record("b")]]
+    )
+    assert _scored_ids(results) == {"a", "b"}
+
+
+def test_merge_removes_nothing_when_the_batches_were_rechunked(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The result screened batch 0 = [a, b]; a later chunk moved b out and c in. A kept row now sits
+    # outside the listed batch, so the indices no longer name what was read: remove nothing.
+    _run(tmp_path, monkeypatch, {"relevant": [_item("b", "ml", 5), _item("c", "ml", 4)]})
+    rescreen = {"relevant": [_item("b", "ml", 4)], "screenedBatches": [0]}
+    results = _run(
+        tmp_path, monkeypatch, rescreen, merge=True, batches=[[_record("c")], [_record("b")]]
+    )
+    assert _scored_ids(results) == {"b", "c"}
+    assert "re-chunked since the screen" in capsys.readouterr().out
