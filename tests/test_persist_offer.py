@@ -524,7 +524,7 @@ def test_a_link_checked_pack_rebuilds_byte_identically_from_its_result_json(
 
 def test_stored_link_counts_are_capped_and_type_checked(tmp_path: Path) -> None:
     (tmp_path / "jobs-raw.json").write_text(json.dumps([_APPLY_RECORD]))
-    counts = {"cv": 999, "match": "3", "gap_report": -1, "prefill_pack": 4, "x": 5}
+    counts = {"cv": 999, "match": "3", "gap_report": -1, "cover_letter": True, "x": 5}
     pack = {**_apply_pack(_CLEAN_ROUTE), persist_offer.LINKS_KEY: counts}
     offer_dir = persist_offer.write_pack(pack, slug="acme-42", results_dir=tmp_path)
     stored = json.loads((offer_dir / "result.json").read_text())[persist_offer.LINKS_KEY]

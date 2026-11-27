@@ -52,7 +52,10 @@ def check_pack(offer_dir: Path) -> PackDrift:
     with tempfile.TemporaryDirectory() as tmp:
         try:
             pack = json.loads((offer_dir / SOURCE).read_text())
-            fresh = write_pack(pack, slug=slug, results_dir=Path(tmp))
+            # The link check reads jobs-raw.json and the library from the pack's own results root
+            fresh = write_pack(
+                pack, slug=slug, results_dir=Path(tmp), source_dir=offer_dir.parent.parent
+            )
         except (ValueError, TypeError, AttributeError):  # bad JSON or a pack that won't render
             return PackDrift(slug=slug, status="invalid source")
         changed = sorted(f for f in RENDERED if _read(fresh / f) != _read(offer_dir / f))

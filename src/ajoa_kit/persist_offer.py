@@ -33,6 +33,7 @@ auto-submits (see ``research.md`` §Delivery for the safe/unsafe boundary, #8).
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import re
 from pathlib import Path
@@ -259,7 +260,9 @@ _APPLY_VIA_CAP = 10
 
 
 def _replaced_count(value: object) -> int:
-    return min(value, _APPLY_VIA_CAP) if isinstance(value, int) and value > 0 else 0
+    if isinstance(value, bool) or not isinstance(value, int):
+        return 0
+    return min(value, _APPLY_VIA_CAP) if value > 0 else 0
 
 
 def _job_record(pack: dict, results_dir: Path) -> dict | None:
@@ -267,14 +270,22 @@ def _job_record(pack: dict, results_dir: Path) -> dict | None:
     jd_id = pack.get("offer_id") or pack.get("id")
     if not jd_id:
         return None
+    return _find_jd_record(str(jd_id), _records(results_dir / "jobs-raw.json"))
+
+
+def _records(path: Path) -> object:
+    """Parsed ``jobs-raw.json`` (``[]`` when missing or unreadable), reused while unchanged."""
     try:
-        records = json.loads((results_dir / "jobs-raw.json").read_text())
-    except (
-        OSError,
-        ValueError,
-    ):  # Reason: a non-UTF-8 file raises UnicodeDecodeError, a ValueError
-        return None
-    return _find_jd_record(str(jd_id), records)
+        st = path.stat()
+        return _parse_records(str(path), st.st_mtime_ns, st.st_size)
+    except (OSError, ValueError):  # Reason: a non-UTF-8 file raises UnicodeDecodeError
+        return []
+
+
+@functools.lru_cache(maxsize=1)
+def _parse_records(path: str, mtime_ns: int, size: int) -> object:
+    # Reason: drift-check re-renders every pack against the ~64 MB corpus; parse it once per change
+    return json.loads(Path(path).read_text())
 
 
 def _enforce_apply_via(pack: dict, record: dict | None, own: tuple[str, ...]) -> dict:
@@ -341,7 +352,7 @@ def _enforce_links(pack: dict, record: dict | None, own: tuple[str, ...]) -> dic
 
 
 def enforce_links(pack: dict, results_dir: Path) -> dict:
-    """Return ``pack`` with every artifact link-checked in code (#526, #530).
+    """Return ``pack`` with the five artifacts link-checked in code (#526, #530).
 
     The record (url and JD text) comes only from ``jobs-raw.json``, never from the pack, and is
     read once for both checks; an unknown record fails closed. The candidate's own links come from
@@ -398,7 +409,7 @@ def _emit_check(offer_dir: Path, title: str, filename: str, warnings: list[str])
     )
 
 
-def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
+def write_pack(pack: dict, slug: str, results_dir: Path, source_dir: Path | None = None) -> Path:
     """Write the validated pack to ``results_dir/offers/<safe-slug>/``.
 
     Validation happens before any write, so an incomplete pack leaves the disk untouched.
@@ -413,14 +424,16 @@ def write_pack(pack: dict, slug: str, results_dir: Path) -> Path:
         pack: The tailor result.
         slug: Untrusted offer slug (sanitized via :func:`safe_slug`).
         results_dir: The results root (from ``AppSettings``).
+        source_dir: The root holding ``jobs-raw.json`` and the evidence library for the link
+            check (default ``results_dir``); the drift check renders elsewhere but reads here.
 
     Returns:
         The offer directory that was written.
     """
-    # Every artifact is link-checked in code before anything renders, and the prefill pack's route
-    # line is written by code, so a detected planted link never reaches a .md file, result.json or
-    # the dashboard (#526, #530).
-    pack = enforce_links(pack, results_dir)
+    # The five artifacts are link-checked in code before anything renders, and the prefill pack's
+    # route line is written by code, so a detected planted link never reaches their .md files,
+    # their text in result.json or the dashboard (#526, #530). must_haves is not checked here.
+    pack = enforce_links(pack, source_dir or results_dir)
     files = render(pack)  # validate first — all-or-nothing
     offer_dir = results_dir / "offers" / safe_slug(slug)
     offer_dir.mkdir(parents=True, exist_ok=True)
