@@ -79,3 +79,19 @@ def test_unrenderable_source_is_reported_not_raised(tmp_path: Path) -> None:
     (offer / "result.json").write_text(json.dumps({"match": "only one field"}))
     [report] = drift.check_offers(tmp_path)
     assert report.status == "invalid source"
+
+
+def test_a_pack_with_record_and_own_links_stays_clean(tmp_path: Path) -> None:
+    """The re-render reads the real jobs-raw.json and library, not the empty temp dir (#530)."""
+    record = {"id": "gh:acme:1", "url": "https://jobs.example.com/1", "description": "Hi."}
+    (tmp_path / "jobs-raw.json").write_text(json.dumps([record]))
+    (tmp_path / "evidence-library.json").write_text(json.dumps({"p": "https://github.com/me/x"}))
+    pack = {
+        **PACK,
+        "offer_id": record["id"],
+        "cv": "Repo: https://github.com/me/x",
+        "match": f"Posting: {record['url']}",
+        "prefill_pack": f"**Apply via:** {record['url']}",
+    }
+    persist_offer.write_pack(pack, slug="acme", results_dir=tmp_path)
+    assert drift.check_offers(tmp_path) == [drift.PackDrift(slug="acme", status="clean")]

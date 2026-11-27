@@ -461,3 +461,72 @@ def test_a_rewritten_pack_rebuilds_byte_identically_from_its_result_json(tmp_pat
         json.loads((offer_dir / "result.json").read_text()), slug="acme-42", results_dir=tmp_path
     )
     assert {p.name: p.read_text() for p in again.iterdir()} == first
+
+
+# --- the other artifacts (#530): the same link check as the prefill pack ---
+
+_CLEAN_ROUTE = "**Apply via:** https://jobs.example.com/careers/42?gh_jid=42"
+_JD_LINK = "https://careers.example.org/jobs/42-engineer"
+
+
+@pytest.mark.parametrize(
+    ("key", "filename"),
+    [
+        ("match", "match.md"),
+        ("cv", "cv.md"),
+        ("cover_letter", "cover-letter.md"),
+        ("gap_report", "gap-report.md"),
+    ],
+)
+def test_write_pack_replaces_a_planted_link_in_every_artifact(
+    tmp_path: Path, key: str, filename: str
+) -> None:
+    (tmp_path / "jobs-raw.json").write_text(json.dumps([_APPLY_RECORD]))
+    pack = {**_apply_pack(_CLEAN_ROUTE), key: "Kept line.\nSee https://evil.example.net/planted"}
+    offer_dir = persist_offer.write_pack(pack, slug="acme-42", results_dir=tmp_path)
+    for name in (filename, "result.json"):
+        assert "planted" not in (offer_dir / name).read_text(), name
+    assert "Kept line." in (offer_dir / filename).read_text()
+    note = (offer_dir / "link-check.md").read_text()
+    assert filename in note
+    assert "planted" not in note
+
+
+def test_a_jd_link_stays_in_the_match_but_not_in_the_cv(tmp_path: Path) -> None:
+    (tmp_path / "jobs-raw.json").write_text(json.dumps([_APPLY_RECORD]))
+    line = f"Posting: {_JD_LINK}"
+    pack = {**_apply_pack(_CLEAN_ROUTE), "match": line, "cv": line}
+    offer_dir = persist_offer.write_pack(pack, slug="acme-42", results_dir=tmp_path)
+    assert line in (offer_dir / "match.md").read_text()
+    assert _JD_LINK not in (offer_dir / "cv.md").read_text()
+
+
+def test_a_clean_pack_writes_no_link_sidecar(tmp_path: Path) -> None:
+    (tmp_path / "jobs-raw.json").write_text(json.dumps([_APPLY_RECORD]))
+    offer_dir = persist_offer.write_pack(_apply_pack(_CLEAN_ROUTE), slug="a", results_dir=tmp_path)
+    assert not (offer_dir / "link-check.md").exists()
+    assert persist_offer.LINKS_KEY not in json.loads((offer_dir / "result.json").read_text())
+
+
+def test_a_link_checked_pack_rebuilds_byte_identically_from_its_result_json(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "jobs-raw.json").write_text(json.dumps([_APPLY_RECORD]))
+    pack = {**_apply_pack(_CLEAN_ROUTE), "cv": "See https://evil.example.net/x"}
+    offer_dir = persist_offer.write_pack(pack, slug="acme-42", results_dir=tmp_path)
+    first = {p.name: p.read_text() for p in offer_dir.iterdir()}
+    assert "link-check.md" in first
+    again = persist_offer.write_pack(
+        json.loads((offer_dir / "result.json").read_text()), slug="acme-42", results_dir=tmp_path
+    )
+    assert {p.name: p.read_text() for p in again.iterdir()} == first
+
+
+def test_stored_link_counts_are_capped_and_type_checked(tmp_path: Path) -> None:
+    (tmp_path / "jobs-raw.json").write_text(json.dumps([_APPLY_RECORD]))
+    counts = {"cv": 999, "match": "3", "gap_report": -1, "cover_letter": True, "x": 5}
+    pack = {**_apply_pack(_CLEAN_ROUTE), persist_offer.LINKS_KEY: counts}
+    offer_dir = persist_offer.write_pack(pack, slug="acme-42", results_dir=tmp_path)
+    stored = json.loads((offer_dir / "result.json").read_text())[persist_offer.LINKS_KEY]
+    assert stored == {"cv": 10}
+    assert "cv.md" in (offer_dir / "link-check.md").read_text()
